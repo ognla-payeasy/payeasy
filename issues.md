@@ -112,237 +112,98 @@ Add `AlreadyInitialized` and `NotInitialized` variants to a `#[contracterror]` e
 - Define `pub enum Error`.
 - Assign unique integer codes to variants.
 
-**Acceptance Criteria**  
-- Enum compiles in `lib.rs`.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
 
 ---
 
-### [Issue #7] Errors: Define Payment Validation Errors
+## Stage 9: Frontend Polish (Issues 41–44)
+
+### [Issue #41] Wallet: Fund Testnet Button Not Wired Up
 **Description**  
-Add `InvalidAmount` and `InsufficientFunding` to the `Error` enum.
+The "Fund Testnet" quick-action button on the wallet page (`app/wallet/page.tsx`, line 120) renders with no `onClick` handler, so clicking it does nothing. A `FundTestnetButton` component already exists in `components/wallet/FundTestnetButton.tsx` and handles the Friendbot funding flow — the inline button should be replaced with it.
 
 **Requirements**  
-- Unique naming and codes.
+- Remove the inert `<button>` at lines 119–126 of `app/wallet/page.tsx`.  
+- Import and render `<FundTestnetButton publicKey={walletData?.address ?? ""} />` in its place.  
+- The button must only be visible when `walletData?.network === "testnet"` (condition is already present).
 
 **Acceptance Criteria**  
-- Errors can be used in `Result` returns.
+- Clicking "Fund Testnet" on the wallet page triggers the Friendbot request and shows toast feedback.  
+- The button does not appear on mainnet.
 
 **Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
+- `app/wallet/page.tsx` (Modify)
 
 **Test Requirements**  
-- N/A
+- Verify clicking the button triggers the funding flow; confirm it is absent when network is not testnet.
 
 ---
 
-### [Issue #8] Errors: Define Access Control Errors
+### [Issue #42] History: "Latest First" Sort Button Has No Handler
 **Description**  
-Add `Unauthorized` and `Expired` variants to the `Error` enum.
+The sort button in `components/history/TransactionList.tsx` (line 103) renders the label "Latest First" but has no `onClick` handler — clicking it does nothing. The transaction list should toggle between newest-first and oldest-first order, and the button label should reflect the current sort direction.
 
 **Requirements**  
-- Unique codes.
+- Add a `sortOrder` state (`"desc" | "asc"`, default `"desc"`) to `TransactionList`.  
+- Wire the button's `onClick` to toggle `sortOrder` between `"desc"` and `"asc"`.  
+- Update the button label to read **"Latest First"** when `sortOrder === "desc"` and **"Oldest First"** when `"asc"`.  
+- Sort `filteredTransactions` (inside its existing `useMemo`) by `transaction.timestamp` according to `sortOrder` before returning.
 
 **Acceptance Criteria**  
-- Errors are defined and mapped.
+- Clicking the button reverses the transaction list order.  
+- The button label reflects the active sort direction.
 
 **Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
+- `components/history/TransactionList.tsx` (Modify)
 
 **Test Requirements**  
-- N/A
+- Render with mock transactions; click sort button; confirm list order inverts and label changes.
 
 ---
 
-### [Issue #9] Constants: Network Time Constants
+### [Issue #43] History: Retry Button Silently Redirects to Create Escrow When contractId Is Missing
 **Description**  
-Define `const DAY_IN_LEDGERS: u32 = 17280` for time-based logic.
+In `components/history/TransactionCard.tsx` (lines 151–167), the "Retry" button for failed transactions falls back to `router.push("/escrow/create")` when `transaction.contractId` is absent. This silently starts a brand-new escrow instead of retrying the failed one, which is confusing and destructive. The button should only appear when a `contractId` is available to navigate to.
 
 **Requirements**  
-- Use accurate approximation for 5-second ledger times.
+- Wrap the entire retry `<button>` in a conditional: only render it when `transaction.status === "failed" && transaction.contractId`.  
+- Remove the `else` branch that redirects to `/escrow/create`.  
+- Add `aria-label={`Retry transaction for escrow ${transaction.contractId}`}` to the button.
 
 **Acceptance Criteria**  
-- Constant is available for contract use.
+- Failed transactions without a `contractId` do not show a Retry button.  
+- Failed transactions with a `contractId` show the button, and clicking it navigates to `/escrow/{contractId}`.
 
 **Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
+- `components/history/TransactionCard.tsx` (Modify)
 
 **Test Requirements**  
-- N/A
+- Render a failed card without `contractId`; confirm no Retry button.  
+- Render a failed card with `contractId`; confirm Retry navigates correctly.
 
 ---
 
-### [Issue #10] Constants: Minimum Rent Threshold
+### [Issue #44] Escrow: Demo Mode Warning Only Shown at Final Review Step
 **Description**  
-Define `const MIN_RENT: i128 = 100` to prevent micro-escrow spam.
+`components/escrow/CreateEscrowForm.tsx` (lines 626–630) shows a "Demo mode is active" notice only at Step 4 (the final review), after the user has already filled out all three preceding steps. Users who are not in demo mode may not notice this until they are about to submit. A prominent banner should be shown at Step 1 so contributors know from the start that transactions will not execute on-chain.
 
 **Requirements**  
-- Amount should be in stroops/token-units.
+- At the top of the Step 1 section, add a dismissible amber banner when `contractClient` is `null` / `undefined`.  
+- The banner must include an info icon and the text: *"Demo mode: transactions will not be executed on-chain. Results are simulated only."*  
+- The existing Step 4 inline note may remain as a secondary reminder.
 
 **Acceptance Criteria**  
-- Constant is enforced in future logic.
+- When `contractClient` is not provided, the amber banner is visible as soon as Step 1 renders.  
+- When `contractClient` is provided, the banner does not render.
 
 **Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
+- `components/escrow/CreateEscrowForm.tsx` (Modify)
 
 **Test Requirements**  
-- N/A
+- Render form without `contractClient`; confirm banner appears on Step 1.  
+- Render form with `contractClient`; confirm banner is absent.
 
 ---
 
-## Stage 3: Data Structures & Storage Keys (11-15)
-
-### [Issue #11] Storage: Define Base Keys
-**Description**  
-Add `Landlord` and `RentAmount` keys to the `DataKey` enum.
-
-**Requirements**  
-- Use `#[contracttype]`.
-
-**Acceptance Criteria**  
-- Enum works with storage accessors.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-### [Issue #12] Storage: Define Roommate Keys
-**Description**  
-Add `Shares` and `Contributions` keys to the `DataKey` enum.
-
-**Requirements**  
-- Used for mapping roommate addresses.
-
-**Acceptance Criteria**  
-- Keys are ready for `Map` storage.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-### [Issue #13] Storage: Define Metadata Keys
-**Description**  
-Add `Deadline` and `RentToken` keys to the `DataKey` enum.
-
-**Requirements**  
-- Consistent naming.
-
-**Acceptance Criteria**  
-- Keys are ready for persistence.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-### [Issue #14] Types: Define Roommate State Struct
-**Description**  
-Create a `RoommateState` struct with `expected` and `paid` fields.
-
-**Requirements**  
-- Use `i128` for amounts.
-- Derive `Clone` and `Debug`.
-
-**Acceptance Criteria**  
-- Struct is marked with `#[contracttype]`.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-### [Issue #15] Types: Define Escrow Status Enum
-**Description**  
-Create a `Status` enum (Open, Funded, Released, Refunded).
-
-**Requirements**  
-- Map to simple integers for storage efficiency.
-
-**Acceptance Criteria**  
-- Enum is marked with `#[contracttype]`.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-## Stage 4: Initialization Logic (16-20)
-
-### [Issue #16] Init: `initialize` Signature
-**Description**  
-Define the public `initialize` function signature with correct arguments.
-
-**Requirements**  
-- Function within `#[contractimpl]` block.
-
-**Acceptance Criteria**  
-- Accepts `landlord`, `total`, `deadline`, and `token_address`.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- N/A
-
----
-
-### [Issue #17] Init: Validation - Zero Address Guard
-**Description**  
-Add logic to verify the landlord address is not the contract itself.
-
-**Requirements**  
-- Compare `landlord` with `env.current_contract_address()`.
-
-**Acceptance Criteria**  
-- Reverts if check fails.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- Test passing an invalid address reverts.
-
----
-
-### [Issue #18] Init: Validation - Positive Rent Check
-**Description**  
-Logic to ensure the `total_rent` is greater than `MIN_RENT`.
-
-**Requirements**  
-- Check against constant from Issue #10.
-
-**Acceptance Criteria**  
-- Fails for small or negative amounts.
-
-**Files to Create/Modify**  
-- `contracts/rent-escrow/src/lib.rs` (Modify)
-
-**Test Requirements**  
-- Test initializing with 0 rent fails.
-
----
 
 ### [Issue #19] Init: Storage Persistence
 **Description**  
@@ -747,6 +608,7 @@ implement persistent storage TTL extension so the agreement doesn't expire.
 **Test Requirements**  
 - N/A
 
+<<<<<<< HEAD
 
 ---
 
@@ -3210,3 +3072,93 @@ Set up `@next/bundle-analyzer` to identify and reduce oversized JavaScript bundl
 
 **Test Requirements**
 - Run bundle analyzer; verify landing page chunk reduction is documented.
+=======
+---
+
+## Stage 9: Frontend Polish (Issues 41–44)
+
+### [Issue #41] Wallet: Fund Testnet Button Not Wired Up
+**Description**  
+The "Fund Testnet" quick-action button on the wallet page (`app/wallet/page.tsx`, line 120) renders with no `onClick` handler, so clicking it does nothing. A `FundTestnetButton` component already exists in `components/wallet/FundTestnetButton.tsx` and handles the Friendbot funding flow — the inline button should be replaced with it.
+
+**Requirements**  
+- Remove the inert `<button>` at lines 119–126 of `app/wallet/page.tsx`.  
+- Import and render `<FundTestnetButton publicKey={walletData?.address ?? ""} />` in its place.  
+- The button must only be visible when `walletData?.network === "testnet"` (condition is already present).
+
+**Acceptance Criteria**  
+- Clicking "Fund Testnet" on the wallet page triggers the Friendbot request and shows toast feedback.  
+- The button does not appear on mainnet.
+
+**Files to Create/Modify**  
+- `app/wallet/page.tsx` (Modify)
+
+**Test Requirements**  
+- Verify clicking the button triggers the funding flow; confirm it is absent when network is not testnet.
+
+---
+
+### [Issue #42] History: "Latest First" Sort Button Has No Handler
+**Description**  
+The sort button in `components/history/TransactionList.tsx` (line 103) renders the label "Latest First" but has no `onClick` handler — clicking it does nothing. The transaction list should toggle between newest-first and oldest-first order, and the button label should reflect the current sort direction.
+
+**Requirements**  
+- Add a `sortOrder` state (`"desc" | "asc"`, default `"desc"`) to `TransactionList`.  
+- Wire the button's `onClick` to toggle `sortOrder` between `"desc"` and `"asc"`.  
+- Update the button label to read **"Latest First"** when `sortOrder === "desc"` and **"Oldest First"** when `"asc"`.  
+- Sort `filteredTransactions` (inside its existing `useMemo`) by `transaction.timestamp` according to `sortOrder` before returning.
+
+**Acceptance Criteria**  
+- Clicking the button reverses the transaction list order.  
+- The button label reflects the active sort direction.
+
+**Files to Create/Modify**  
+- `components/history/TransactionList.tsx` (Modify)
+
+**Test Requirements**  
+- Render with mock transactions; click sort button; confirm list order inverts and label changes.
+
+---
+
+### [Issue #43] History: Retry Button Silently Redirects to Create Escrow When contractId Is Missing
+**Description**  
+In `components/history/TransactionCard.tsx` (lines 151–167), the "Retry" button for failed transactions falls back to `router.push("/escrow/create")` when `transaction.contractId` is absent. This silently starts a brand-new escrow instead of retrying the failed one, which is confusing and destructive. The button should only appear when a `contractId` is available to navigate to.
+
+**Requirements**  
+- Wrap the entire retry `<button>` in a conditional: only render it when `transaction.status === "failed" && transaction.contractId`.  
+- Remove the `else` branch that redirects to `/escrow/create`.  
+- Add `aria-label={`Retry transaction for escrow ${transaction.contractId}`}` to the button.
+
+**Acceptance Criteria**  
+- Failed transactions without a `contractId` do not show a Retry button.  
+- Failed transactions with a `contractId` show the button, and clicking it navigates to `/escrow/{contractId}`.
+
+**Files to Create/Modify**  
+- `components/history/TransactionCard.tsx` (Modify)
+
+**Test Requirements**  
+- Render a failed card without `contractId`; confirm no Retry button.  
+- Render a failed card with `contractId`; confirm Retry navigates correctly.
+
+---
+
+### [Issue #44] Escrow: Demo Mode Warning Only Shown at Final Review Step
+**Description**  
+`components/escrow/CreateEscrowForm.tsx` (lines 626–630) shows a "Demo mode is active" notice only at Step 4 (the final review), after the user has already filled out all three preceding steps. Users who are not in demo mode may not notice this until they are about to submit. A prominent banner should be shown at Step 1 so contributors know from the start that transactions will not execute on-chain.
+
+**Requirements**  
+- At the top of the Step 1 section, add a dismissible amber banner when `contractClient` is `null` / `undefined`.  
+- The banner must include an info icon and the text: *"Demo mode: transactions will not be executed on-chain. Results are simulated only."*  
+- The existing Step 4 inline note may remain as a secondary reminder.
+
+**Acceptance Criteria**  
+- When `contractClient` is not provided, the amber banner is visible as soon as Step 1 renders.  
+- When `contractClient` is provided, the banner does not render.
+
+**Files to Create/Modify**  
+- `components/escrow/CreateEscrowForm.tsx` (Modify)
+
+**Test Requirements**  
+- Render form without `contractClient`; confirm banner appears on Step 1.  
+- Render form with `contractClient`; confirm banner is absent.
+>>>>>>> 8de19633dba2e4e4517d42df7e340da6eebd2c90

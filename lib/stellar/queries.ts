@@ -1,3 +1,35 @@
+// Returns all escrows for a landlord (stub, replace with real implementation)
+export async function getLandlordEscrows(): Promise<any[]> {
+  // TODO: Replace with actual Soroban RPC call and landlord address filtering
+  return [
+    {
+      id: "escrow1",
+      name: "Apartment 1",
+      funded: 500,
+      total: 1000,
+      roommateCount: 3,
+      deadline: Date.now() + 86400000 * 10,
+    },
+    {
+      id: "escrow2",
+      name: "Apartment 2",
+      funded: 1200,
+      total: 1200,
+      roommateCount: 2,
+      deadline: Date.now() + 86400000 * 5,
+    },
+  ];
+}
+
+// Returns landlord dashboard stats (stub, replace with real implementation)
+export async function getLandlordStats(): Promise<any> {
+  // TODO: Replace with actual Soroban RPC call and landlord address filtering
+  return {
+    totalEscrowed: 1700,
+    activeEscrows: 2,
+    totalReleased: 800,
+  };
+}
 import type { xdr } from "@stellar/stellar-sdk";
 import { withRetry } from "./retry.ts";
 
