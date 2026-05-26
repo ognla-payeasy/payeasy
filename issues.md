@@ -3072,93 +3072,894 @@ Set up `@next/bundle-analyzer` to identify and reduce oversized JavaScript bundl
 
 **Test Requirements**
 - Run bundle analyzer; verify landing page chunk reduction is documented.
-=======
----
-
-## Stage 9: Frontend Polish (Issues 41–44)
-
-### [Issue #41] Wallet: Fund Testnet Button Not Wired Up
-**Description**  
-The "Fund Testnet" quick-action button on the wallet page (`app/wallet/page.tsx`, line 120) renders with no `onClick` handler, so clicking it does nothing. A `FundTestnetButton` component already exists in `components/wallet/FundTestnetButton.tsx` and handles the Friendbot funding flow — the inline button should be replaced with it.
-
-**Requirements**  
-- Remove the inert `<button>` at lines 119–126 of `app/wallet/page.tsx`.  
-- Import and render `<FundTestnetButton publicKey={walletData?.address ?? ""} />` in its place.  
-- The button must only be visible when `walletData?.network === "testnet"` (condition is already present).
-
-**Acceptance Criteria**  
-- Clicking "Fund Testnet" on the wallet page triggers the Friendbot request and shows toast feedback.  
-- The button does not appear on mainnet.
-
-**Files to Create/Modify**  
-- `app/wallet/page.tsx` (Modify)
-
-**Test Requirements**  
-- Verify clicking the button triggers the funding flow; confirm it is absent when network is not testnet.
 
 ---
 
-### [Issue #42] History: "Latest First" Sort Button Has No Handler
-**Description**  
-The sort button in `components/history/TransactionList.tsx` (line 103) renders the label "Latest First" but has no `onClick` handler — clicking it does nothing. The transaction list should toggle between newest-first and oldest-first order, and the button label should reflect the current sort direction.
+## Stage 25: Critical Bug Fixes (Issues 161–170)
 
-**Requirements**  
-- Add a `sortOrder` state (`"desc" | "asc"`, default `"desc"`) to `TransactionList`.  
-- Wire the button's `onClick` to toggle `sortOrder` between `"desc"` and `"asc"`.  
-- Update the button label to read **"Latest First"** when `sortOrder === "desc"` and **"Oldest First"** when `"asc"`.  
-- Sort `filteredTransactions` (inside its existing `useMemo`) by `transaction.timestamp` according to `sortOrder` before returning.
+### [Issue #161] Bug: Missing `getContractBasicInfo` Function Breaks `/pay/[contractId]` Page
+**Description**
+`app/pay/[contractId]/page.tsx` calls `getContractBasicInfo(contractId)` on line 22, but this function is never exported from `lib/stellar/queries.ts`. The entire page crashes at runtime with a ReferenceError on load.
 
-**Acceptance Criteria**  
-- Clicking the button reverses the transaction list order.  
-- The button label reflects the active sort direction.
+**Requirements**
+- Implement and export `getContractBasicInfo(contractId: string)` from `lib/stellar/queries.ts`.
+- Function should return `{ landlord, totalRent, deadline, token }` from Soroban storage, or `null` if not found.
+- Update `app/pay/[contractId]/page.tsx` to handle the `null` case and show a "Contract not found" state.
 
-**Files to Create/Modify**  
-- `components/history/TransactionList.tsx` (Modify)
+**Acceptance Criteria**
+- Visiting `/pay/VALID_CONTRACT_ID` renders the contribute form without a crash.
+- Visiting `/pay/INVALID_ID` renders a not-found state, not a blank screen.
 
-**Test Requirements**  
-- Render with mock transactions; click sort button; confirm list order inverts and label changes.
+**Files to Create/Modify**
+- `lib/stellar/queries.ts` (Modify — add `getContractBasicInfo`)
+- `app/pay/[contractId]/page.tsx` (Modify)
 
----
-
-### [Issue #43] History: Retry Button Silently Redirects to Create Escrow When contractId Is Missing
-**Description**  
-In `components/history/TransactionCard.tsx` (lines 151–167), the "Retry" button for failed transactions falls back to `router.push("/escrow/create")` when `transaction.contractId` is absent. This silently starts a brand-new escrow instead of retrying the failed one, which is confusing and destructive. The button should only appear when a `contractId` is available to navigate to.
-
-**Requirements**  
-- Wrap the entire retry `<button>` in a conditional: only render it when `transaction.status === "failed" && transaction.contractId`.  
-- Remove the `else` branch that redirects to `/escrow/create`.  
-- Add `aria-label={`Retry transaction for escrow ${transaction.contractId}`}` to the button.
-
-**Acceptance Criteria**  
-- Failed transactions without a `contractId` do not show a Retry button.  
-- Failed transactions with a `contractId` show the button, and clicking it navigates to `/escrow/{contractId}`.
-
-**Files to Create/Modify**  
-- `components/history/TransactionCard.tsx` (Modify)
-
-**Test Requirements**  
-- Render a failed card without `contractId`; confirm no Retry button.  
-- Render a failed card with `contractId`; confirm Retry navigates correctly.
+**Test Requirements**
+- Mock Soroban RPC returning valid data; verify contract info renders.
+- Mock null response; verify not-found state renders.
 
 ---
 
-### [Issue #44] Escrow: Demo Mode Warning Only Shown at Final Review Step
-**Description**  
-`components/escrow/CreateEscrowForm.tsx` (lines 626–630) shows a "Demo mode is active" notice only at Step 4 (the final review), after the user has already filled out all three preceding steps. Users who are not in demo mode may not notice this until they are about to submit. A prominent banner should be shown at Step 1 so contributors know from the start that transactions will not execute on-chain.
+### [Issue #162] Bug: `TokenHelper.invoke()` Throws "Method Not Implemented"
+**Description**
+`lib/stellar/token.ts` line 74 throws `"Method not implemented: requires Soroban RPC integration."` inside `TokenHelper.invoke()`. Any code path that calls token-related Soroban operations will fail at runtime with this unhandled exception.
 
-**Requirements**  
-- At the top of the Step 1 section, add a dismissible amber banner when `contractClient` is `null` / `undefined`.  
-- The banner must include an info icon and the text: *"Demo mode: transactions will not be executed on-chain. Results are simulated only."*  
-- The existing Step 4 inline note may remain as a secondary reminder.
+**Requirements**
+- Implement `TokenHelper.invoke()` using `SorobanRpc.Server` and Freighter signing, following the same pattern as `lib/stellar/actions/contribute.ts`.
+- If Soroban RPC is unavailable, throw a descriptive `StellarError` instead of a plain string.
 
-**Acceptance Criteria**  
-- When `contractClient` is not provided, the amber banner is visible as soon as Step 1 renders.  
-- When `contractClient` is provided, the banner does not render.
+**Acceptance Criteria**
+- Calling `TokenHelper.invoke()` submits a real Soroban transaction via Freighter, not an exception.
 
-**Files to Create/Modify**  
-- `components/escrow/CreateEscrowForm.tsx` (Modify)
+**Files to Create/Modify**
+- `lib/stellar/token.ts` (Modify — implement `invoke`)
 
-**Test Requirements**  
-- Render form without `contractClient`; confirm banner appears on Step 1.  
-- Render form with `contractClient`; confirm banner is absent.
->>>>>>> 8de19633dba2e4e4517d42df7e340da6eebd2c90
+**Test Requirements**
+- Mock Soroban RPC; verify `invoke` builds and submits a transaction without throwing.
+
+---
+
+### [Issue #163] Bug: Missing `/api/auth/logout` Route Causes 404 on Logout
+**Description**
+`context/EmailAuthContext.tsx` line 66 calls `POST /api/auth/logout` on sign-out, but the route file `app/api/auth/logout/route.ts` does not exist. Every logout attempt results in a 404 error and the user's session is never cleared server-side.
+
+**Requirements**
+- Create `app/api/auth/logout/route.ts` that clears the JWT cookie.
+- Return `{ success: true }` on success.
+- Invalidate the `Authorization` header token if present.
+
+**Acceptance Criteria**
+- Clicking "Sign out" clears the auth cookie and navigates the user to `/login`.
+
+**Files to Create/Modify**
+- `app/api/auth/logout/route.ts` (Create)
+
+**Test Requirements**
+- Call `POST /api/auth/logout` with a valid cookie; verify cookie is cleared in the response.
+
+---
+
+### [Issue #164] Bug: Dashboard Page Hardcodes `connected = true`, Bypassing Auth
+**Description**
+`app/dashboard/page.tsx` line 15 sets `const [connected, setConnected] = useState(true)` and line 21 has `const isConnected = true`. Authentication is never actually checked, meaning any unauthenticated user can view the dashboard with no redirect.
+
+**Requirements**
+- Replace hardcoded state with `const { isConnected, publicKey } = useStellar()` from `StellarContext`.
+- Redirect to `/connect` if `!isConnected` after the context initializes.
+- Remove the TODO comment and empty catch block on line 35.
+
+**Acceptance Criteria**
+- An unauthenticated user visiting `/dashboard` is redirected to `/connect`.
+
+**Files to Create/Modify**
+- `app/dashboard/page.tsx` (Modify)
+
+**Test Requirements**
+- Render page without wallet; verify redirect to `/connect`.
+
+---
+
+### [Issue #165] Bug: `getLandlordEscrows()` Returns Hardcoded Mock Data
+**Description**
+`lib/stellar/queries.ts` lines 2–22 define `getLandlordEscrows()` with a comment `// TODO: Replace with actual Soroban RPC call`. It returns an array of three hardcoded mock objects regardless of the landlord address passed. The dashboard always shows the same fake data.
+
+**Requirements**
+- Implement real Soroban RPC call to fetch escrow contracts where `landlord === address`.
+- Query the deployed contract registry or iterate known contract IDs stored in user session.
+- Return `EscrowContract[]` typed array, not `any[]`.
+
+**Acceptance Criteria**
+- Dashboard shows only escrows where the connected wallet is the landlord.
+
+**Files to Create/Modify**
+- `lib/stellar/queries.ts` (Modify — replace mock `getLandlordEscrows`)
+
+**Test Requirements**
+- Mock Soroban returning 2 contracts; verify only those 2 render on dashboard.
+
+---
+
+### [Issue #166] Bug: `getLandlordStats()` Returns Stubbed Zeros
+**Description**
+`lib/stellar/queries.ts` lines 25–32 define `getLandlordStats()` that always returns `{ totalEscrowed: 0, activeEscrows: 0, totalReleased: 0 }` with a TODO comment. The stats row on the dashboard always shows all zeros.
+
+**Requirements**
+- Derive stats by aggregating the result from `getLandlordEscrows()`.
+- `totalEscrowed`: sum of `totalRent` across all escrows.
+- `activeEscrows`: count of escrows with status "open" or "funded".
+- `totalReleased`: sum of `totalRent` for released escrows.
+
+**Acceptance Criteria**
+- Dashboard stats accurately reflect the landlord's real escrow data.
+
+**Files to Create/Modify**
+- `lib/stellar/queries.ts` (Modify — implement `getLandlordStats`)
+
+**Test Requirements**
+- Mock 3 escrows (2 active, 1 released); verify stats totals are correct.
+
+---
+
+### [Issue #167] Bug: ContributeForm Receives Wrong Props from `/pay/[contractId]`
+**Description**
+`app/pay/[contractId]/page.tsx` line 43 renders `<ContributeForm contractId={contractId} contractInfo={contractInfo} onSuccess={handleSuccess} />`. However, `components/escrow/ContributeForm.tsx` expects `{ escrowId, expectedShare, remainingBalance }`. This prop mismatch causes a TypeScript error and runtime failure where amounts never render.
+
+**Requirements**
+- Either update `ContributeForm` to accept `contractInfo` and extract `expectedShare`/`remainingBalance` internally.
+- Or update `app/pay/[contractId]/page.tsx` to destructure and pass the correct props.
+- Ensure TypeScript strict mode compiles without errors.
+
+**Acceptance Criteria**
+- Visiting `/pay/VALID_ID` renders the contribution form with the correct expected share amount.
+
+**Files to Create/Modify**
+- `app/pay/[contractId]/page.tsx` (Modify)
+- `components/escrow/ContributeForm.tsx` (Modify)
+
+**Test Requirements**
+- Render `ContributeForm` with valid props; verify amount fields populate correctly.
+
+---
+
+### [Issue #168] Bug: Empty Catch Blocks Silently Hide Errors in Dashboard and Success Pages
+**Description**
+`app/dashboard/page.tsx` line 35 has `} catch (e) { // handle error }` which swallows all data-fetch errors silently. `app/escrow/success/page.tsx` lines 51–63 have two empty catch blocks ignoring clipboard errors. These make debugging impossible and leave users with no feedback when things go wrong.
+
+**Requirements**
+- `app/dashboard/page.tsx`: replace the empty catch with `setError(e instanceof Error ? e.message : "Failed to load dashboard")` and render an error banner.
+- `app/escrow/success/page.tsx`: replace clipboard catch blocks with `setClipboardError(true)` and show a "Copy failed — paste manually" fallback.
+
+**Acceptance Criteria**
+- A fetch failure on the dashboard shows a visible error message to the user.
+- A clipboard failure on the success page shows a fallback copy instruction.
+
+**Files to Create/Modify**
+- `app/dashboard/page.tsx` (Modify)
+- `app/escrow/success/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock a fetch failure; verify error message renders. Mock clipboard failure; verify fallback renders.
+
+---
+
+### [Issue #169] Bug: File-Based User Storage (`data/users.json`) Not Suitable for Production
+**Description**
+`lib/auth/users.ts` reads and writes user credentials to `data/users.json` on disk. This approach fails in multi-process deployments (e.g., Vercel serverless), loses data on cold starts, and has no concurrency protection. Any two simultaneous signups can corrupt the file.
+
+**Requirements**
+- Replace `data/users.json` file storage with a proper persistence layer.
+- Minimum viable: use an environment-variable-configured database (SQLite via Prisma for local dev, or a hosted option).
+- Add file locking or atomic writes as an interim measure if a full DB migration is deferred.
+- Add a `DATA_STORE` environment variable to switch between `file` and `db` modes.
+
+**Acceptance Criteria**
+- Two simultaneous signups do not corrupt user data.
+- App works correctly after a server restart without losing registered users.
+
+**Files to Create/Modify**
+- `lib/auth/users.ts` (Modify — add atomic write or DB adapter)
+- `lib/auth/db-adapter.ts` (Create — optional DB abstraction)
+- `.env.example` (Modify — document `DATA_STORE`)
+
+**Test Requirements**
+- Simulate concurrent writes; verify no data corruption.
+
+---
+
+### [Issue #170] Bug: JWT Token Expiration Hardcoded to "7d" With No Refresh Mechanism
+**Description**
+`lib/auth/jwt.ts` line 19 hardcodes `"7d"` as the token expiration. There is no refresh token flow, so when a 7-day session expires, the user is silently logged out mid-session with no warning. API calls fail with 401 after expiry.
+
+**Requirements**
+- Move token expiration to `JWT_EXPIRY` environment variable (default `"7d"`).
+- Implement a `POST /api/auth/refresh` route that issues a new token if the current one is within 1 day of expiry.
+- On 401 responses, `EmailAuthContext` should attempt one silent refresh before redirecting to login.
+
+**Acceptance Criteria**
+- A user active within 24 hours of token expiry gets a seamless silent refresh.
+- A fully expired token redirects the user to `/login` with a "Session expired" message.
+
+**Files to Create/Modify**
+- `lib/auth/jwt.ts` (Modify)
+- `app/api/auth/refresh/route.ts` (Create)
+- `context/EmailAuthContext.tsx` (Modify — add refresh interceptor)
+
+**Test Requirements**
+- Mock token expiring in 23 hours; verify silent refresh fires. Mock fully expired token; verify redirect.
+
+---
+
+## Stage 26: Security Hardening (Issues 171–178)
+
+### [Issue #171] Security: Development Auth Secret Used in Production Config
+**Description**
+`.env.local` line 6 sets `AUTH_SECRET=payeasy-dev-secret-change-in-production-32chars`. The inline comment admits this is not production-safe. If this value is accidentally deployed, all JWT tokens are signed with a known, public secret.
+
+**Requirements**
+- Generate a cryptographically secure random 32-byte secret: `openssl rand -base64 32`.
+- Update `.env.example` with a placeholder and clear instructions.
+- Add a startup check in `lib/auth/jwt.ts` that throws an error if `AUTH_SECRET` matches the known dev placeholder.
+- Document the secret rotation procedure in a comment.
+
+**Acceptance Criteria**
+- App refuses to start if `AUTH_SECRET` equals the dev placeholder value.
+
+**Files to Create/Modify**
+- `lib/auth/jwt.ts` (Modify — add secret validation)
+- `.env.example` (Modify — update placeholder)
+- `.env.local` (Modify — replace secret value)
+
+**Test Requirements**
+- Set `AUTH_SECRET` to the dev placeholder; verify app throws on startup.
+
+---
+
+### [Issue #172] Security: Add Rate Limiting to Authentication API Routes
+**Description**
+`app/api/auth/signup/route.ts` and `app/api/auth/login/route.ts` have no rate limiting. An attacker can make unlimited brute-force login attempts or flood signups without restriction.
+
+**Requirements**
+- Implement IP-based rate limiting: max 10 requests per 15 minutes on `/api/auth/login`.
+- Max 5 requests per hour on `/api/auth/signup`.
+- Return HTTP 429 with `Retry-After` header when limit is exceeded.
+- Use in-memory sliding window for dev; support Upstash Redis for production.
+
+**Acceptance Criteria**
+- Making 11 login requests in 15 minutes returns a 429 on the 11th.
+
+**Files to Create/Modify**
+- `lib/auth/rate-limit.ts` (Create)
+- `app/api/auth/login/route.ts` (Modify)
+- `app/api/auth/signup/route.ts` (Modify)
+
+**Test Requirements**
+- Simulate 11 rapid login requests; verify 429 on the 11th with correct headers.
+
+---
+
+### [Issue #173] Security: Add CSRF Protection to Auth API Routes
+**Description**
+The authentication routes (`/api/auth/login`, `/api/auth/signup`, `/api/auth/logout`) have no CSRF token validation. This makes the app vulnerable to cross-site request forgery attacks where a malicious page can silently log users in or out.
+
+**Requirements**
+- Implement double-submit cookie CSRF protection.
+- On GET requests to auth pages, set a `csrf_token` cookie (HttpOnly: false, SameSite: Strict).
+- All mutating auth API routes must verify the `X-CSRF-Token` header matches the cookie value.
+- Return HTTP 403 if the CSRF token is missing or mismatched.
+
+**Acceptance Criteria**
+- A request to `/api/auth/login` without a matching CSRF token returns HTTP 403.
+
+**Files to Create/Modify**
+- `lib/auth/csrf.ts` (Create)
+- `app/api/auth/login/route.ts` (Modify)
+- `app/api/auth/signup/route.ts` (Modify)
+- `app/api/auth/logout/route.ts` (Modify)
+
+**Test Requirements**
+- POST to login without `X-CSRF-Token`; verify 403. POST with valid token; verify 200.
+
+---
+
+### [Issue #174] Security: Missing Input Sanitization on Signup and Login Forms
+**Description**
+`app/api/auth/signup/route.ts` and `app/api/auth/login/route.ts` do not sanitize the `email` or `password` fields before processing. An email like `admin@test.com<script>` is accepted as-is and stored in `data/users.json`, creating a stored XSS vector.
+
+**Requirements**
+- Validate email with a strict RFC-5321 regex before processing.
+- Trim and reject emails containing HTML-special characters (`<`, `>`, `"`, `'`).
+- Add `Content-Type: application/json` response header validation on incoming requests.
+- Return HTTP 400 with a field-specific error message for invalid inputs.
+
+**Acceptance Criteria**
+- `POST /api/auth/signup` with `email: "a<script>@b.com"` returns HTTP 400.
+
+**Files to Create/Modify**
+- `lib/auth/validation.ts` (Create)
+- `app/api/auth/signup/route.ts` (Modify)
+- `app/api/auth/login/route.ts` (Modify)
+
+**Test Requirements**
+- Unit test 10 invalid email patterns; all return 400. Valid email; returns 200.
+
+---
+
+### [Issue #175] Security: Add Content Security Policy Header
+**Description**
+The app has no `Content-Security-Policy` (CSP) header. This exposes the app to XSS attacks by allowing inline scripts and arbitrary external resources. The Stellar/Soroban frontend is particularly sensitive as it handles wallet interactions.
+
+**Requirements**
+- Add a strict CSP via `next.config.js` headers:
+  - `default-src 'self'`; `script-src 'self' 'nonce-{nonce}'`
+  - `connect-src 'self' https://horizon-testnet.stellar.org https://soroban-testnet.stellar.org`
+  - `img-src 'self' data: https://images.unsplash.com https://i.pravatar.cc`
+- Generate a per-request nonce via Next.js middleware for inline scripts.
+
+**Acceptance Criteria**
+- Response headers include a valid `Content-Security-Policy`.
+- Inline scripts not bearing the nonce are blocked by the browser.
+
+**Files to Create/Modify**
+- `next.config.js` (Modify)
+- `middleware.ts` (Create — nonce generation)
+
+**Test Requirements**
+- Run `curl -I` and verify `Content-Security-Policy` header is present and well-formed.
+
+---
+
+### [Issue #176] Security: Stellar Address Injection in Soroban RPC Calls
+**Description**
+`lib/stellar/queries.ts` and `lib/stellar/actions/contribute.ts` pass user-supplied `contractId` and `address` strings directly into Soroban RPC calls and XDR builders with no validation. A malformed address could cause unexpected RPC behavior or client-side errors that reveal internal structure.
+
+**Requirements**
+- Create `lib/stellar/validation.ts` with `isValidStellarAddress(addr)` and `isValidContractId(id)` using the Stellar SDK's `StrKey` class.
+- Validate all user-supplied addresses before they reach RPC calls.
+- Return a typed `ValidationError` rather than passing invalid strings to the SDK.
+
+**Acceptance Criteria**
+- Passing `"not-a-stellar-address"` to any Soroban action returns a `ValidationError` immediately.
+
+**Files to Create/Modify**
+- `lib/stellar/validation.ts` (Create or Modify)
+- `lib/stellar/queries.ts` (Modify — add validation gates)
+- `lib/stellar/actions/contribute.ts` (Modify)
+- `lib/stellar/actions/initialize.ts` (Modify)
+
+**Test Requirements**
+- Unit test 5 invalid addresses; all throw `ValidationError`. Valid address; no error.
+
+---
+
+### [Issue #177] Security: Sensitive Data Logged to Console in Production
+**Description**
+Seven `console.error` calls in `lib/stellar/wallet.ts`, `lib/stellar/token.ts`, `lib/stellar/health.ts`, and `app/escrow/error.tsx` may log Stellar public keys, transaction details, or error stacks to the browser console in production. This leaks implementation details and potentially sensitive metadata.
+
+**Requirements**
+- Create `lib/logger.ts` with `log.error(msg, context?)` that only logs in `NODE_ENV !== "production"`.
+- In production, send errors to an error tracking sink (or suppress them entirely).
+- Replace all 7 bare `console.error` calls in the Stellar library with `log.error`.
+
+**Acceptance Criteria**
+- Running in `NODE_ENV=production`, no Stellar-related messages appear in the browser console.
+
+**Files to Create/Modify**
+- `lib/logger.ts` (Create)
+- `lib/stellar/wallet.ts` (Modify)
+- `lib/stellar/token.ts` (Modify)
+- `lib/stellar/health.ts` (Modify)
+- `app/escrow/error.tsx` (Modify)
+
+**Test Requirements**
+- Set `NODE_ENV=production`; trigger a Freighter error; verify nothing logged to console.
+
+---
+
+### [Issue #178] Security: Hardcoded Soroban RPC URL Bypasses Environment Config
+**Description**
+`lib/stellar/actions/contribute.ts` line 12 and `lib/stellar/actions/initialize.ts` line 27 hardcode `"https://soroban-testnet.stellar.org"` as a string literal instead of reading from `process.env.NEXT_PUBLIC_SOROBAN_RPC_URL`. This makes the app impossible to reconfigure for different networks without code changes.
+
+**Requirements**
+- Replace both hardcoded URL strings with `process.env.NEXT_PUBLIC_SOROBAN_RPC_URL`.
+- Throw a startup error (via `lib/env.ts`) if the variable is not set.
+- Update `.env.example` to document the variable.
+
+**Acceptance Criteria**
+- Setting `NEXT_PUBLIC_SOROBAN_RPC_URL` to a different endpoint in `.env.local` routes all Soroban calls to that endpoint.
+
+**Files to Create/Modify**
+- `lib/stellar/actions/contribute.ts` (Modify)
+- `lib/stellar/actions/initialize.ts` (Modify)
+- `.env.example` (Modify)
+
+**Test Requirements**
+- Set env var to a mock URL; verify all Soroban RPC calls go to that URL.
+
+---
+
+## Stage 27: Settings & Account Management (Issues 179–186)
+
+### [Issue #179] Feature: Settings Page — Display Name and Email Edit
+**Description**
+`app/settings/page.tsx` is a design placeholder with no functional state management. The profile section has no `onChange` handlers, no form submission, and no API call. Users cannot actually update their display name or email.
+
+**Requirements**
+- Add controlled inputs for display name and email with `useState`.
+- On submit, call `PATCH /api/user/profile` with the updated fields.
+- Show a success toast on save. Show inline errors for invalid email or name too short.
+- Create the `PATCH /api/user/profile` route.
+
+**Acceptance Criteria**
+- User can update their display name in settings and see the change persist after page reload.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+- `app/api/user/profile/route.ts` (Create)
+
+**Test Requirements**
+- Submit valid name change; verify PATCH is called and success toast shows.
+
+---
+
+### [Issue #180] Feature: Settings Page — Change Password Flow
+**Description**
+The settings page has a password section in the layout but no implementation. Users have no way to change their password without a developer directly modifying `data/users.json`.
+
+**Requirements**
+- Add "Current Password", "New Password", and "Confirm New Password" fields.
+- Validate: current password correct, new password ≥ 8 chars, passwords match.
+- Call `PATCH /api/user/password` on submit; return 403 if current password is wrong.
+- Clear fields on success. Show toast "Password updated successfully."
+
+**Acceptance Criteria**
+- User can change their password from settings. Wrong current password shows an error.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+- `app/api/user/password/route.ts` (Create)
+
+**Test Requirements**
+- Submit wrong current password; verify 403 and error message. Submit correct; verify success.
+
+---
+
+### [Issue #181] Feature: Settings Page — Delete Account with Confirmation
+**Description**
+The settings page has a "Danger Zone" delete account placeholder but no implementation. Users cannot remove their accounts, which is a GDPR requirement.
+
+**Requirements**
+- "Delete Account" button opens a confirmation dialog requiring the user to type their email.
+- On confirmation, call `DELETE /api/user/account`.
+- Clear all cookies and localStorage, then redirect to `/`.
+- Server-side: remove user from storage, invalidate all sessions.
+
+**Acceptance Criteria**
+- User who confirms deletion is logged out and their account no longer exists.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+- `app/api/user/account/route.ts` (Create)
+
+**Test Requirements**
+- Type wrong email in confirmation; verify button stays disabled. Type correct; verify deletion proceeds.
+
+---
+
+### [Issue #182] Feature: Password Reset / Forgot Password Flow
+**Description**
+There is no password reset mechanism. Users who forget their password are permanently locked out of their accounts. The email auth system has no recovery path.
+
+**Requirements**
+- Add "Forgot password?" link on `/login` page.
+- Create `/forgot-password` page with email input.
+- Generate a time-limited (1 hour) reset token; store hashed in user record.
+- Send reset link via a configured email service (or log to console in dev).
+- Create `/reset-password?token=...` page for the actual reset.
+
+**Acceptance Criteria**
+- User enters email, receives a reset link (logged in dev), and can set a new password.
+
+**Files to Create/Modify**
+- `app/forgot-password/page.tsx` (Create)
+- `app/reset-password/page.tsx` (Create)
+- `app/api/auth/forgot-password/route.ts` (Create)
+- `app/api/auth/reset-password/route.ts` (Create)
+- `lib/auth/users.ts` (Modify — add reset token fields)
+
+**Test Requirements**
+- Request reset for valid email; verify token stored. Use token to reset; verify password changes.
+
+---
+
+### [Issue #183] Feature: Email Verification on Signup
+**Description**
+`app/api/auth/signup/route.ts` creates user accounts without any email verification step. Anyone can register with any email address, including ones they do not own.
+
+**Requirements**
+- After signup, store user with `emailVerified: false` and generate a 24-hour verification token.
+- Send a verification email (or log link to console in dev).
+- Create `GET /api/auth/verify-email?token=...` route that sets `emailVerified: true`.
+- Require `emailVerified: true` to access protected routes (escrow creation, dashboard).
+
+**Acceptance Criteria**
+- New user who has not verified email cannot create an escrow. Verified user can.
+
+**Files to Create/Modify**
+- `app/api/auth/signup/route.ts` (Modify)
+- `app/api/auth/verify-email/route.ts` (Create)
+- `app/verify-email/page.tsx` (Create)
+- `lib/auth/users.ts` (Modify)
+
+**Test Requirements**
+- Signup; attempt escrow creation without verification; verify redirect to verification prompt.
+
+---
+
+### [Issue #184] Feature: Settings Page — Connected Wallet Display and Disconnect
+**Description**
+The settings page has no section showing the currently connected Stellar wallet. Users cannot see which wallet is linked to their account or disconnect it from within settings.
+
+**Requirements**
+- Add a "Connected Wallet" card showing truncated address, network badge, XLM balance.
+- "Disconnect Wallet" button calls `StellarContext.disconnect()`.
+- If no wallet connected, show "No wallet connected" with a link to `/connect`.
+
+**Acceptance Criteria**
+- Settings page shows the connected wallet address. Disconnecting returns the card to "not connected" state.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+
+**Test Requirements**
+- Render settings with connected wallet; verify address shows. Click disconnect; verify card changes.
+
+---
+
+### [Issue #185] Feature: Settings Page — Notification Preferences
+**Description**
+The settings page design includes a notifications section but it has no implementation. Users cannot configure whether they receive alerts for contribution deadlines, funded escrows, or refund availability.
+
+**Requirements**
+- Add notification toggle switches for: "Escrow deadline reminders", "Payment confirmed", "Refund available".
+- Store preferences in user record via `PATCH /api/user/notifications`.
+- Preferences should be read by the dashboard and escrow pages to conditionally show banners.
+
+**Acceptance Criteria**
+- Toggling a notification preference persists after page reload.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+- `app/api/user/notifications/route.ts` (Create)
+- `lib/auth/users.ts` (Modify — add notification prefs field)
+
+**Test Requirements**
+- Toggle a preference; reload settings page; verify toggle state is preserved.
+
+---
+
+### [Issue #186] Feature: Settings Page — Export Personal Data (GDPR)
+**Description**
+Users have no way to export their account data, which is required under GDPR Article 20 (data portability). The settings page should include a "Download My Data" feature.
+
+**Requirements**
+- "Download My Data" button calls `GET /api/user/export` and downloads a JSON file.
+- Exported data includes: email, display name, account creation date, notification preferences.
+- File named `payeasy-data-{email}-{date}.json`.
+
+**Acceptance Criteria**
+- Clicking "Download My Data" triggers a JSON file download with the user's data.
+
+**Files to Create/Modify**
+- `app/settings/page.tsx` (Modify)
+- `app/api/user/export/route.ts` (Create)
+
+**Test Requirements**
+- Call `GET /api/user/export` as an authenticated user; verify JSON response with correct fields.
+
+---
+
+## Stage 28: Testing Infrastructure (Issues 187–193)
+
+### [Issue #187] Testing: Set Up Vitest with React Testing Library
+**Description**
+The project has `.test.ts` files (`components/escrow/ContributeForm.test.ts`, `CreateEscrowForm.test.ts`, `lib/stellar/queries.test.ts`) but no testing framework is installed. Running `npm test` fails with "no test runner configured".
+
+**Requirements**
+- Install `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`.
+- Configure `vitest.config.ts` with jsdom environment and `@testing-library/jest-dom` setup.
+- Add `"test": "vitest"` to `package.json` scripts.
+- Write at least one passing smoke test to confirm the setup works.
+
+**Acceptance Criteria**
+- `npm test` runs without errors and shows passing tests.
+
+**Files to Create/Modify**
+- `vitest.config.ts` (Create)
+- `package.json` (Modify — add test script and devDependencies)
+- `tests/setup.ts` (Create)
+
+**Test Requirements**
+- `npm test` exits with code 0 and shows at least 1 passing test.
+
+---
+
+### [Issue #188] Testing: Unit Tests for JWT Auth Library
+**Description**
+`lib/auth/jwt.ts` has zero test coverage. The functions `signToken`, `verifyToken`, and the token refresh logic are critical security code that should be fully tested.
+
+**Requirements**
+- Test `signToken`: verify returned token is a valid JWT with correct payload.
+- Test `verifyToken`: valid token returns payload; expired token throws; tampered token throws.
+- Test `verifyToken` with wrong secret throws.
+- All tests use mocked time via `vi.useFakeTimers`.
+
+**Acceptance Criteria**
+- `npm test lib/auth/jwt` shows 100% function coverage.
+
+**Files to Create/Modify**
+- `lib/auth/jwt.test.ts` (Create)
+
+**Test Requirements**
+- 8 test cases covering happy path, expiry, tampered signature, and wrong secret.
+
+---
+
+### [Issue #189] Testing: Unit Tests for Stellar Address Validation
+**Description**
+`lib/stellar/validation.ts` (once implemented per Issue #176) needs comprehensive tests for both valid and invalid Stellar addresses and contract IDs.
+
+**Requirements**
+- Test 5 valid G... addresses pass `isValidStellarAddress`.
+- Test 5 invalid inputs (too short, wrong prefix, wrong checksum) fail.
+- Test valid and invalid Soroban contract IDs (`C...` prefix).
+
+**Acceptance Criteria**
+- All 15+ test cases pass.
+
+**Files to Create/Modify**
+- `lib/stellar/validation.test.ts` (Create)
+
+**Test Requirements**
+- 15 test cases; all pass; zero false positives or negatives.
+
+---
+
+### [Issue #190] Testing: Integration Tests for Auth API Routes
+**Description**
+`/api/auth/signup` and `/api/auth/login` have no automated tests. Changes to the auth logic could silently break login for all users.
+
+**Requirements**
+- Use `vitest` with Next.js route handler testing pattern.
+- Test signup: valid body creates user, duplicate email returns 409, missing fields return 400.
+- Test login: correct credentials return JWT cookie, wrong password returns 401, unknown email returns 401.
+
+**Acceptance Criteria**
+- `npm test api/auth` runs 6+ tests covering both routes, all passing.
+
+**Files to Create/Modify**
+- `app/api/auth/signup/route.test.ts` (Create)
+- `app/api/auth/login/route.test.ts` (Create)
+
+**Test Requirements**
+- 6+ test cases across both route files; all pass.
+
+---
+
+### [Issue #191] Testing: Component Tests for CreateEscrowForm
+**Description**
+`components/escrow/CreateEscrowForm.test.ts` exists but contains no test content. The multi-step form is the most complex component in the app and has no automated test coverage.
+
+**Requirements**
+- Test Step 1: validates required fields, shows errors on empty submit.
+- Test Step 2: adding a roommate with valid address shows them in the list; duplicate address shows toast.
+- Test Step 3: share percentages sum correctly; over-allocation highlights in red.
+- Test Step 4: review step shows submitted data correctly.
+
+**Acceptance Criteria**
+- 8+ tests covering all 4 steps of the create escrow form.
+
+**Files to Create/Modify**
+- `components/escrow/CreateEscrowForm.test.ts` (Modify — add actual tests)
+
+**Test Requirements**
+- 8+ tests; all pass with mocked `contractClient`.
+
+---
+
+### [Issue #192] Testing: E2E Test for Wallet Connect Flow
+**Description**
+The wallet connection flow (Freighter detect → connect → display address) is the critical onboarding path but has no end-to-end tests. A regression here blocks all blockchain functionality.
+
+**Requirements**
+- Install Playwright (`@playwright/test`).
+- Test: visit `/connect`, mock Freighter as not installed, verify install prompt renders.
+- Test: mock Freighter as installed but not connected, click Connect, mock approval, verify address displays.
+
+**Acceptance Criteria**
+- `npx playwright test connect` runs both tests successfully against `http://localhost:3000`.
+
+**Files to Create/Modify**
+- `e2e/connect.spec.ts` (Create)
+- `playwright.config.ts` (Create)
+- `package.json` (Modify — add e2e script)
+
+**Test Requirements**
+- 2 E2E tests; both pass with mocked Freighter extension.
+
+---
+
+### [Issue #193] Testing: Snapshot Tests for Landing Page Components
+**Description**
+The landing page has complex visual components (hero, features, how-it-works, stellar section) that could silently regress during refactors. Snapshot tests provide a safety net.
+
+**Requirements**
+- Create snapshot tests for: `PayEasyHero`, `Features`, `HowItWorks`, `Navbar`, `Footer`.
+- Use `@testing-library/react` with vitest snapshot support.
+- Snapshots committed to the repository.
+
+**Acceptance Criteria**
+- `npm test components/landing` runs 5 snapshot tests; all pass.
+
+**Files to Create/Modify**
+- `components/landing/__tests__/hero.test.tsx` (Create)
+- `components/landing/__tests__/features.test.tsx` (Create)
+- `components/landing/__tests__/navbar.test.tsx` (Create)
+- `components/landing/__tests__/footer.test.tsx` (Create)
+
+**Test Requirements**
+- 5 snapshot tests; all pass; snapshots committed.
+
+---
+
+## Stage 29: TypeScript Strict Mode & Code Quality (Issues 194–200)
+
+### [Issue #194] TypeScript: Enable Strict Mode and Fix All Resulting Errors
+**Description**
+`tsconfig.json` does not have `"strict": true`. This allows implicit `any` types, missing null checks, and other unsafe patterns that have already caused bugs (e.g., the prop mismatch in Issue #167). Enabling strict mode is necessary for long-term type safety.
+
+**Requirements**
+- Add `"strict": true` to `tsconfig.json`.
+- Fix all TypeScript errors that surface as a result (expected: 20–50 errors based on `any` usage and missing null checks).
+- Replace `any` types in `app/pay/[contractId]/page.tsx`, `app/dashboard/page.tsx`, and `components/escrow/ContributeForm.tsx` with specific interfaces.
+
+**Acceptance Criteria**
+- `npm run build` completes with zero TypeScript errors after enabling strict mode.
+
+**Files to Create/Modify**
+- `tsconfig.json` (Modify — add strict)
+- Multiple files (Modify — fix strict errors)
+
+**Test Requirements**
+- `npx tsc --noEmit` exits with code 0.
+
+---
+
+### [Issue #195] TypeScript: Define Shared Type Interfaces for Stellar Data
+**Description**
+`lib/stellar/queries.ts` returns `any[]` from multiple functions. Components consume these as `any`, making it impossible for TypeScript to catch prop mismatches or missing fields. Shared interfaces would eliminate this entire class of bugs.
+
+**Requirements**
+- Define and export from `lib/stellar/types.ts`:
+  - `EscrowContract { contractId, landlord, totalRent, deadline, token, status, roommates }`
+  - `RoommateState { address, expectedShare, paid, status }`
+  - `LandlordStats { totalEscrowed, activeEscrows, totalReleased }`
+  - `ContractBasicInfo { landlord, totalRent, deadline, token }`
+- Update all query functions to return these types instead of `any`.
+
+**Acceptance Criteria**
+- `lib/stellar/queries.ts` exports zero `any`-typed functions.
+
+**Files to Create/Modify**
+- `lib/stellar/types.ts` (Create)
+- `lib/stellar/queries.ts` (Modify — use defined types)
+
+**Test Requirements**
+- `npx tsc --noEmit`; zero implicit `any` errors in `lib/stellar/`.
+
+---
+
+### [Issue #196] TypeScript: Fix `catch (e: any)` Pattern Across Codebase
+**Description**
+`app/pay/[contractId]/page.tsx` line 24 and at least 3 other files use `catch (e: any)` which bypasses TypeScript's error narrowing. The correct pattern is `catch (e: unknown)` with `instanceof Error` checks.
+
+**Requirements**
+- Grep codebase for `catch (e: any)` and `catch (error: any)`.
+- Replace each with `catch (e: unknown)` and add proper `instanceof Error` narrowing.
+- Ensure error message extraction uses `e instanceof Error ? e.message : String(e)`.
+
+**Acceptance Criteria**
+- Zero `catch (e: any)` or `catch (error: any)` patterns remain in the codebase.
+
+**Files to Create/Modify**
+- `app/pay/[contractId]/page.tsx` (Modify)
+- All other files with `catch (e: any)` (Modify)
+
+**Test Requirements**
+- `grep -r "catch (e: any)"` and `grep -r "catch (error: any)"` return no results.
+
+---
+
+### [Issue #197] Code Quality: Remove All `setTimeout` Mock Delays from Production Code
+**Description**
+`components/escrow/ContributeForm.tsx` uses `setTimeout` to simulate transaction processing instead of real Soroban calls. When `USE_DEMO_MODE` is false, real transaction flow should be used. Shipping with mock delays misleads users into thinking transactions have completed.
+
+**Requirements**
+- Identify all `setTimeout` calls in escrow action files.
+- Replace mock delays with real Soroban transaction building and submission.
+- Keep `USE_DEMO_MODE` flag functional for local development only; it must not be active if `NEXT_PUBLIC_SOROBAN_RPC_URL` is set.
+
+**Acceptance Criteria**
+- With a real Soroban RPC URL configured, no `setTimeout` mock delays execute during contribution.
+
+**Files to Create/Modify**
+- `components/escrow/ContributeForm.tsx` (Modify — remove mock setTimeout)
+- `lib/stellar/actions/contribute.ts` (Modify — ensure real flow is used)
+
+**Test Requirements**
+- With `USE_DEMO_MODE=false`, verify no setTimeout fires during a mocked Soroban transaction.
+
+---
+
+### [Issue #198] Code Quality: Resolve Merge Conflict Artifacts in Codebase
+**Description**
+A merge conflict was introduced in `issues.md` (lines 611–3165) between `HEAD` and commit `8de1963`. The conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) were committed to the repository, causing the file to be unparseable by any tooling that reads it.
+
+**Requirements**
+- Resolve the conflict by keeping the HEAD version (stages 9–24 from the main branch).
+- Remove all conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) from the file.
+- Verify the resulting file has no duplicate issue numbers.
+
+**Acceptance Criteria**
+- `issues.md` parses cleanly with no merge conflict markers.
+- `grep -n "<<<<<<" issues.md` returns no results.
+
+**Files to Create/Modify**
+- `issues.md` (Modify — resolve conflict)
+
+**Test Requirements**
+- `grep -c "<<<<<<" issues.md` returns 0.
+
+---
+
+### [Issue #199] Code Quality: Enforce Consistent Error Handling Pattern via ESLint
+**Description**
+The codebase has a mix of error handling patterns: empty catch blocks, `catch (e: any)`, `console.error`, and silently swallowed errors. There is no ESLint rule enforcing a consistent approach, so new contributions continue adding inconsistent patterns.
+
+**Requirements**
+- Add ESLint rules to `.eslintrc.js`:
+  - `no-empty`: error on empty catch blocks.
+  - `@typescript-eslint/no-explicit-any`: warn on `any` type usage.
+  - Custom rule or `unicorn/no-useless-catch` to prevent re-throwing without modification.
+- Fix all violations surfaced by the new rules.
+
+**Acceptance Criteria**
+- `npm run lint` shows zero `no-empty` violations and zero `no-explicit-any` warnings.
+
+**Files to Create/Modify**
+- `.eslintrc.js` (Modify)
+- All files with ESLint violations (Modify)
+
+**Test Requirements**
+- `npm run lint` exits with code 0 after fixes.
+
+---
+
+### [Issue #200] Code Quality: Add Pre-Commit Hook for Type Check and Lint
+**Description**
+Developers can currently commit TypeScript errors and ESLint violations because there is no pre-commit validation. Adding a pre-commit hook ensures that type errors and lint failures are caught before they reach the repository.
+
+**Requirements**
+- Install `husky` and `lint-staged`.
+- Configure pre-commit hook to run `tsc --noEmit` and `eslint` on staged `.ts` and `.tsx` files.
+- Hook must complete in under 30 seconds on a cold run.
+- Document the setup in a brief comment in `package.json`.
+
+**Acceptance Criteria**
+- Committing a file with a TypeScript error is blocked by the pre-commit hook.
+
+**Files to Create/Modify**
+- `package.json` (Modify — add husky + lint-staged config)
+- `.husky/pre-commit` (Create)
+
+**Test Requirements**
+- Stage a file with a deliberate TypeScript error; verify `git commit` is rejected with a clear message.
