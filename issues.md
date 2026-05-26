@@ -3963,3 +3963,2119 @@ Developers can currently commit TypeScript errors and ESLint violations because 
 
 **Test Requirements**
 - Stage a file with a deliberate TypeScript error; verify `git commit` is rejected with a clear message.
+
+---
+
+## Stage 30: CI/CD & DevOps (Issues 201–210)
+
+### [Issue #201] CI: GitHub Actions Workflow for Build and Lint
+**Description**
+There is no CI pipeline. Pull requests are merged without automated build verification or lint checks, meaning broken builds reach the main branch undetected.
+
+**Requirements**
+- Create `.github/workflows/ci.yml` that runs on every push and PR to `main`.
+- Steps: `npm ci`, `npm run lint`, `npm run build`.
+- Cache `node_modules` using `actions/cache` keyed on `package-lock.json`.
+- Fail the workflow if any step exits with a non-zero code.
+
+**Acceptance Criteria**
+- Opening a PR with a lint error shows a failing CI check on GitHub.
+
+**Files to Create/Modify**
+- `.github/workflows/ci.yml` (Create)
+
+**Test Requirements**
+- Push a branch with a deliberate lint error; verify CI fails and reports the error.
+
+---
+
+### [Issue #202] CI: Automated Test Run in GitHub Actions
+**Description**
+The CI pipeline runs lint and build but not the test suite. Regressions in auth, validation, and component logic go undetected until manual testing.
+
+**Requirements**
+- Add a `test` job to `.github/workflows/ci.yml` running `npm test -- --run`.
+- Run tests in parallel with the lint job.
+- Upload test results as a GitHub Actions artifact.
+
+**Acceptance Criteria**
+- A failing unit test blocks a PR from being merged via branch protection rules.
+
+**Files to Create/Modify**
+- `.github/workflows/ci.yml` (Modify)
+
+**Test Requirements**
+- Break a unit test on a feature branch; verify CI test job fails.
+
+---
+
+### [Issue #203] CI: Branch Protection Rules Configuration
+**Description**
+The `main` branch has no protection rules. Anyone with write access can force-push or merge unreviewed code directly to main, bypassing CI checks.
+
+**Requirements**
+- Document in `CONTRIBUTING.md` the required branch protection settings: require 1 PR review, require CI checks, disallow direct pushes.
+- Apply rules via the GitHub repo settings.
+
+**Acceptance Criteria**
+- A direct push to `main` is rejected by GitHub's branch protection.
+
+**Files to Create/Modify**
+- `CONTRIBUTING.md` (Create)
+
+**Test Requirements**
+- Attempt `git push origin main` from a non-admin account; verify rejection.
+
+---
+
+### [Issue #204] CI: Automatic Dependency Updates with Dependabot
+**Description**
+No automated dependency update process exists. Security vulnerabilities in npm dependencies may go unpatched for months.
+
+**Requirements**
+- Create `.github/dependabot.yml` configuring weekly npm dependency updates.
+- Group minor and patch updates into a single PR per week.
+- Label dependabot PRs with `dependencies`.
+
+**Acceptance Criteria**
+- Dependabot opens a PR when a dependency has a new version available.
+
+**Files to Create/Modify**
+- `.github/dependabot.yml` (Create)
+
+**Test Requirements**
+- Verify Dependabot PRs appear in the GitHub repo within one week of setup.
+
+---
+
+### [Issue #205] CI: Vercel Preview Deployments
+**Description**
+There is no preview deployment system. Reviewers must run the project locally to verify UI changes, which slows down code review.
+
+**Requirements**
+- Connect the GitHub repo to a Vercel project.
+- Configure Vercel to deploy a unique preview URL for every PR.
+- Add the preview URL as a PR comment via the Vercel GitHub integration.
+
+**Acceptance Criteria**
+- Opening a PR automatically generates a Vercel preview URL posted as a PR comment.
+
+**Files to Create/Modify**
+- `vercel.json` (Create)
+- `.env.example` (Modify — document Vercel env var names)
+
+**Test Requirements**
+- Open a test PR; verify Vercel preview URL is posted as a comment.
+
+---
+
+### [Issue #206] CI: Bundle Size Budget Check
+**Description**
+There is no bundle size monitoring. A large import can bloat the JS bundle silently across PRs.
+
+**Requirements**
+- Add `size-limit` as a dev dependency.
+- Configure a budget: landing page first-load JS ≤ 150 kB, escrow page ≤ 200 kB.
+- Run the size check as a CI step; fail the build if budgets are exceeded.
+
+**Acceptance Criteria**
+- Importing an un-tree-shaken large library causes the CI size check to fail.
+
+**Files to Create/Modify**
+- `.size-limit.json` (Create)
+- `.github/workflows/ci.yml` (Modify)
+- `package.json` (Modify)
+
+**Test Requirements**
+- Add a large unused import; verify size check step fails.
+
+---
+
+### [Issue #207] DevOps: Docker Compose for Local Development
+**Description**
+New contributors must manually configure environment variables and install tools. A `docker-compose.yml` would standardise the local dev environment.
+
+**Requirements**
+- Create `docker-compose.yml` with a `next` service running the Next.js dev server.
+- Mount the project directory as a volume for hot reload.
+- Include a `redis` service for rate limiting with a named volume.
+
+**Acceptance Criteria**
+- `docker compose up` starts the app at `http://localhost:3000` with hot reload working.
+
+**Files to Create/Modify**
+- `docker-compose.yml` (Create)
+- `Dockerfile.dev` (Create)
+- `README.md` (Modify)
+
+**Test Requirements**
+- Run `docker compose up`; verify app is accessible and file changes trigger hot reload.
+
+---
+
+### [Issue #208] DevOps: Environment Variable Documentation
+**Description**
+`.env.example` is sparse and undocumented. New contributors do not know which variables are required vs optional.
+
+**Requirements**
+- Expand `.env.example` with every required and optional variable.
+- Add inline comments explaining each variable's purpose and allowed values.
+- Group variables by concern: Auth, Stellar, Redis, Feature Flags.
+
+**Acceptance Criteria**
+- A developer following `.env.example` can get the app running locally without external help.
+
+**Files to Create/Modify**
+- `.env.example` (Modify)
+- `scripts/check-env.ts` (Create)
+
+**Test Requirements**
+- Remove a required variable; run `check-env.ts`; verify clear error message.
+
+---
+
+### [Issue #209] DevOps: Production Dockerfile
+**Description**
+There is no production Docker image. The app cannot be deployed to any container-based hosting without a Dockerfile.
+
+**Requirements**
+- Create a multi-stage `Dockerfile`: builder stage installs deps and runs `npm run build`, runner stage copies `.next/standalone`.
+- Use `node:20-alpine` as the base image. Expose port 3000.
+- Add `.dockerignore` excluding `node_modules`, `.next`, `.env*`.
+
+**Acceptance Criteria**
+- `docker build -t payeasy .` succeeds and the resulting image runs the production build.
+
+**Files to Create/Modify**
+- `Dockerfile` (Create)
+- `.dockerignore` (Create)
+
+**Test Requirements**
+- Build image; run container; verify `http://localhost:3000` serves the production app.
+
+---
+
+### [Issue #210] DevOps: Health Check Endpoint
+**Description**
+There is no `/api/health` endpoint. Load balancers and uptime monitors cannot verify the app is running correctly.
+
+**Requirements**
+- Create `app/api/health/route.ts` returning `{ status, version, uptime, timestamp }`.
+- Include a check that the Stellar Horizon endpoint is reachable.
+- Return HTTP 200 if healthy, HTTP 503 if Horizon is unreachable.
+
+**Acceptance Criteria**
+- `GET /api/health` returns `{ status: "ok" }` with HTTP 200 when the app is running normally.
+
+**Files to Create/Modify**
+- `app/api/health/route.ts` (Create)
+
+**Test Requirements**
+- Mock Horizon as unreachable; verify `/api/health` returns HTTP 503.
+
+---
+
+## Stage 31: Documentation (Issues 211–218)
+
+### [Issue #211] Docs: README Overhaul
+**Description**
+The current `README.md` is sparse. First-time contributors cannot onboard without significant investigation.
+
+**Requirements**
+- Sections: Project Overview, Tech Stack, Quick Start (5 steps), Environment Setup, Running Tests, Deployment, Contributing.
+- Include a Mermaid architecture diagram.
+- Add badges: CI status, license, Vercel deployment status.
+
+**Acceptance Criteria**
+- A developer can clone the repo and run it locally by following the README alone.
+
+**Files to Create/Modify**
+- `README.md` (Modify — complete overhaul)
+
+**Test Requirements**
+- New contributor follows README from fresh clone; verify they reach a running app.
+
+---
+
+### [Issue #212] Docs: CLAUDE.md Codebase Guide
+**Description**
+There is no `CLAUDE.md` documenting the codebase for AI-assisted development.
+
+**Requirements**
+- Document: project purpose, directory structure, key architectural decisions, data flow, environment variables, coding conventions, known gotchas.
+- Explain the dual-auth model (email + Stellar wallet).
+- Document mock vs real Soroban modes.
+
+**Acceptance Criteria**
+- `CLAUDE.md` exists at the project root and accurately describes the architecture.
+
+**Files to Create/Modify**
+- `CLAUDE.md` (Create)
+
+**Test Requirements**
+- Review accuracy of all file paths and architectural descriptions against the actual codebase.
+
+---
+
+### [Issue #213] Docs: Soroban Contract API Reference
+**Description**
+The Soroban smart contract has no documentation. Contributors implementing the frontend have no reference for function signatures and error codes.
+
+**Requirements**
+- Create `docs/contract-api.md` documenting all public contract functions: `initialize`, `add_roommate`, `contribute`, `release`, `claim_refund`.
+- For each: signature, parameters, return type, preconditions, emitted events, error codes.
+
+**Acceptance Criteria**
+- A frontend developer can implement a Soroban call from the docs alone.
+
+**Files to Create/Modify**
+- `docs/contract-api.md` (Create)
+
+**Test Requirements**
+- Cross-reference every documented function against the actual contract source; zero discrepancies.
+
+---
+
+### [Issue #214] Docs: Authentication Flow Diagram
+**Description**
+The dual-auth system (email JWT + Freighter wallet) confuses contributors. A clear diagram is needed.
+
+**Requirements**
+- Create `docs/auth-flow.md` with Mermaid sequence diagrams covering both auth flows and how they interact.
+
+**Acceptance Criteria**
+- A new contributor understands the full auth flow from the diagram without reading code.
+
+**Files to Create/Modify**
+- `docs/auth-flow.md` (Create)
+
+**Test Requirements**
+- Technical review by someone unfamiliar with the codebase; they can answer auth questions from the doc alone.
+
+---
+
+### [Issue #215] Docs: Contribution Guide (CONTRIBUTING.md)
+**Description**
+There is no contribution guide. Open-source contributors do not know how to fork, set up the project, or follow conventions.
+
+**Requirements**
+- Sections: How to Contribute, Local Setup, Commit Message Format, PR Checklist, Issue Labels, Review Process.
+- Document branch naming convention: `feat/`, `fix/`, `docs/`, `test/`.
+
+**Acceptance Criteria**
+- A first-time contributor can open a correctly formatted PR by following CONTRIBUTING.md alone.
+
+**Files to Create/Modify**
+- `CONTRIBUTING.md` (Modify — expand)
+
+**Test Requirements**
+- First-time contributor follows the guide; their PR matches all checklist items.
+
+---
+
+### [Issue #216] Docs: ADR for File-Based Storage Decision
+**Description**
+Using `data/users.json` for user storage is an unusual choice that will confuse contributors. An ADR documents why it was chosen.
+
+**Requirements**
+- Create `docs/adr/001-file-storage.md` following the ADR template: Status, Context, Decision, Consequences.
+
+**Acceptance Criteria**
+- ADR accurately reflects the trade-offs of the file-based storage decision.
+
+**Files to Create/Modify**
+- `docs/adr/001-file-storage.md` (Create)
+
+**Test Requirements**
+- N/A — documentation review only.
+
+---
+
+### [Issue #217] Docs: ADR for Dual Authentication System
+**Description**
+The dual-auth decision (email JWT + Stellar wallet) needs an ADR so contributors don't remove one system thinking it's redundant.
+
+**Requirements**
+- Create `docs/adr/002-dual-auth.md` documenting why both auth systems coexist and the migration path.
+
+**Acceptance Criteria**
+- ADR clearly explains why both auth systems must coexist.
+
+**Files to Create/Modify**
+- `docs/adr/002-dual-auth.md` (Create)
+
+**Test Requirements**
+- N/A — documentation review only.
+
+---
+
+### [Issue #218] Docs: JSDoc Comments for All Public Library Functions
+**Description**
+`lib/stellar/` functions have no JSDoc comments. IDE autocomplete shows no parameter or return type information.
+
+**Requirements**
+- Add JSDoc to all exported functions in `lib/stellar/queries.ts`, `lib/stellar/wallet.ts`, `lib/stellar/token.ts`, `lib/stellar/history.ts`, `lib/auth/jwt.ts`.
+- Each comment must include `@param`, `@returns`, `@throws`, and a description.
+
+**Acceptance Criteria**
+- Hovering a function name in VS Code shows a populated tooltip with parameters and return type.
+
+**Files to Create/Modify**
+- `lib/stellar/queries.ts` (Modify)
+- `lib/stellar/wallet.ts` (Modify)
+- `lib/stellar/token.ts` (Modify)
+- `lib/stellar/history.ts` (Modify)
+- `lib/auth/jwt.ts` (Modify)
+
+**Test Requirements**
+- `tsc --declaration --emitDeclarationOnly`; verify `.d.ts` files contain JSDoc.
+
+---
+
+## Stage 32: Monitoring & Analytics (Issues 219–225)
+
+### [Issue #219] Monitoring: Error Tracking with Sentry
+**Description**
+There is no error tracking. Uncaught runtime errors in production are invisible to the development team.
+
+**Requirements**
+- Install `@sentry/nextjs`. Configure `SENTRY_DSN` environment variable.
+- Capture unhandled exceptions, rejected promises, and React component errors.
+- Filter out expected errors (user-cancelled Freighter requests).
+
+**Acceptance Criteria**
+- An unhandled exception in production appears in the Sentry dashboard within 30 seconds.
+
+**Files to Create/Modify**
+- `sentry.client.config.ts` (Create)
+- `sentry.server.config.ts` (Create)
+- `next.config.js` (Modify)
+- `.env.example` (Modify)
+
+**Test Requirements**
+- Trigger a deliberate throw in a component; verify it appears in Sentry.
+
+---
+
+### [Issue #220] Monitoring: Web Vitals Reporting
+**Description**
+Core Web Vitals (LCP, FID, CLS) are not tracked, so performance regressions after code changes go unnoticed.
+
+**Requirements**
+- Use Next.js `reportWebVitals` in `app/layout.tsx`.
+- Send metrics to `POST /api/vitals`. In production, forward to Vercel Analytics.
+
+**Acceptance Criteria**
+- After page load, a request to `/api/vitals` appears in the Network panel with LCP, FID, and CLS values.
+
+**Files to Create/Modify**
+- `app/layout.tsx` (Modify)
+- `app/api/vitals/route.ts` (Create)
+
+**Test Requirements**
+- Load the landing page; verify vitals POST request appears in Network tab.
+
+---
+
+### [Issue #221] Monitoring: Stellar Network Status Banner
+**Description**
+When Stellar has an outage, users get confusing errors with no context.
+
+**Requirements**
+- Poll `https://status.stellar.org/api/v2/status.json` every 5 minutes.
+- If status is not "All Systems Operational", show a banner warning users.
+
+**Acceptance Criteria**
+- When Stellar status API reports an incident, the app shows the warning banner within 5 minutes.
+
+**Files to Create/Modify**
+- `hooks/useStellarStatus.ts` (Create)
+- `components/ui/stellar-status-banner.tsx` (Create)
+- `components/ui/app-shell.tsx` (Modify)
+
+**Test Requirements**
+- Mock status API returning an incident; verify banner appears.
+
+---
+
+### [Issue #222] Monitoring: Privacy-First Page Analytics
+**Description**
+There is no analytics. The team cannot see which pages are most visited or where users drop off.
+
+**Requirements**
+- Integrate Plausible or Umami (no cookies, GDPR-compliant).
+- Track: page views, escrow creation starts, wallet connections, contribution completions.
+- Respect `Do Not Track` browser header.
+
+**Acceptance Criteria**
+- Visiting the landing page generates a page view event in the analytics dashboard.
+
+**Files to Create/Modify**
+- `components/ui/analytics.tsx` (Create)
+- `app/layout.tsx` (Modify)
+- `.env.example` (Modify)
+
+**Test Requirements**
+- Load the page; verify analytics event fires in the Network tab.
+
+---
+
+### [Issue #223] Monitoring: Uptime Monitoring Configuration
+**Description**
+There is no uptime monitoring. The app could go down for hours without the team being alerted.
+
+**Requirements**
+- Document setup for a free uptime monitor (UptimeRobot) in `docs/ops/uptime.md`.
+- Configure the monitor to check `/api/health` every 5 minutes.
+
+**Acceptance Criteria**
+- A simulated downtime triggers an alert notification within 10 minutes.
+
+**Files to Create/Modify**
+- `docs/ops/uptime.md` (Create)
+
+**Test Requirements**
+- Simulate 6-minute downtime; verify alert notification received.
+
+---
+
+### [Issue #224] Monitoring: Transaction Failure Rate Metrics
+**Description**
+There is no visibility into how often escrow transactions fail.
+
+**Requirements**
+- Instrument contribute and release actions to emit custom events on success and failure.
+- Create `GET /api/metrics` endpoint returning `{ total_transactions, failed_transactions, failure_rate_percent }`.
+
+**Acceptance Criteria**
+- `GET /api/metrics` returns a JSON object with transaction failure statistics.
+
+**Files to Create/Modify**
+- `lib/metrics.ts` (Create)
+- `app/api/metrics/route.ts` (Create)
+- `lib/stellar/actions/contribute.ts` (Modify)
+- `lib/stellar/actions/release.ts` (Modify)
+
+**Test Requirements**
+- Simulate 3 failed and 7 successful transactions; verify `/api/metrics` reports 30% failure rate.
+
+---
+
+### [Issue #225] Monitoring: Structured JSON Logging
+**Description**
+The app has no structured logging. `console.error` calls produce unformatted strings hard to query in log aggregators.
+
+**Requirements**
+- Extend `lib/logger.ts` to output JSON-formatted logs: `{ level, message, timestamp, context }`.
+- In production: `warn` level and above only. In development: pretty-printed.
+- Add request ID middleware to correlate logs.
+
+**Acceptance Criteria**
+- In production mode, an error logs a valid JSON object.
+
+**Files to Create/Modify**
+- `lib/logger.ts` (Modify)
+- `middleware.ts` (Modify)
+
+**Test Requirements**
+- Set `NODE_ENV=production`; trigger an error; verify output is valid JSON.
+
+---
+
+## Stage 33: Advanced Escrow Features (Issues 226–235)
+
+### [Issue #226] Escrow: Multi-Signature Approval Visualization
+**Description**
+The multi-sig release flow exists in the contract but is never visualized in the UI. Users cannot see who has approved and who hasn't.
+
+**Requirements**
+- Add an "Approvals" section to the escrow dashboard.
+- Display a list of required signers with green (approved) or gray (pending) indicators.
+- Show "X of Y approvals received" as a progress label.
+
+**Acceptance Criteria**
+- When 2 of 3 required approvers have signed, the dashboard shows "2 of 3 approvals received".
+
+**Files to Create/Modify**
+- `components/escrow/ApprovalStatus.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+- `lib/stellar/queries.ts` (Modify — add getApprovalStatus)
+
+**Test Requirements**
+- Mock 2 of 3 approvals; verify correct count and indicators render.
+
+---
+
+### [Issue #227] Escrow: Contract Status Timeline
+**Description**
+Users cannot see the lifecycle history of an escrow contract.
+
+**Requirements**
+- Create a vertical timeline component showing key contract events with timestamps.
+- Events: Created, Roommate Added, First Contribution, Fully Funded, Released/Expired.
+
+**Acceptance Criteria**
+- The escrow dashboard shows a timeline of all past events in chronological order.
+
+**Files to Create/Modify**
+- `components/escrow/ContractTimeline.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+- `lib/stellar/history.ts` (Modify — add filterByContract)
+
+**Test Requirements**
+- Mock 4 historical events; verify all 4 appear in the timeline in correct order.
+
+---
+
+### [Issue #228] Escrow: Deadline Extension Request Flow
+**Description**
+There is no mechanism for a landlord to extend the payment deadline.
+
+**Requirements**
+- Add a "Request Extension" button visible only to the landlord.
+- Opens a modal to set a new deadline (must be after current deadline).
+- Notify all roommates via an in-app banner when deadline is extended.
+
+**Acceptance Criteria**
+- Landlord can extend the deadline; the new deadline reflects immediately on all dashboards.
+
+**Files to Create/Modify**
+- `components/escrow/ExtendDeadlineModal.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+- `lib/stellar/actions/extendDeadline.ts` (Create)
+
+**Test Requirements**
+- Mock extension transaction; verify new deadline renders on dashboard.
+
+---
+
+### [Issue #229] Escrow: Refund Preview Before Claiming
+**Description**
+There is no visualization of how much each roommate will receive back before they initiate the refund claim.
+
+**Requirements**
+- Before the "Claim Refund" button, show: "You will receive back X XLM (your full contribution)".
+- Clarify that gas fees will be deducted.
+
+**Acceptance Criteria**
+- An eligible roommate sees their exact refund amount before clicking "Claim Refund".
+
+**Files to Create/Modify**
+- `components/escrow/RefundPreview.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock contract state with partial contributions; verify correct refund amounts display.
+
+---
+
+### [Issue #230] Escrow: Share Link with QR Code for Roommates
+**Description**
+Landlords have no easy way to send the payment link to roommates.
+
+**Requirements**
+- "Share with Roommates" button on the escrow dashboard (landlord only).
+- Generates a deep link to `/pay/{contractId}`.
+- Opens a share modal with: copy link, QR code, native share API.
+
+**Acceptance Criteria**
+- Landlord clicks "Share" and a QR code and copyable link appear in the modal.
+
+**Files to Create/Modify**
+- `components/escrow/ShareEscrowModal.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Render modal; verify QR code renders and copy button works.
+
+---
+
+### [Issue #231] Escrow: Archive Completed Escrows
+**Description**
+Completed or expired escrows remain in the active list forever. Users have no way to archive old escrows.
+
+**Requirements**
+- Add an "Archive" button on completed/expired escrow cards.
+- Archived escrows stored in `localStorage`. Hidden from default view.
+- Add a "Show archived" toggle.
+
+**Acceptance Criteria**
+- Archiving an escrow removes it from the list. Toggling "Show archived" brings it back.
+
+**Files to Create/Modify**
+- `app/escrows/page.tsx` (Modify)
+- `hooks/useArchivedEscrows.ts` (Create)
+
+**Test Requirements**
+- Archive an escrow; verify it disappears. Toggle show archived; verify it reappears.
+
+---
+
+### [Issue #232] Escrow: Contribution Receipt Download
+**Description**
+Roommates have no way to prove they made a payment.
+
+**Requirements**
+- After a successful contribution, show a "Download Receipt" button.
+- Receipt includes: date, amount, escrow ID, transaction hash, payer address, landlord address.
+- Generates a styled HTML page that can be printed or saved as PDF.
+
+**Acceptance Criteria**
+- After contributing, the user can download a receipt containing their transaction hash.
+
+**Files to Create/Modify**
+- `components/escrow/ContributionReceipt.tsx` (Create)
+- `app/escrow/success/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock a successful contribution; verify receipt renders with correct transaction data.
+
+---
+
+### [Issue #233] Escrow: Bulk Creation via CSV Upload
+**Description**
+Landlords with multiple properties must create each escrow individually. There is no batch creation flow.
+
+**Requirements**
+- Add a "Create Multiple Escrows" option accepting a CSV upload.
+- CSV columns: `property_name`, `total_rent`, `deadline`, `token`, `roommate_addresses`.
+- Parse the CSV, validate each row, show a preview table before submission.
+
+**Acceptance Criteria**
+- Uploading a valid 3-row CSV creates 3 escrow contracts sequentially.
+
+**Files to Create/Modify**
+- `app/escrow/create-bulk/page.tsx` (Create)
+- `components/escrow/BulkEscrowForm.tsx` (Create)
+- `lib/utils/csv-parser.ts` (Create)
+
+**Test Requirements**
+- Upload a 3-row CSV; verify 3 separate contract deployments are initiated.
+
+---
+
+### [Issue #234] Escrow: Escrow Templates for Recurring Setups
+**Description**
+Landlords who create the same escrow setup monthly must re-enter all details every time.
+
+**Requirements**
+- After successful escrow creation, offer "Save as Template".
+- Template stores: roommate count, share allocations, token, relative deadline.
+- Stored in `localStorage`. On create page, offer "Use template" to pre-fill the form.
+
+**Acceptance Criteria**
+- A saved template pre-fills all form fields when selected.
+
+**Files to Create/Modify**
+- `hooks/useEscrowTemplates.ts` (Create)
+- `components/escrow/CreateEscrowForm.tsx` (Modify)
+- `app/escrow/success/page.tsx` (Modify)
+
+**Test Requirements**
+- Save a template; select it on create form; verify all fields are pre-populated.
+
+---
+
+### [Issue #235] Escrow: Dispute Flag Feature
+**Description**
+There is no mechanism for roommates to flag a dispute when the landlord refuses to release after full payment.
+
+**Requirements**
+- Add a "Flag Dispute" button visible to roommates when escrow is fully funded but unreleased past deadline.
+- Stores a dispute record (escrow ID, reporter, reason, timestamp).
+- Shows a "Dispute Pending" badge on the dashboard.
+
+**Acceptance Criteria**
+- A roommate can flag a dispute; the escrow shows a "Dispute Pending" badge.
+
+**Files to Create/Modify**
+- `components/escrow/DisputeFlag.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+- `app/api/disputes/route.ts` (Create)
+
+**Test Requirements**
+- Flag a dispute; verify badge appears and dispute is stored.
+
+---
+
+## Stage 34: Landlord Features (Issues 236–242)
+
+### [Issue #236] Landlord: Portfolio Overview with Aggregated Stats
+**Description**
+The landlord dashboard shows individual escrow cards but no portfolio-level summary.
+
+**Requirements**
+- Add a sticky summary header: total active escrows, total XLM in escrow, total released, soonest deadline.
+- Numbers animate using `AnimatedNumber` component.
+
+**Acceptance Criteria**
+- Dashboard summary header shows correct aggregated totals for all landlord escrows.
+
+**Files to Create/Modify**
+- `components/dashboard/PortfolioSummary.tsx` (Create)
+- `app/dashboard/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock 3 escrows with different states; verify correct totals in summary.
+
+---
+
+### [Issue #237] Landlord: Property Labels for Escrows
+**Description**
+Escrow contracts are identified only by contract ID. Landlords cannot distinguish which escrow belongs to which property.
+
+**Requirements**
+- Allow landlords to add a human-readable label to any escrow.
+- Labels stored in `localStorage`. Displayed in escrow cards.
+- Labels editable inline.
+
+**Acceptance Criteria**
+- A labelled escrow shows the custom name instead of the raw contract ID.
+
+**Files to Create/Modify**
+- `hooks/useEscrowLabels.ts` (Create)
+- `components/escrow/EscrowLabel.tsx` (Create)
+- `app/escrows/page.tsx` (Modify)
+
+**Test Requirements**
+- Add a label; verify it replaces the contract ID in the UI.
+
+---
+
+### [Issue #238] Landlord: Deadline Reminder Banner
+**Description**
+Landlords are not reminded when an escrow deadline is approaching.
+
+**Requirements**
+- On dashboard load, check all active escrows for deadlines within 72 hours.
+- Show a dismissible amber banner for each approaching deadline.
+
+**Acceptance Criteria**
+- An escrow deadline 48 hours away shows a warning banner on the dashboard.
+
+**Files to Create/Modify**
+- `components/dashboard/DeadlineBanners.tsx` (Create)
+- `app/dashboard/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock an escrow with a deadline 24 hours out; verify banner appears.
+
+---
+
+### [Issue #239] Landlord: Payment History and Past Payments Report
+**Description**
+There is no record of past released escrows, making it impossible to track payment history per tenant.
+
+**Requirements**
+- Add a "Payment History" tab to the landlord dashboard.
+- Table: Property Label, Total Amount, Status, Release Date, Transaction Hash.
+- Exportable as CSV.
+
+**Acceptance Criteria**
+- "Payment History" tab shows past released escrows with correct amounts and dates.
+
+**Files to Create/Modify**
+- `components/dashboard/PaymentHistoryTab.tsx` (Create)
+- `app/dashboard/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock 2 historical escrows; verify both appear with correct data.
+
+---
+
+### [Issue #240] Landlord: Early Release Before Full Funding
+**Description**
+A landlord may wish to accept partial payment and release the escrow before it is fully funded.
+
+**Requirements**
+- Add "Early Release" option for landlords when at least 50% is funded.
+- Show confirmation modal explaining the release amount.
+
+**Acceptance Criteria**
+- A landlord can release a 75%-funded escrow early from the dashboard.
+
+**Files to Create/Modify**
+- `components/escrow/EarlyReleaseModal.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock 75% funded escrow; verify early release modal appears and release proceeds.
+
+---
+
+### [Issue #241] Landlord: Roommate Payment Nudge
+**Description**
+Landlords have no way to remind roommates who haven't paid yet.
+
+**Requirements**
+- Add a "Nudge" button next to each unpaid roommate.
+- Nudging generates a shareable reminder link to `/pay/{contractId}`.
+- Show toast: "Reminder link copied to clipboard."
+
+**Acceptance Criteria**
+- Clicking "Nudge" copies a payment reminder link for the specific roommate.
+
+**Files to Create/Modify**
+- `components/escrow/RoommateTable.tsx` (Modify)
+- `app/pay/[contractId]/page.tsx` (Modify — support pre-filled address param)
+
+**Test Requirements**
+- Click Nudge; verify copied link includes contractId and roommate address.
+
+---
+
+### [Issue #242] Landlord: Tax Year Summary Export
+**Description**
+Landlords need to report rental income for tax purposes. There is no year summary of received payments.
+
+**Requirements**
+- Add a "Tax Summary" button in the dashboard header.
+- Date range picker defaulting to current tax year.
+- Generates a printable report with totals and transaction hashes.
+- Amounts shown in XLM and estimated USD via CoinGecko price API.
+
+**Acceptance Criteria**
+- "Tax Summary" generates a printable report with correct totals for the selected period.
+
+**Files to Create/Modify**
+- `app/dashboard/tax-summary/page.tsx` (Create)
+- `lib/utils/price-api.ts` (Create)
+
+**Test Requirements**
+- Mock 3 payment transactions; verify correct XLM and USD totals.
+
+---
+
+## Stage 35: Roommate UX (Issues 243–249)
+
+### [Issue #243] Roommate: Landlord vs Tenant View on Escrows Page
+**Description**
+The `/escrows` page shows all escrows with no distinction between landlord and roommate roles.
+
+**Requirements**
+- Split into two tabs: "As Landlord" and "As Roommate".
+- "As Roommate" cards show: expected share, amount paid, remaining, deadline.
+
+**Acceptance Criteria**
+- A roommate user sees their escrows under "As Roommate" with personal payment progress.
+
+**Files to Create/Modify**
+- `app/escrows/page.tsx` (Modify)
+- `components/escrow/RoommateEscrowCard.tsx` (Create)
+
+**Test Requirements**
+- Mock wallet appearing as roommate in 2 escrows; verify both appear in "As Roommate" tab.
+
+---
+
+### [Issue #244] Roommate: Payment Deadline Countdown on Pay Page
+**Description**
+The `/pay/{contractId}` page shows the contribution form but not the payment deadline.
+
+**Requirements**
+- Add a deadline countdown above the form.
+- Under 24 hours: red with warning icon. Deadline passed: hide form, show "Refund available".
+
+**Acceptance Criteria**
+- A roommate visiting `/pay/...` can see the payment deadline before contributing.
+
+**Files to Create/Modify**
+- `app/pay/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock deadline 1 hour away; verify red warning. Mock passed deadline; verify form hidden.
+
+---
+
+### [Issue #245] Roommate: Payment Confirmation Email
+**Description**
+After a successful contribution, roommates receive no confirmation email.
+
+**Requirements**
+- After a successful contribution, call `POST /api/notifications/payment-confirmed`.
+- Send email with: amount, escrow ID, transaction hash, date, link to dashboard.
+- In development, log email content to console.
+
+**Acceptance Criteria**
+- After a successful contribution, the user's registered email receives a payment confirmation.
+
+**Files to Create/Modify**
+- `app/api/notifications/payment-confirmed/route.ts` (Create)
+- `lib/email/templates/payment-confirmed.ts` (Create)
+- `components/escrow/ContributeForm.tsx` (Modify)
+
+**Test Requirements**
+- Complete a mocked contribution; verify email template generated with correct data.
+
+---
+
+### [Issue #246] Roommate: View Other Roommates' Payment Status
+**Description**
+Roommates can only see their own payment progress; they cannot see if roommates have paid.
+
+**Requirements**
+- Show a simplified roommate table to all users (not just landlords).
+- For privacy, truncate other roommates' addresses. Show status badges only, not exact amounts.
+- Own row shows full amount.
+
+**Acceptance Criteria**
+- A roommate sees anonymised payment status for all other roommates.
+
+**Files to Create/Modify**
+- `components/escrow/RoommateStatusPublic.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Render with 3 roommates; verify own row shows full amount, others show only status badge.
+
+---
+
+### [Issue #247] Roommate: Partial Instalment Payments
+**Description**
+Roommates must pay their full share in one transaction. There is no UI support for partial payments.
+
+**Requirements**
+- Allow the `ContributeForm` amount field to accept values below `expectedShare`.
+- Show "Paying X of Y remaining" when partial amount is entered.
+- After submission, update "Paid" amount and show "X more needed".
+
+**Acceptance Criteria**
+- A roommate can contribute half their share and see the remaining balance update correctly.
+
+**Files to Create/Modify**
+- `components/escrow/ContributeForm.tsx` (Modify)
+
+**Test Requirements**
+- Submit 50% of expected share; verify remaining balance shows 50% outstanding.
+
+---
+
+### [Issue #248] Roommate: Payment History per Escrow
+**Description**
+A roommate can see their current `paid` balance but not the history of individual payments that make it up.
+
+**Requirements**
+- Add a "My Payment History" expandable section on the escrow dashboard.
+- List each contribution transaction: date, amount, transaction hash (linked to Stellar Expert).
+
+**Acceptance Criteria**
+- A roommate who made 3 partial payments sees all 3 listed with correct dates and amounts.
+
+**Files to Create/Modify**
+- `components/escrow/MyPaymentHistory.tsx` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock 3 contribution transactions; verify all 3 appear in the history section.
+
+---
+
+### [Issue #249] Roommate: Web Push Notification for Deadline
+**Description**
+Roommates receive no proactive reminders that a payment deadline is approaching.
+
+**Requirements**
+- Implement Web Push Notifications using VAPID keys.
+- Prompt for notification permission on first escrow join.
+- Send notification 72 hours before any escrow deadline with a deep link to `/pay/{contractId}`.
+
+**Acceptance Criteria**
+- A user with notifications enabled receives a push notification 72 hours before a deadline.
+
+**Files to Create/Modify**
+- `app/api/push/subscribe/route.ts` (Create)
+- `app/api/push/send/route.ts` (Create)
+- `lib/push.ts` (Create)
+- `public/sw.js` (Create)
+
+**Test Requirements**
+- Subscribe to push; trigger test notification; verify it appears.
+
+---
+
+## Stage 36: Mobile & PWA (Issues 250–256)
+
+### [Issue #250] PWA: Web App Manifest
+**Description**
+The app has no `manifest.json` so it cannot be installed as a PWA.
+
+**Requirements**
+- Create `public/manifest.json` with: name, short_name, theme_color, display: "standalone", icons (192×192 and 512×512).
+- Add `<link rel="manifest">` to `app/layout.tsx`.
+
+**Acceptance Criteria**
+- Chrome on Android shows "Add to Home Screen" prompt.
+
+**Files to Create/Modify**
+- `public/manifest.json` (Create)
+- `public/icons/icon-192.png` (Create)
+- `public/icons/icon-512.png` (Create)
+- `app/layout.tsx` (Modify)
+
+**Test Requirements**
+- Chrome DevTools > Application > Manifest; verify all fields populated.
+
+---
+
+### [Issue #251] PWA: Service Worker for Offline Support
+**Description**
+On poor mobile connections, the app shows a blank screen instead of a graceful offline state.
+
+**Requirements**
+- Register a service worker caching: landing page, static assets, fonts.
+- Offline fallback page: "You're offline — blockchain features require a connection."
+- Show "Update available" banner when a new version is deployed.
+
+**Acceptance Criteria**
+- Disabling network in DevTools shows the offline fallback page.
+
+**Files to Create/Modify**
+- `next.config.js` (Modify — add next-pwa)
+- `public/offline.html` (Create)
+- `package.json` (Modify)
+
+**Test Requirements**
+- Disable network; navigate to `/connect`; verify offline page renders.
+
+---
+
+### [Issue #252] Mobile: Swipe Gestures on Escrow Cards
+**Description**
+On mobile, escrow cards are tap-only. Users cannot swipe to reveal quick actions.
+
+**Requirements**
+- Implement swipe-left to reveal "Archive" and "Share" action buttons using `framer-motion`.
+- Swipe threshold: 80px to reveal, 200px to trigger archive directly.
+
+**Acceptance Criteria**
+- Swiping left on an escrow card on mobile reveals Archive and Share buttons.
+
+**Files to Create/Modify**
+- `components/escrow/SwipeableEscrowCard.tsx` (Create)
+- `app/escrows/page.tsx` (Modify)
+
+**Test Requirements**
+- Simulate touch swipe; verify action buttons reveal at 80px threshold.
+
+---
+
+### [Issue #253] Mobile: Native Share for Deep Links
+**Description**
+On mobile, `navigator.share` is more appropriate than clipboard copy for sharing payment links.
+
+**Requirements**
+- On mobile (detect via `navigator.share`), replace "Copy Link" with "Share".
+- Fall back to clipboard copy if `navigator.share` is not available.
+
+**Acceptance Criteria**
+- On Android, tapping "Share" opens the native share sheet.
+
+**Files to Create/Modify**
+- `components/escrow/ShareEscrowModal.tsx` (Modify)
+
+**Test Requirements**
+- Mock `navigator.share`; verify it is called with correct title and URL.
+
+---
+
+### [Issue #254] Mobile: iOS-Friendly Date Picker
+**Description**
+The deadline date picker renders poorly on iOS Safari.
+
+**Requirements**
+- Detect iOS via user agent.
+- On iOS, use a bottom-sheet date picker instead of the default native input.
+
+**Acceptance Criteria**
+- On iOS Safari, the deadline field opens a bottom-sheet date picker.
+
+**Files to Create/Modify**
+- `components/ui/date-input.tsx` (Modify)
+
+**Test Requirements**
+- Open the form on iOS Safari; verify the bottom-sheet date picker appears.
+
+---
+
+### [Issue #255] Mobile: Biometric Authentication
+**Description**
+Mobile users must enter email and password every time their session expires. WebAuthn supports biometric re-authentication.
+
+**Requirements**
+- After initial login, offer "Enable Face ID / Fingerprint" on supported devices.
+- Use WebAuthn API to register and authenticate credentials.
+
+**Acceptance Criteria**
+- On a Face ID-capable device, a returning user can log in with biometrics.
+
+**Files to Create/Modify**
+- `lib/auth/webauthn.ts` (Create)
+- `app/api/auth/webauthn/register/route.ts` (Create)
+- `app/api/auth/webauthn/authenticate/route.ts` (Create)
+- `app/login/page.tsx` (Modify)
+
+**Test Requirements**
+- Register a WebAuthn credential; call authenticate endpoint; verify success.
+
+---
+
+### [Issue #256] Mobile: Bottom Navigation Bar
+**Description**
+On mobile, the top hamburger menu is hard to reach with one hand.
+
+**Requirements**
+- On screens below `md` breakpoint, render a fixed bottom navigation bar.
+- Nav items: Home, Escrows, Wallet, History, Settings. Active item highlighted.
+- Smart hide: hide on scroll down, show on scroll up.
+
+**Acceptance Criteria**
+- On a 375px viewport, a bottom nav bar with 5 items is visible and functional.
+
+**Files to Create/Modify**
+- `components/ui/bottom-nav.tsx` (Create)
+- `app/layout.tsx` (Modify)
+- `hooks/useScrollDirection.ts` (Create)
+
+**Test Requirements**
+- Render at 375px; verify bottom nav shows with correct items and active state.
+
+---
+
+## Stage 37: Internationalisation (Issues 257–262)
+
+### [Issue #257] i18n: Set Up next-intl
+**Description**
+The app is English-only with no i18n infrastructure, making it impossible to add languages without touching every component.
+
+**Requirements**
+- Install `next-intl`. Configure locale detection from `Accept-Language` header, fallback to `en`.
+- Create `messages/en.json` with all hardcoded strings extracted.
+- URL-based locale prefix: `/en/`, `/es/`.
+
+**Acceptance Criteria**
+- `GET /es/` serves a page with locale set to Spanish.
+
+**Files to Create/Modify**
+- `i18n.ts` (Create)
+- `middleware.ts` (Modify)
+- `messages/en.json` (Create)
+- `next.config.js` (Modify)
+
+**Test Requirements**
+- Navigate to `/en/`; verify locale is `en`. Navigate to `/es/`; verify locale is `es`.
+
+---
+
+### [Issue #258] i18n: Spanish Translation
+**Description**
+Stellar rent escrow has strong adoption in Latin America. Spanish is the highest-impact second language.
+
+**Requirements**
+- Translate all strings in `messages/en.json` to Spanish in `messages/es.json`.
+- Formal (usted) register. Cover all navigation labels, form fields, error and success messages.
+
+**Acceptance Criteria**
+- Visiting `/es/` renders the entire landing page in correct Spanish.
+
+**Files to Create/Modify**
+- `messages/es.json` (Create)
+
+**Test Requirements**
+- Navigate to `/es/`; verify all visible text is in Spanish.
+
+---
+
+### [Issue #259] i18n: Locale-Aware Number and Currency Formatting
+**Description**
+All amounts are formatted as raw numbers. Different locales format numbers differently.
+
+**Requirements**
+- Create `lib/utils/format.ts` with `formatXLM(amount, locale)` using `Intl.NumberFormat`.
+- Replace all raw amount displays with `formatXLM`.
+- Format dates using `Intl.DateTimeFormat`.
+
+**Acceptance Criteria**
+- A German locale user sees amounts formatted as `1.234,56 XLM`.
+
+**Files to Create/Modify**
+- `lib/utils/format.ts` (Create)
+- All components displaying amounts (Modify)
+
+**Test Requirements**
+- Unit test `formatXLM(1234.56, "de-DE")`; verify output is `1.234,56 XLM`.
+
+---
+
+### [Issue #260] i18n: RTL Layout Support
+**Description**
+Arabic and Hebrew require RTL layout mirroring for correct rendering.
+
+**Requirements**
+- Set `dir="rtl"` on `<html>` when locale is RTL.
+- Convert directional CSS to logical properties (margin-inline-start, etc.).
+
+**Acceptance Criteria**
+- Setting `dir="rtl"` renders the landing page with correct RTL layout.
+
+**Files to Create/Modify**
+- `app/layout.tsx` (Modify)
+- `app/globals.css` (Modify)
+
+**Test Requirements**
+- Force `dir="rtl"` in Chrome; verify layout mirrors correctly.
+
+---
+
+### [Issue #261] i18n: Language Selector Component in Navbar
+**Description**
+Users need a way to manually switch languages from within the app.
+
+**Requirements**
+- Add a language selector dropdown to the Navbar showing flag emoji and language name.
+- Selecting a locale updates the URL prefix and persists to `localStorage`.
+
+**Acceptance Criteria**
+- Selecting "Español" changes URL to `/es/` and re-renders in Spanish.
+
+**Files to Create/Modify**
+- `components/ui/language-selector.tsx` (Create)
+- `components/landing/Navbar.tsx` (Modify)
+
+**Test Requirements**
+- Select a language; verify URL updates and content re-renders.
+
+---
+
+### [Issue #262] i18n: Blockchain Term Glossary Tooltips
+**Description**
+Terms like "escrow", "XLM", "Soroban", "Freighter" are unfamiliar to non-technical users.
+
+**Requirements**
+- Create `<GlossaryTerm term="escrow">` component showing a tooltip definition on hover.
+- Definitions in `lib/glossary.ts` with translations per locale.
+- Cover: escrow, XLM, Soroban, Freighter, gas fee, smart contract, testnet.
+
+**Acceptance Criteria**
+- Hovering "escrow" anywhere it appears shows a tooltip definition in the current locale.
+
+**Files to Create/Modify**
+- `components/ui/glossary-term.tsx` (Create)
+- `lib/glossary.ts` (Create)
+
+**Test Requirements**
+- Hover a GlossaryTerm; verify tooltip renders with correct definition.
+
+---
+
+## Stage 38: Admin & Moderation (Issues 263–268)
+
+### [Issue #263] Admin: Protected Admin Dashboard (`/admin`)
+**Description**
+There is no admin interface. The team cannot view registered users, active escrows, or disputes from within the app.
+
+**Requirements**
+- Create `app/admin/page.tsx` protected by an `ADMIN_SECRET` cookie.
+- Dashboard cards: total users, active escrows, disputed escrows, Horizon health status.
+- Access restricted via `middleware.ts`.
+
+**Acceptance Criteria**
+- Visiting `/admin` without the admin cookie redirects to `/admin/login`.
+
+**Files to Create/Modify**
+- `app/admin/page.tsx` (Create)
+- `app/admin/login/page.tsx` (Create)
+- `app/api/admin/stats/route.ts` (Create)
+- `middleware.ts` (Modify)
+
+**Test Requirements**
+- Access `/admin` without cookie; verify redirect. Log in; verify stats render.
+
+---
+
+### [Issue #264] Admin: User Management Actions
+**Description**
+The admin dashboard shows user data but has no action capabilities.
+
+**Requirements**
+- Admin actions: "Verify Email", "Reset Password" (sends email), "Suspend Account".
+- Suspended accounts receive 403 on login with "Account suspended. Contact support."
+
+**Acceptance Criteria**
+- Admin suspending a user prevents that user from logging in.
+
+**Files to Create/Modify**
+- `app/admin/page.tsx` (Modify)
+- `app/api/admin/users/[userId]/route.ts` (Create)
+- `lib/auth/users.ts` (Modify — add suspended field)
+
+**Test Requirements**
+- Suspend a user; attempt login as that user; verify 403.
+
+---
+
+### [Issue #265] Admin: Dispute Resolution Interface
+**Description**
+Disputes flagged by roommates sit in storage indefinitely with no resolution interface.
+
+**Requirements**
+- Add a "Disputes" tab listing all flagged disputes with details.
+- Admin actions: "Dismiss" (notify reporter) and "Escalate" (manual review queue).
+
+**Acceptance Criteria**
+- Admin can view and dismiss a dispute; the dismissal reflects in the escrow dashboard.
+
+**Files to Create/Modify**
+- `app/admin/disputes/page.tsx` (Create)
+- `app/api/admin/disputes/[disputeId]/route.ts` (Create)
+
+**Test Requirements**
+- Create a test dispute; dismiss as admin; verify it no longer appears in default list.
+
+---
+
+### [Issue #266] Admin: System Announcement Banner
+**Description**
+There is no way for admins to push a system-wide announcement to all users.
+
+**Requirements**
+- Admin creates an announcement with: message, severity (info/warning/critical), expiry datetime.
+- All users see the banner on every page until it expires or they dismiss it.
+
+**Acceptance Criteria**
+- Admin creates a "Maintenance tonight" announcement; all users see it as a top banner.
+
+**Files to Create/Modify**
+- `app/admin/announcements/page.tsx` (Create)
+- `app/api/admin/announcements/route.ts` (Create)
+- `components/ui/announcement-banner.tsx` (Create)
+- `app/layout.tsx` (Modify)
+
+**Test Requirements**
+- Create announcement; verify banner appears for all users. Dismiss; verify it doesn't reappear.
+
+---
+
+### [Issue #267] Admin: Audit Log for All Admin Actions
+**Description**
+Admin actions are unlogged. There is no audit trail of who did what and when.
+
+**Requirements**
+- Create `lib/audit-log.ts` appending a JSON entry for each admin action.
+- Fields: `adminId`, `action`, `target`, `timestamp`, `ipAddress`.
+- Add Audit Log page in admin dashboard showing last 100 entries.
+
+**Acceptance Criteria**
+- Every admin action appears in the audit log within 1 second.
+
+**Files to Create/Modify**
+- `lib/audit-log.ts` (Create)
+- `app/admin/audit-log/page.tsx` (Create)
+- `app/api/admin/audit-log/route.ts` (Create)
+
+**Test Requirements**
+- Perform 3 admin actions; verify all 3 appear in audit log with correct data.
+
+---
+
+### [Issue #268] Admin: Rate Limit Monitoring Dashboard
+**Description**
+There is no visibility into how often rate limits are being hit.
+
+**Requirements**
+- Add a "Rate Limits" card showing: requests blocked in last 1h, top blocked IPs, blocked route breakdown.
+- Auto-refreshes every 60 seconds.
+
+**Acceptance Criteria**
+- After 11 failed login attempts, admin dashboard shows the IP in "Top blocked IPs".
+
+**Files to Create/Modify**
+- `app/admin/page.tsx` (Modify)
+- `app/api/admin/rate-limits/route.ts` (Create)
+
+**Test Requirements**
+- Trigger 11 blocked requests; verify admin dashboard shows correct count.
+
+---
+
+## Stage 39: Onboarding & Education (Issues 269–274)
+
+### [Issue #269] Onboarding: Interactive 5-Step Tutorial
+**Description**
+The app has no guided tour. New users do not understand what an escrow is and leave before completing onboarding.
+
+**Requirements**
+- Implement a 5-step interactive tour: Welcome → Connect Wallet → Create Escrow → Add Roommates → Make Payment.
+- Tour starts on first visit. "Skip Tour" always available. Highlights relevant UI element at each step.
+
+**Acceptance Criteria**
+- First-time user sees tour start automatically. Completing all 5 steps marks it as done.
+
+**Files to Create/Modify**
+- `components/ui/onboarding-tour.tsx` (Create)
+- `hooks/useOnboardingTour.ts` (Create)
+- `app/layout.tsx` (Modify)
+
+**Test Requirements**
+- Clear localStorage; load app; verify tour starts. Complete steps; reload; verify tour doesn't restart.
+
+---
+
+### [Issue #270] Onboarding: Testnet Explainer Banner
+**Description**
+New users do not know the app runs on testnet and may try to use real XLM.
+
+**Requirements**
+- Show a persistent dismissible banner for first-time visitors explaining testnet and how to get test XLM.
+- Dismisses permanently after clicking "Got it" (stored in `localStorage`).
+
+**Acceptance Criteria**
+- First-time visitor sees testnet banner. "Got it" hides it permanently.
+
+**Files to Create/Modify**
+- `components/ui/testnet-banner.tsx` (Create)
+- `app/layout.tsx` (Modify)
+
+**Test Requirements**
+- Clear localStorage; load app; verify banner shows. Click "Got it"; reload; verify gone.
+
+---
+
+### [Issue #271] Onboarding: Freighter Installation Guide Modal
+**Description**
+Users without Freighter installed see a generic "Wallet not found" error with no guidance.
+
+**Requirements**
+- When Freighter is not detected, show an installation guide modal.
+- Steps: Install Freighter → Create/import wallet → Switch to Testnet → Return and connect.
+- Include direct link to the Freighter Chrome Web Store listing.
+
+**Acceptance Criteria**
+- A user without Freighter sees the installation guide modal instead of a raw error.
+
+**Files to Create/Modify**
+- `components/wallet/FreighterInstallGuide.tsx` (Create)
+- `app/connect/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock Freighter as undefined; verify install guide modal renders with all 4 steps.
+
+---
+
+### [Issue #272] Onboarding: Sample Escrow Demo Mode
+**Description**
+Users who have not completed a real escrow cannot understand what the dashboard looks like.
+
+**Requirements**
+- Add a "Try Demo" button on the landing page.
+- Demo mode loads the dashboard with pre-filled sample data. No wallet required.
+- Persistent amber banner: "Demo Mode — Connect a wallet to create real escrows."
+
+**Acceptance Criteria**
+- Clicking "Try Demo" shows a realistic dashboard without requiring a wallet.
+
+**Files to Create/Modify**
+- `app/demo/page.tsx` (Create)
+- `lib/demo-data.ts` (Create)
+- `components/landing/CTA.tsx` (Modify)
+
+**Test Requirements**
+- Navigate to `/demo`; verify dashboard renders with demo data and demo banner.
+
+---
+
+### [Issue #273] Onboarding: Video Explainer Section on Landing Page
+**Description**
+The landing page has no video. Video dramatically improves conversion for complex products like blockchain escrow.
+
+**Requirements**
+- Add a "How It Works" video section.
+- Video opens in a lightbox dialog (not inline embed) on click.
+- Lazy-load the video iframe to avoid performance impact.
+
+**Acceptance Criteria**
+- Clicking the play button opens the video in a full-screen lightbox overlay.
+
+**Files to Create/Modify**
+- `components/landing/VideoExplainer.tsx` (Create)
+- `app/page.tsx` (Modify)
+
+**Test Requirements**
+- Click play button; verify lightbox dialog opens.
+
+---
+
+### [Issue #274] Onboarding: Contextual Help Tooltips on Technical Fields
+**Description**
+Technical fields like "Token Address" and "Soroban Contract ID" have no help text.
+
+**Requirements**
+- Add a `?` icon button next to all technical form fields.
+- Tooltip provides a plain-English explanation of each field.
+- Fields covered: Token Address, Landlord Address, Roommate Address, Amount, Deadline.
+
+**Acceptance Criteria**
+- Hovering `?` next to "Token Address" shows an explanation of what a token address is.
+
+**Files to Create/Modify**
+- `components/ui/help-tooltip.tsx` (Create)
+- `components/escrow/CreateEscrowForm.tsx` (Modify)
+- `components/escrow/ContributeForm.tsx` (Modify)
+
+**Test Requirements**
+- Hover each `?` button; verify correct tooltip for each field.
+
+---
+
+## Stage 40: Advanced Blockchain Features (Issues 275–282)
+
+### [Issue #275] Stellar: Mainnet Readiness Checklist
+**Description**
+The app is testnet-only with no documented path to mainnet deployment.
+
+**Requirements**
+- Create `docs/mainnet-checklist.md` listing all blockers before mainnet launch.
+- Add a `NEXT_PUBLIC_ENABLE_MAINNET` feature flag.
+
+**Acceptance Criteria**
+- `docs/mainnet-checklist.md` exists with at least 15 actionable checklist items.
+
+**Files to Create/Modify**
+- `docs/mainnet-checklist.md` (Create)
+- `lib/config.ts` (Modify)
+
+**Test Requirements**
+- Set `NEXT_PUBLIC_ENABLE_MAINNET=true`; verify mainnet option becomes available in UI.
+
+---
+
+### [Issue #276] Stellar: USDC Stablecoin Support
+**Description**
+The UI only shows XLM. USDC is far more practical for real rent payments.
+
+**Requirements**
+- Add Circle's USDC testnet asset to `SUPPORTED_TOKENS`.
+- Show USDC balance in the wallet alongside XLM.
+- Validate sufficient USDC allowance before submission.
+
+**Acceptance Criteria**
+- Selecting USDC in the create escrow form deploys a USDC-denominated contract.
+
+**Files to Create/Modify**
+- `lib/stellar/config.ts` (Modify)
+- `components/escrow/CreateEscrowForm.tsx` (Modify)
+- `hooks/useWalletBalance.ts` (Modify)
+
+**Test Requirements**
+- Create escrow with USDC; verify token address matches Circle's USDC issuer.
+
+---
+
+### [Issue #277] Stellar: Transaction Fee Sponsoring for New Users
+**Description**
+New users without XLM cannot pay transaction fees — a chicken-and-egg onboarding problem.
+
+**Requirements**
+- Implement fee-bump transaction wrapping for first-time contributors.
+- The app's fee-sponsoring account wraps the user's transaction in a fee-bump.
+- Limit sponsoring to first 3 transactions per wallet. Track in Redis to prevent abuse.
+
+**Acceptance Criteria**
+- A wallet with 0 XLM can submit a contribution transaction when fee sponsoring is enabled.
+
+**Files to Create/Modify**
+- `lib/stellar/fee-sponsor.ts` (Create)
+- `lib/stellar/actions/contribute.ts` (Modify)
+- `.env.example` (Modify)
+
+**Test Requirements**
+- Mock a zero-balance wallet; verify fee-bump transaction is built and submitted.
+
+---
+
+### [Issue #278] Stellar: Horizon Failover to Backup RPC
+**Description**
+If the primary Horizon endpoint is down, the app is completely non-functional with no fallback.
+
+**Requirements**
+- Configure a list of Horizon endpoints in config: primary and at least one fallback.
+- Create `lib/stellar/horizon-client.ts` that tries each endpoint in order on failure.
+- Apply exponential backoff between failover attempts.
+
+**Acceptance Criteria**
+- When primary Horizon returns 503, the app automatically retries with the fallback.
+
+**Files to Create/Modify**
+- `lib/stellar/horizon-client.ts` (Create)
+- `lib/stellar/config.ts` (Modify)
+
+**Test Requirements**
+- Mock primary endpoint unavailable; verify app falls back to secondary without visible error.
+
+---
+
+### [Issue #279] Stellar: Ledger Hardware Wallet Support
+**Description**
+Freighter is the only signing method. Users with Ledger hardware wallets cannot use the app.
+
+**Requirements**
+- Integrate Ledger signing via the Stellar Ledger app.
+- Detect Ledger via WebUSB/WebHID.
+- Show "Sign with Ledger" option alongside Freighter.
+
+**Acceptance Criteria**
+- A user with a connected Ledger can sign a contribute transaction using the Ledger.
+
+**Files to Create/Modify**
+- `lib/stellar/ledger.ts` (Create)
+- `app/connect/page.tsx` (Modify)
+- `context/StellarContext.tsx` (Modify)
+
+**Test Requirements**
+- Mock Ledger connection; verify transaction signing flow works.
+
+---
+
+### [Issue #280] Stellar: Pre-Submission Transaction Simulation
+**Description**
+Failed transactions waste gas fees. Soroban supports `simulateTransaction` to detect failures before submission.
+
+**Requirements**
+- Before submitting any Soroban transaction, call `server.simulateTransaction(tx)`.
+- If simulation fails, show the error without submitting.
+- Show simulation result in the `TransactionReview` modal.
+
+**Acceptance Criteria**
+- A transaction that would fail shows an error before any fee is charged.
+
+**Files to Create/Modify**
+- `lib/stellar/actions/simulate.ts` (Create)
+- `lib/stellar/actions/contribute.ts` (Modify)
+- `components/escrow/TransactionConfirmModal.tsx` (Modify)
+
+**Test Requirements**
+- Mock simulation returning an error; verify error shows before submission.
+
+---
+
+### [Issue #281] Stellar: Detect Merged/Closed Roommate Accounts
+**Description**
+If a roommate merges their Stellar account after being added to an escrow, their contribution slot becomes unreachable.
+
+**Requirements**
+- When loading an escrow, check all roommate addresses via Horizon.
+- If an address returns 404, mark that roommate as "Account Closed" in the UI.
+- Show a warning to the landlord.
+
+**Acceptance Criteria**
+- If a roommate's account is not found on Horizon, the dashboard shows "Account Closed" badge.
+
+**Files to Create/Modify**
+- `lib/stellar/queries.ts` (Modify — add account existence check)
+- `components/escrow/RoommateTable.tsx` (Modify)
+
+**Test Requirements**
+- Mock one roommate address returning 404; verify "Account Closed" badge renders.
+
+---
+
+### [Issue #282] Stellar: Claimable Balance for Unclaimed Refunds
+**Description**
+If a roommate's wallet becomes inactive and they cannot claim a refund, funds are locked forever.
+
+**Requirements**
+- After claim-refund deadline passes with unclaimed funds, landlord can "Push Unclaimed Refunds".
+- Creates a Stellar Claimable Balance for each unclaimed roommate.
+- Show claimable balance ID in dashboard for landlord's records.
+
+**Acceptance Criteria**
+- Landlord can push unclaimed refunds; Horizon shows a new claimable balance for the roommate.
+
+**Files to Create/Modify**
+- `lib/stellar/actions/pushRefund.ts` (Create)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Mock claimable balance creation; verify balance ID appears in the dashboard.
+
+---
+
+## Stage 41: Additional UI Improvements (Issues 283–291)
+
+### [Issue #283] UI: Dark/Light Mode CSS Variable System
+**Description**
+The app is dark-mode only. There is no CSS variable system making it easy to switch themes.
+
+**Requirements**
+- Define a full set of semantic CSS variables in `globals.css`: `--color-surface`, `--color-text`, `--color-accent`, etc.
+- Map these to dark mode values by default, light mode values under `.light` class.
+- Replace all hardcoded hex colors in components with CSS variable references.
+
+**Acceptance Criteria**
+- Adding `.light` class to `<html>` changes the entire app to light mode without additional code.
+
+**Files to Create/Modify**
+- `app/globals.css` (Modify — add CSS variables)
+- `tailwind.config.ts` (Modify — reference CSS variables)
+
+**Test Requirements**
+- Add `.light` class; verify background and text colors invert correctly.
+
+---
+
+### [Issue #284] UI: Consistent Loading Spinner Component
+**Description**
+Different parts of the app use different loading indicators: text "Loading...", spinners, and skeletons inconsistently.
+
+**Requirements**
+- Create a `<Spinner>` component with three sizes: `sm`, `md`, `lg`.
+- Replace all inconsistent loading indicators across the app with `<Spinner>`.
+- Animation: CSS `@keyframes` rotation — no external library.
+
+**Acceptance Criteria**
+- Every loading state in the app uses the same spinner component.
+
+**Files to Create/Modify**
+- `components/ui/spinner.tsx` (Create)
+- All pages with loading states (Modify)
+
+**Test Requirements**
+- Render all three sizes; verify animation plays and sizes differ.
+
+---
+
+### [Issue #285] UI: Truncated Address Display Component
+**Description**
+Stellar addresses (56 chars) are truncated inconsistently across the app: some show 4+4, some show 6+6, some show the full string.
+
+**Requirements**
+- Create a `<TruncatedAddress>` component with props: `address`, `chars` (default 6).
+- Renders as `GABCDE...XY1234`. Copies full address on click with a checkmark animation.
+- Used consistently everywhere an address is displayed.
+
+**Acceptance Criteria**
+- All address displays across the app use `TruncatedAddress` and behave identically.
+
+**Files to Create/Modify**
+- `components/ui/truncated-address.tsx` (Create)
+- All components displaying addresses (Modify)
+
+**Test Requirements**
+- Render with a 56-char address; verify truncation format and copy behavior.
+
+---
+
+### [Issue #286] UI: Keyboard Shortcut System
+**Description**
+Power users cannot navigate the app without a mouse. There are no keyboard shortcuts for common actions.
+
+**Requirements**
+- Implement a `useKeyboardShortcuts` hook.
+- Shortcuts: `G H` (go to history), `G E` (go to escrows), `G D` (go to dashboard), `G C` (go to connect), `?` (show shortcuts help modal).
+- Show a keyboard shortcut help modal listing all shortcuts.
+
+**Acceptance Criteria**
+- Pressing `G` then `H` anywhere in the app navigates to the history page.
+
+**Files to Create/Modify**
+- `hooks/useKeyboardShortcuts.ts` (Create)
+- `components/ui/shortcuts-modal.tsx` (Create)
+- `app/layout.tsx` (Modify)
+
+**Test Requirements**
+- Simulate key presses; verify correct navigation for each shortcut.
+
+---
+
+### [Issue #287] UI: Improved 500 Error Page
+**Description**
+The app has no custom 500 error page. Server errors render Next.js's default plain white error page, which is jarring compared to the dark PayEasy design.
+
+**Requirements**
+- Create `app/error.tsx` as a global error boundary with PayEasy branding.
+- Show: error message, a "Reload Page" button, a "Go Home" link.
+- Log the error to Sentry (Issue #219).
+
+**Acceptance Criteria**
+- A server-side error renders the branded error page instead of Next.js's default.
+
+**Files to Create/Modify**
+- `app/error.tsx` (Create)
+- `app/global-error.tsx` (Create)
+
+**Test Requirements**
+- Throw in a server component; verify branded error page renders.
+
+---
+
+### [Issue #288] UI: Confirmation Dialog Reusable Component
+**Description**
+Destructive actions (delete account, early release, archive escrow) each implement their own confirmation dialog. This duplicates code and creates inconsistent UX.
+
+**Requirements**
+- Create a reusable `<ConfirmDialog>` component: props `title`, `description`, `confirmLabel`, `onConfirm`, `isDangerous`.
+- `isDangerous=true` styles the confirm button red and requires typing a confirmation phrase.
+- All existing confirmation dialogs replaced with this component.
+
+**Acceptance Criteria**
+- All destructive action confirmations use `ConfirmDialog` with consistent styling.
+
+**Files to Create/Modify**
+- `components/ui/confirm-dialog.tsx` (Create or Modify)
+- All files with custom confirmation logic (Modify)
+
+**Test Requirements**
+- Render dangerous confirm dialog; verify confirm button is disabled until phrase is typed.
+
+---
+
+### [Issue #289] UI: Smooth Number Transition on Balance Updates
+**Description**
+When a wallet balance updates (e.g., after contributing), the number jumps instantly. A smooth counter animation would make balance changes more satisfying.
+
+**Requirements**
+- When `balance` prop changes, animate the displayed number from old value to new value over 800ms.
+- Uses `framer-motion`'s `animate` API. Works for both increases and decreases.
+
+**Acceptance Criteria**
+- After a contribution, the wallet balance counter animates smoothly to the new value.
+
+**Files to Create/Modify**
+- `components/ui/animated-number.tsx` (Modify — support from/to transition)
+- `components/wallet/ConnectWalletButton.tsx` (Modify)
+
+**Test Requirements**
+- Change balance prop; verify counter animates over 800ms.
+
+---
+
+### [Issue #290] UI: Drag-and-Drop Roommate Reordering
+**Description**
+In the create escrow form, roommates are added in a fixed order with no way to reorder them. Landlords who want to display roommates in a specific order (e.g., by unit number) cannot.
+
+**Requirements**
+- Make the roommate list in the create escrow form drag-and-drop reorderable.
+- Use `framer-motion` drag constraints for the reordering animation.
+- Reordering updates the array order in form state.
+
+**Acceptance Criteria**
+- Dragging a roommate card reorders it in the list. The form submits in the new order.
+
+**Files to Create/Modify**
+- `components/escrow/RoommateInput.tsx` (Modify — add drag handle)
+- `components/escrow/CreateEscrowForm.tsx` (Modify — handle reorder)
+
+**Test Requirements**
+- Drag second roommate above first; verify array order updates in form state.
+
+---
+
+### [Issue #291] UI: Print-Friendly Escrow Dashboard
+**Description**
+Landlords sometimes need to print the escrow dashboard status for records or tenant meetings. The current layout is not print-friendly.
+
+**Requirements**
+- Add `@media print` CSS rules to: hide navbar, sidebar, action buttons; show full addresses; expand all collapsed sections; remove dark background.
+- Add a "Print" button to the escrow dashboard.
+
+**Acceptance Criteria**
+- Clicking Print or using Ctrl+P renders a clean, readable escrow status page.
+
+**Files to Create/Modify**
+- `app/globals.css` (Modify — add print styles)
+- `app/escrow/[contractId]/page.tsx` (Modify — add print button)
+
+**Test Requirements**
+- Use Chrome print preview; verify dark background is removed and all data is visible.
+
+---
+
+## Stage 42: Performance Optimisations (Issues 292–300)
+
+### [Issue #292] Perf: React Query for Server State Management
+**Description**
+The app uses bare `useEffect` + `useState` for all data fetching. This leads to duplicated fetches, no caching between navigations, and no automatic background refetching.
+
+**Requirements**
+- Install `@tanstack/react-query`.
+- Replace all `useEffect` data fetching in escrow pages and history with React Query hooks.
+- Configure a 30-second stale time for contract state. Infinite stale time for transaction history.
+
+**Acceptance Criteria**
+- Navigating away from and back to the escrow dashboard does not trigger a new network request if data is < 30 seconds old.
+
+**Files to Create/Modify**
+- `app/layout.tsx` (Modify — add QueryClientProvider)
+- `hooks/useContractState.ts` (Modify — use useQuery)
+- `hooks/useTransactionHistory.ts` (Create)
+- `package.json` (Modify)
+
+**Test Requirements**
+- Navigate to escrow page; navigate away; navigate back; verify no second network request fires.
+
+---
+
+### [Issue #293] Perf: Virtualise Long Transaction History Lists
+**Description**
+The history page renders all transactions as DOM nodes. With 100+ transactions, this causes visible lag on scroll.
+
+**Requirements**
+- Install `@tanstack/virtual` (TanStack Virtualizer).
+- Virtualise the transaction list so only visible rows are rendered in the DOM.
+- Maintain correct scroll position when new transactions are prepended.
+
+**Acceptance Criteria**
+- With 500 mock transactions, scrolling the history page shows no frame drops.
+
+**Files to Create/Modify**
+- `components/history/TransactionList.tsx` (Modify — add virtualisation)
+- `package.json` (Modify)
+
+**Test Requirements**
+- Render 500 mock transactions; open DevTools; verify fewer than 30 DOM nodes in the list at any time.
+
+---
+
+### [Issue #294] Perf: Optimistic UI Updates for Contributions
+**Description**
+After submitting a contribution, the UI waits for the full Soroban round-trip before updating. This creates a 5–10 second delay before the user sees their payment reflected.
+
+**Requirements**
+- On contribution submit, optimistically update the `paid` balance in local state immediately.
+- Show a "Confirming on-chain..." indicator next to the optimistic amount.
+- On transaction confirmation, replace the optimistic value with the real value.
+- On transaction failure, roll back the optimistic update and show an error.
+
+**Acceptance Criteria**
+- After clicking "Contribute", the paid amount updates instantly in the UI before chain confirmation.
+
+**Files to Create/Modify**
+- `components/escrow/ContributeForm.tsx` (Modify)
+- `app/escrow/[contractId]/page.tsx` (Modify)
+
+**Test Requirements**
+- Submit contribution; verify balance updates immediately. Mock failure; verify rollback.
+
+---
+
+### [Issue #295] Perf: Code Splitting for Three.js
+**Description**
+`three` (Three.js) is imported at the top level of `DottedSurface`, causing it to be bundled with the main chunk. This adds ~150 kB to the landing page initial load.
+
+**Requirements**
+- Convert `DottedSurface` to use `React.lazy` + `Suspense` with dynamic import for Three.js.
+- `DottedSurface` should only load after the landing page is interactive.
+- Add a fallback `<div>` with a CSS-only gradient background during the lazy load.
+
+**Acceptance Criteria**
+- Landing page Lighthouse performance score increases by at least 5 points after this change.
+
+**Files to Create/Modify**
+- `components/ui/dotted-surface.tsx` (Modify — dynamic import)
+- `app/page.tsx` (Modify — add Suspense wrapper)
+
+**Test Requirements**
+- Run Lighthouse on landing page; verify `three` is not in the initial JS bundle.
+
+---
+
+### [Issue #296] Perf: Memoize Expensive Computations in History Page
+**Description**
+`components/history/TransactionList.tsx` re-computes filter and sort on every render, including renders triggered by unrelated state changes.
+
+**Requirements**
+- Wrap the filter + sort pipeline in `useMemo` with correct dependency arrays: `[transactions, filterType, sortOrder, dateRange]`.
+- Wrap `TransactionCard` in `React.memo` to prevent re-renders when only the list position changes.
+
+**Acceptance Criteria**
+- React DevTools Profiler shows `TransactionList` re-renders are reduced by > 50% during filter interactions.
+
+**Files to Create/Modify**
+- `components/history/TransactionList.tsx` (Modify)
+- `components/history/TransactionCard.tsx` (Modify — add React.memo)
+
+**Test Requirements**
+- Profile with React DevTools; verify memo prevents unnecessary re-renders.
+
+---
+
+### [Issue #297] Perf: Preload Critical Fonts
+**Description**
+The app loads Space Grotesk and JetBrains Mono from Google Fonts CDN, causing layout shift while fonts load.
+
+**Requirements**
+- Add `<link rel="preload">` for the woff2 font files in `app/layout.tsx`.
+- Switch to `next/font` self-hosting (Issue #126) to eliminate the CDN round-trip.
+- Set `font-display: swap` to prevent invisible text during font load.
+
+**Acceptance Criteria**
+- Lighthouse audit shows zero "Ensure text remains visible during webfont load" warnings.
+
+**Files to Create/Modify**
+- `app/layout.tsx` (Modify — add preload links)
+- `app/globals.css` (Modify — add font-display: swap)
+
+**Test Requirements**
+- Run Lighthouse; verify zero font-related performance warnings.
+
+---
+
+### [Issue #298] Perf: API Response Caching with Cache-Control Headers
+**Description**
+API routes have no `Cache-Control` headers. Every request hits the server even for data that changes infrequently (e.g., health check, fee stats).
+
+**Requirements**
+- Add `Cache-Control: public, max-age=60` to `/api/health`.
+- Add `Cache-Control: public, max-age=30` to `/api/metrics` (read-only stats).
+- Add `Cache-Control: no-store` to all auth routes.
+
+**Acceptance Criteria**
+- A second request to `/api/health` within 60 seconds is served from the CDN cache.
+
+**Files to Create/Modify**
+- `app/api/health/route.ts` (Modify)
+- `app/api/metrics/route.ts` (Modify)
+- `app/api/auth/login/route.ts` (Modify)
+- `app/api/auth/signup/route.ts` (Modify)
+
+**Test Requirements**
+- Make two requests to `/api/health`; verify second is served from cache with `Age` header.
+
+---
+
+### [Issue #299] Perf: Compress Static Assets with Brotli
+**Description**
+The Next.js production build does not explicitly configure Brotli compression. Static JS/CSS bundles are served gzip-only, missing the ~20% size reduction from Brotli.
+
+**Requirements**
+- Configure Brotli compression in `next.config.js` via the `compress` option.
+- Verify Vercel serves Brotli by checking the `Content-Encoding: br` response header.
+- Document the compression settings in a comment.
+
+**Acceptance Criteria**
+- JS bundle responses include `Content-Encoding: br` header on Vercel.
+
+**Files to Create/Modify**
+- `next.config.js` (Modify — enable Brotli compression)
+
+**Test Requirements**
+- Deploy to Vercel; run `curl -H "Accept-Encoding: br" URL`; verify `Content-Encoding: br` in response.
+
+---
+
+### [Issue #300] Perf: Edge Runtime for Auth Middleware
+**Description**
+The auth middleware runs on Node.js runtime, adding latency to every protected route. Moving it to Edge Runtime reduces cold start time and improves global latency.
+
+**Requirements**
+- Add `export const runtime = "edge"` to `middleware.ts`.
+- Replace any Node.js-only APIs in middleware (e.g., `fs`, `path`) with Edge-compatible alternatives.
+- Ensure JWT verification uses a Web Crypto API-compatible library (`jose`).
+
+**Acceptance Criteria**
+- Vercel deployment logs show middleware running on Edge Runtime.
+
+**Files to Create/Modify**
+- `middleware.ts` (Modify — add runtime export)
+
+**Test Requirements**
+- Deploy to Vercel; verify middleware appears under "Edge Functions" in the Vercel dashboard.
