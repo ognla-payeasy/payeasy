@@ -6,10 +6,11 @@ import FundingProgress from "@/components/escrow/FundingProgress";
 import MultiSigApproval from "@/components/escrow/MultiSigApproval";
 import RoommateList, { type Roommate } from "@/components/escrow/RoommateList";
 import EscrowDashboardSkeleton from "@/components/escrow/EscrowDashboardSkeleton";
-import { ChevronLeft, ExternalLink, ShieldCheck, Activity, Globe } from "lucide-react";
+import { ChevronLeft, ExternalLink, ShieldCheck, Activity, Globe, Clock, CheckCircle2, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 import { createLandlordMajorityConfig } from "@/lib/stellar/multisig";
+import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 
 interface Props {
   contractId: string;
@@ -29,6 +30,7 @@ interface ContractState {
 export default function EscrowDashboardClient({ contractId }: Props) {
   const [contractState, setContractState] = useState<ContractState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { preferences } = useNotificationPreferences();
 
   useEffect(() => {
     // Artificial 3s delay to verify skeleton renders before content
@@ -143,6 +145,57 @@ export default function EscrowDashboardClient({ contractId }: Props) {
             </div>
           </div>
         </header>
+
+        {!isLoading && contractState && (
+          <div className="mb-10 space-y-3">
+            {preferences.deadlineReminders && contractState.status === "active" && (
+              <div
+                role="status"
+                className="flex items-start gap-3 rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 text-brand-100"
+              >
+                <Clock className="h-5 w-5 mt-0.5 shrink-0 text-brand-300" />
+                <div className="text-sm">
+                  <p className="font-semibold">Contribution deadline approaching</p>
+                  <p className="text-brand-200/80 text-xs mt-1">
+                    Funding closes on {contractState.deadline}. Manage alerts in{" "}
+                    <Link href="/settings" className="underline hover:text-white">
+                      settings
+                    </Link>
+                    .
+                  </p>
+                </div>
+              </div>
+            )}
+            {preferences.paymentConfirmed && contractState.status === "funded" && (
+              <div
+                role="status"
+                className="flex items-start gap-3 rounded-xl border border-accent-500/30 bg-accent-500/10 p-4 text-accent-100"
+              >
+                <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0 text-accent-300" />
+                <div className="text-sm">
+                  <p className="font-semibold">Payment confirmed</p>
+                  <p className="text-accent-200/80 text-xs mt-1">
+                    This escrow is fully funded and ready for release.
+                  </p>
+                </div>
+              </div>
+            )}
+            {preferences.refundAvailable && contractState.status === "expired" && (
+              <div
+                role="status"
+                className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100"
+              >
+                <RefreshCcw className="h-5 w-5 mt-0.5 shrink-0 text-amber-300" />
+                <div className="text-sm">
+                  <p className="font-semibold">Refund available</p>
+                  <p className="text-amber-200/80 text-xs mt-1">
+                    This escrow expired without full funding — your contribution can be refunded.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Dashboard Grid — skeleton or real content */}
         <div className="space-y-12">
