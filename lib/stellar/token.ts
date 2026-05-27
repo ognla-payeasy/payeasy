@@ -1,6 +1,24 @@
-import { Contract, scValToNative, nativeToScVal, xdr } from "@stellar/stellar-sdk";
+import {
+  Contract,
+  TransactionBuilder,
+  BASE_FEE,
+  scValToNative,
+  nativeToScVal,
+  xdr,
+  rpc,
+} from "@stellar/stellar-sdk";
 import { getCurrentNetwork, getNetworkConfig } from "./config";
-import { toStellarAmount, fromStellarAmount } from "./format";
+import { toStellarAmount } from "./format";
+
+/**
+ * Thrown when a Soroban operation cannot be completed.
+ */
+export class StellarError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StellarError";
+  }
+}
 
 /**
  * Interaction helper for Stellar Asset Contracts (SAC)
@@ -66,11 +84,61 @@ export class TokenHelper {
   }
 
   /**
-   * Internal helper to invoke read-only methods.
+   * Invokes a read-only SAC method via Soroban RPC simulation.
+   * For state-mutating calls the caller should build a full transaction;
+   * this path is intentionally simulation-only (no signing required).
    */
-  private async invoke(method: string, args: xdr.ScVal[]): Promise<any> {
-    // This is a simplified version. In a real app, you'd use a Soroban RPC client.
-    // For now, we're providing the structure as per requirements.
-    throw new Error("Method not implemented: requires Soroban RPC integration.");
+  private async invoke(method: string, args: xdr.ScVal[]): Promise<xdr.ScVal> {
+    const networkConfig = getNetworkConfig();
+
+    let server: rpc.Server;
+    try {
+      server = new rpc.Server(networkConfig.rpcUrl, { allowHttp: false });
+    } catch (err) {
+      throw new StellarError(
+        `Failed to connect to Soroban RPC at ${networkConfig.rpcUrl}: ${String(err)}`
+      );
+    }
+
+    // Fetch the source account — use the contract address itself as a dummy
+    // source for simulation (read-only calls don't need a real signer).
+    const contractId = (this.contract as any).contractId() as string;
+    let sourceAccount;
+    try {
+      sourceAccount = await server.getAccount(contractId);
+    } catch (err) {
+      throw new StellarError(
+        `Unable to load source account for simulation (${contractId}): ${String(err)}`
+      );
+    }
+
+    const operation = this.contract.call(method, ...args);
+
+    const tx = new TransactionBuilder(sourceAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: networkConfig.networkPassphrase,
+    })
+      .addOperation(operation)
+      .setTimeout(60)
+      .build();
+
+    let simResult: rpc.Api.SimulateTransactionResponse;
+    try {
+      simResult = await server.simulateTransaction(tx);
+    } catch (err) {
+      throw new StellarError(`Soroban RPC simulation request failed: ${String(err)}`);
+    }
+
+    if (rpc.Api.isSimulationError(simResult)) {
+      throw new StellarError(`Soroban simulation error in ${method}: ${simResult.error}`);
+    }
+
+    if (!rpc.Api.isSimulationSuccess(simResult) || !simResult.result?.retval) {
+      throw new StellarError(
+        `Soroban simulation for ${method} returned no result`
+      );
+    }
+
+    return simResult.result.retval;
   }
 }

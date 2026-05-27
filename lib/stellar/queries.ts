@@ -312,6 +312,98 @@ export interface ContractState {
   }[];
 }
 
+// ─── Basic contract info (for /pay/[contractId]) ─────────────────────────────
+
+export interface ContractBasicInfo {
+  landlord: string;
+  totalRent: string;
+  deadline: string;
+  token: string;
+}
+
+/**
+ * Returns the essential fields needed to render the contribute/pay page,
+ * or `null` when the contract does not exist or its data cannot be read.
+ */
+export async function getContractBasicInfo(
+  contractId: string
+): Promise<ContractBasicInfo | null> {
+  try {
+    const { rpcServer, networkPassphrase } = await import("./config.ts");
+    const {
+      TransactionBuilder,
+      Account,
+      Contract,
+      scValToNative,
+      rpc: rpcHelpers,
+    } = await import("@stellar/stellar-sdk");
+
+    const buildInvocationXdr = ({
+      contractId: cId,
+      method,
+      args = [],
+    }: BuildInvocationParams): string => {
+      const contract = new Contract(cId);
+      const source = new Account(cId, "0");
+      const tx = new TransactionBuilder(source, {
+        fee: "100",
+        networkPassphrase,
+      })
+        .addOperation(contract.call(method, ...(args as xdr.ScVal[])))
+        .setTimeout(60)
+        .build();
+      return tx.toXDR();
+    };
+
+    const ctx: QueryContext = {
+      client: {
+        async simulateTransaction(
+          xdrStr: string
+        ): Promise<SimulateTransactionResponse> {
+          try {
+            const tx = TransactionBuilder.fromXDR(xdrStr, networkPassphrase);
+            const result = await withRetry(() =>
+              rpcServer.simulateTransaction(tx)
+            );
+            if (rpcHelpers.Api.isSimulationError(result)) {
+              return { error: result.error };
+            }
+            let retval: unknown = undefined;
+            if (
+              rpcHelpers.Api.isSimulationSuccess(result) &&
+              result.result?.retval
+            ) {
+              try {
+                retval = scValToNative(result.result.retval);
+              } catch {
+                retval = result.result.retval.toString();
+              }
+            }
+            return { results: retval !== undefined ? [{ retval }] : [] };
+          } catch (err) {
+            throw new ContractQueryError(
+              `Soroban RPC simulation failed: ${String(err)}`
+            );
+          }
+        },
+      },
+      builder: { buildInvocationXdr },
+      contractId,
+    };
+
+    const [landlord, totalRent, deadline, token] = await Promise.all([
+      getLandlord(ctx),
+      getTotal(ctx),
+      getDeadline(ctx),
+      getTokenAddress(ctx),
+    ]);
+
+    return { landlord, totalRent, deadline, token };
+  } catch {
+    return null;
+  }
+}
+
 export async function getContractState(contractId: string): Promise<ContractState> {
   const { rpcServer, networkPassphrase } = await import("./config.ts");
   const { TransactionBuilder, Account, Contract, scValToNative, rpc: rpcHelpers } = await import("@stellar/stellar-sdk");
