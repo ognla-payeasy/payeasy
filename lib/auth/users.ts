@@ -11,9 +11,6 @@ export interface StoredUser {
   name: string;
   passwordHash: string;
   createdAt: string;
-  // Optional fields for password reset flow
-  resetTokenHash?: string;
-  resetTokenExpiresAt?: string; // ISO string
 }
 
 export interface PublicUser {
@@ -57,23 +54,10 @@ export function createUser(
     name: name.trim(),
     passwordHash,
     createdAt: new Date().toISOString(),
-    // reset fields start undefined
   };
   users.push(user);
   writeUsers(users);
   return user;
-}
-
-/**
- * Updates a user record with new data. Used for password reset updates.
- */
-export function updateUser(updated: StoredUser): void {
-  const users = readUsers();
-  const idx = users.findIndex((u) => u.id === updated.id);
-  if (idx !== -1) {
-    users[idx] = { ...users[idx], ...updated };
-    writeUsers(users);
-  }
 }
 
 export function toPublicUser(user: StoredUser): PublicUser {
