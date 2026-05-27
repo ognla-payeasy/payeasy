@@ -562,3 +562,38 @@ export async function getUserEscrows(publicKey: string): Promise<ContractState[]
     }
   ];
 }
+
+// ─── Contract Basic Info (exported for app/pay/[contractId]/page.tsx) ────────
+
+export interface ContractBasicInfo {
+  landlord: string;
+  totalRent: string;
+  deadline: string;
+  deadlineEpoch: number;
+  token: string;
+  status: "active" | "funded";
+  totalFunded: number;
+  id: string;
+}
+
+/**
+ * Returns basic contract info (landlord, totalRent, deadline, token) or null if not found.
+ * Used by app/pay/[contractId]/page.tsx to display the contribute form or not-found state.
+ */
+export async function getContractBasicInfo(contractId: string): Promise<ContractBasicInfo | null> {
+  try {
+    const state = await getContractState(contractId);
+    return {
+      id: state.id,
+      landlord: state.landlord,
+      totalRent: state.totalRent,
+      deadline: state.deadline,
+      deadlineEpoch: state.deadlineEpoch,
+      token: "", // Token address not directly exposed in getContractState
+      status: state.status,
+      totalFunded: state.totalFunded,
+    };
+  } catch {
+    return null;
+  }
+}
