@@ -1,9 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
-import { randomUUID } from "crypto";
+import { DataStore, createDataStore } from "./db-adapter";
 
-const DATA_DIR = join(process.cwd(), "data");
-const USERS_FILE = join(DATA_DIR, "users.json");
+let dataStore: DataStore | null = null;
 
 export interface StoredUser {
   id: string;
@@ -19,45 +16,44 @@ export interface PublicUser {
   name: string;
 }
 
-function readUsers(): StoredUser[] {
-  if (!existsSync(USERS_FILE)) {
-    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(USERS_FILE, "[]");
-    return [];
+/**
+ * Initialize the data store (file or database based on environment)
+ */
+async function getDataStore(): Promise<DataStore> {
+  if (!dataStore) {
+    dataStore = await createDataStore();
   }
-  return JSON.parse(readFileSync(USERS_FILE, "utf-8")) as StoredUser[];
+  return dataStore;
 }
 
-function writeUsers(users: StoredUser[]): void {
-  writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+/**
+ * Set a custom data store (useful for testing)
+ */
+export function setDataStore(store: DataStore): void {
+  dataStore = store;
 }
 
-export function findUserByEmail(email: string): StoredUser | undefined {
-  return readUsers().find(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
+export async function findUserByEmail(
+  email: string
+): Promise<StoredUser | undefined> {
+  const store = await getDataStore();
+  return store.findUserByEmail(email);
 }
 
-export function findUserById(id: string): StoredUser | undefined {
-  return readUsers().find((u) => u.id === id);
+export async function findUserById(
+  id: string
+): Promise<StoredUser | undefined> {
+  const store = await getDataStore();
+  return store.findUserById(id);
 }
 
-export function createUser(
+export async function createUser(
   email: string,
   name: string,
   passwordHash: string
-): StoredUser {
-  const users = readUsers();
-  const user: StoredUser = {
-    id: randomUUID(),
-    email: email.toLowerCase().trim(),
-    name: name.trim(),
-    passwordHash,
-    createdAt: new Date().toISOString(),
-  };
-  users.push(user);
-  writeUsers(users);
-  return user;
+): Promise<StoredUser> {
+  const store = await getDataStore();
+  return store.createUser(email, name, passwordHash);
 }
 
 export function toPublicUser(user: StoredUser): PublicUser {
