@@ -24,7 +24,10 @@ import {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-export const RPC_URL = "https://soroban-testnet.stellar.org";
+const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL;
+if (!rpcUrl) {
+  throw new Error("Missing required environment variable: NEXT_PUBLIC_SOROBAN_RPC_URL");
+}
 const DEFAULT_TIMEOUT_SECONDS = 300;
 const MAX_CONFIRMATION_RETRIES = 20;
 const CONFIRMATION_DELAY_MS = 1500;
@@ -115,7 +118,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function getServer(deps: InitializeDependencies): rpc.Server {
-  return deps.server ?? new rpc.Server(deps.rpcUrl ?? RPC_URL);
+  return deps.server ?? new rpc.Server(deps.rpcUrl ?? rpcUrl);
 }
 
 function getNetworkPassphrase(deps: InitializeDependencies): string {

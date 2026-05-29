@@ -6,26 +6,24 @@ import useFreighter from "@/hooks/useFreighter.ts";
 import TransactionReview from "@/components/wallet/TransactionReview.tsx";
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actions/contribute";
+import type { ContractBasicInfo } from "@/lib/stellar/queries";
 
 type ContributePhase = "idle" | "building" | "review" | "submitting";
 
 interface ContributeFormProps {
-  escrowId: string;
-  expectedShare: string;
-  remainingBalance: string;
+  contractId: string;
+  contractInfo: ContractBasicInfo;
   onSuccess?: (txHash: string) => void;
 }
 
-/**
- * A form for roommates to contribute their share to an escrow agreement.
- * Includes validation and integrates with the Freighter wallet.
- */
 export default function ContributeForm({
-  escrowId,
-  expectedShare,
-  remainingBalance,
+  contractId,
+  contractInfo,
   onSuccess,
 }: ContributeFormProps) {
+  const escrowId = contractId;
+  const expectedShare = contractInfo.totalRent;
+  const remainingBalance = contractInfo.totalRent;
   const { isConnected, connect, publicKey } = useFreighter();
   
   const [amount, setAmount] = useState(expectedShare);

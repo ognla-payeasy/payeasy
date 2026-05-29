@@ -8,6 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 
 export interface AuthUser {
   id: string;
@@ -25,10 +26,52 @@ interface EmailAuthContextValue {
 
 const EmailAuthContext = createContext<EmailAuthContextValue | null>(null);
 
+/**
+ * Handles HTTP responses with automatic token refresh on 401.
+ * If the response is 401 and we haven't already tried to refresh,
+ * attempt a silent token refresh and retry the original request.
+ */
+async function handleAuthResponse<T>(
+  response: Response,
+  retryFn?: () => Promise<Response>
+): Promise<{ ok: boolean; data: T; status: number }> {
+  if (response.status === 401 && retryFn) {
+    try {
+      // Attempt silent token refresh
+      const refreshRes = await fetch("/api/auth/refresh", {
+        method: "POST",
+      });
+
+      if (refreshRes.ok || refreshRes.status === 204) {
+        // Token was refreshed, retry original request
+        const retryRes = await retryFn();
+        const data = await retryRes.json();
+        return {
+          ok: retryRes.ok,
+          data,
+          status: retryRes.status,
+        };
+      }
+    } catch (err) {
+      // Refresh failed, will handle 401 normally
+      console.debug("Silent token refresh failed", err);
+    }
+  }
+
+  const data = await response.json();
+  return {
+    ok: response.ok,
+    data,
+    status: response.status,
+  };
+}
+
 export function EmailAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
+  // Initialize auth state on mount
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
@@ -37,35 +80,77 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Login failed");
-    setUser((data as { user: AuthUser }).user);
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      let attempt = 0;
+
+      const doLogin = async (): Promise<Response> => {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        return res;
+      };
+
+      const result = await handleAuthResponse(await doLogin(), doLogin);
+
+      if (!result.ok) {
+        throw new Error(result.data?.error ?? "Login failed");
+      }
+
+      setUser((result.data as { user: AuthUser }).user);
+    },
+    []
+  );
 
   const signup = useCallback(
     async (email: string, name: string, password: string) => {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Sign up failed");
-      setUser((data as { user: AuthUser }).user);
+      const doSignup = async (): Promise<Response> => {
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, name, password }),
+        });
+        return res;
+      };
+
+      const result = await handleAuthResponse(await doSignup(), doSignup);
+
+      if (!result.ok) {
+        throw new Error(result.data?.error ?? "Sign up failed");
+      }
+
+      setUser((result.data as { user: AuthUser }).user);
     },
     []
   );
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-  }, []);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      setUser(null);
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Enhanced handleAuthResponse for context-level errors
+  useEffect(() => {
+    // Intercept 401s that happen outside of login/signup flows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "auth_session_expired" && e.newValue === "true") {
+        setUser(null);
+        router.push("/login?reason=session_expired");
+        localStorage.removeItem("auth_session_expired");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [router]);
 
   return (
     <EmailAuthContext.Provider value={{ user, isLoading, login, signup, logout }}>

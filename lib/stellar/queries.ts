@@ -1,34 +1,85 @@
-// Returns all escrows for a landlord (stub, replace with real implementation)
-export async function getLandlordEscrows(): Promise<any[]> {
-  // TODO: Replace with actual Soroban RPC call and landlord address filtering
-  return [
-    {
-      id: "escrow1",
-      name: "Apartment 1",
-      funded: 500,
-      total: 1000,
-      roommateCount: 3,
-      deadline: Date.now() + 86400000 * 10,
-    },
-    {
-      id: "escrow2",
-      name: "Apartment 2",
-      funded: 1200,
-      total: 1200,
-      roommateCount: 2,
-      deadline: Date.now() + 86400000 * 5,
-    },
-  ];
+export interface EscrowContract {
+  id: string;
+  landlord: string;
+  totalRent: string;
+  deadline: string;
+  deadlineEpoch: number;
+  status: "active" | "funded" | "released" | "expired";
+  totalFunded: number;
 }
 
-// Returns landlord dashboard stats (stub, replace with real implementation)
-export async function getLandlordStats(): Promise<any> {
-  // TODO: Replace with actual Soroban RPC call and landlord address filtering
-  return {
-    totalEscrowed: 1700,
-    activeEscrows: 2,
-    totalReleased: 800,
-  };
+export interface LandlordStats {
+  totalEscrowed: number;
+  activeEscrows: number;
+  totalReleased: number;
+}
+
+export async function getLandlordEscrows(address: string): Promise<EscrowContract[]> {
+  const { createHorizonClient, fetchTransactionHistory } = await import("./history");
+  const client = createHorizonClient();
+
+  const contractIds = new Set<string>();
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 10; page++) {
+    const result = await fetchTransactionHistory({
+      client,
+      accountId: address,
+      cursor,
+      limit: 50,
+      includeOperations: true,
+    });
+
+    for (const tx of result.transactions) {
+      for (const op of tx.operations) {
+        if (op.type === "invoke_host_function" && op.contractId) {
+          contractIds.add(op.contractId);
+        }
+      }
+    }
+
+    if (!result.nextCursor || result.transactions.length === 0) break;
+    cursor = result.nextCursor;
+  }
+
+  const escrows: EscrowContract[] = [];
+
+  await Promise.all(
+    Array.from(contractIds).map(async (contractId) => {
+      try {
+        const state = await getContractState(contractId);
+        if (state.landlord === address) {
+          escrows.push({
+            id: state.id,
+            landlord: state.landlord,
+            totalRent: state.totalRent,
+            deadline: state.deadline,
+            deadlineEpoch: state.deadlineEpoch,
+            status: state.status,
+            totalFunded: state.totalFunded,
+          });
+        }
+      } catch {
+        // not an escrow contract or contract unavailable, skip
+      }
+    })
+  );
+
+  return escrows;
+}
+
+export async function getLandlordStats(address: string): Promise<LandlordStats> {
+  const escrows = await getLandlordEscrows(address);
+
+  const totalEscrowed = escrows.reduce((sum, e) => sum + Number(e.totalRent), 0);
+  const activeEscrows = escrows.filter(
+    (e) => e.status === "active" || e.status === "funded"
+  ).length;
+  const totalReleased = escrows
+    .filter((e) => e.status === "released")
+    .reduce((sum, e) => sum + Number(e.totalRent), 0);
+
+  return { totalEscrowed, activeEscrows, totalReleased };
 }
 import type { xdr } from "@stellar/stellar-sdk";
 import { withRetry } from "./retry.ts";
