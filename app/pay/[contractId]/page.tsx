@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import ContributeForm from "@/components/escrow/ContributeForm";
 import {
   getContractBasicInfo,
-  type ContractBasicInfo,
 } from "@/lib/stellar/queries";
+import type { ContractBasicInfo } from "@/lib/stellar/types";
 
 export default function PayContractPage() {
   const router = useRouter();

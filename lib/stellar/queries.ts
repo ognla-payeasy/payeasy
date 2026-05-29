@@ -1,18 +1,4 @@
-export interface EscrowContract {
-  id: string;
-  landlord: string;
-  totalRent: string;
-  deadline: string;
-  deadlineEpoch: number;
-  status: "active" | "funded" | "released" | "expired";
-  totalFunded: number;
-}
-
-export interface LandlordStats {
-  totalEscrowed: number;
-  activeEscrows: number;
-  totalReleased: number;
-}
+import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
 
 export async function getLandlordEscrows(address: string): Promise<EscrowContract[]> {
   const { createHorizonClient, fetchTransactionHistory } = await import("./history");
@@ -345,32 +331,9 @@ function parseBoolRetval(retval: unknown): boolean {
 
 // ─── Full contract state ──────────────────────────────────────────────────────
 
-export interface ContractState {
-  id: string;
-  landlord: string;
-  totalRent: string;
-  deadline: string;
-  /** Unix timestamp (seconds) of the deadline, for numeric comparison. */
-  deadlineEpoch: number;
-  status: "active" | "funded" | "released" | "expired";
-  totalFunded: number;
-  lastUpdate: string;
-  roommates: {
-    address: string;
-    expectedShare: string;
-    paidAmount: string;
-    isPaid: boolean;
-  }[];
-}
 
 // ─── Basic contract info (for /pay/[contractId]) ─────────────────────────────
 
-export interface ContractBasicInfo {
-  landlord: string;
-  totalRent: string;
-  deadline: string;
-  token: string;
-}
 
 /**
  * Returns the essential fields needed to render the contribute/pay page,

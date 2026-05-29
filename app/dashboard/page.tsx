@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   getLandlordEscrows,
   getLandlordStats,
-  type EscrowContract,
-  type LandlordStats,
 } from "@/lib/stellar/queries";
+import type { EscrowContract, LandlordStats } from "@/lib/stellar/types";
 import EscrowDashboardSkeleton from "@/components/escrow/EscrowDashboardSkeleton";
 import FundingProgress from "@/components/escrow/FundingProgress";
 import DeadlineCountdown from "@/components/escrow/DeadlineCountdown";

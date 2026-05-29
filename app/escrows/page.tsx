@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Wallet, Clock, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
 import { useStellarAuth } from "@/context/StellarContext";
-import { getUserEscrows, type ContractState } from "@/lib/stellar/queries";
+import { getUserEscrows } from "@/lib/stellar/queries";
+import type { ContractState } from "@/lib/stellar/types";
 
 export default function EscrowsPage() {
   const router = useRouter();

@@ -170,7 +170,14 @@ payeasy/
 - Comment on the issue to let others know you're working on it.
 - Wait for a maintainer to assign it to you.
 
-### 2. Create a Branch
+### 2. Branch Protection Rules
+
+The `main` branch has strict protection rules enabled to maintain code quality:
+- **Direct Pushes**: Disallowed. All changes must be made via a Pull Request.
+- **Reviews**: At least 1 approved review from a maintainer is required before merging.
+- **CI Checks**: All Continuous Integration (CI) checks must pass successfully before merging.
+
+### 3. Create a Branch
 
 ```bash
 # Sync with upstream

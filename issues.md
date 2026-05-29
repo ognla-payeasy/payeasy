@@ -608,7 +608,6 @@ implement persistent storage TTL extension so the agreement doesn't expire.
 **Test Requirements**  
 - N/A
 
-<<<<<<< HEAD
 
 ---
 
@@ -3902,11 +3901,11 @@ The landing page has complex visual components (hero, features, how-it-works, st
 
 ### [Issue #198] Code Quality: Resolve Merge Conflict Artifacts in Codebase
 **Description**
-A merge conflict was introduced in `issues.md` (lines 611–3165) between `HEAD` and commit `8de1963`. The conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) were committed to the repository, causing the file to be unparseable by any tooling that reads it.
+A merge conflict was introduced in `issues.md` (lines 611–3165) between `HEAD` and commit `8de1963`. The conflict markers (`&lt;&lt;&lt;&lt;&lt;&lt;&lt;`, `=======`, `&gt;&gt;&gt;&gt;&gt;&gt;&gt;`) were committed to the repository, causing the file to be unparseable by any tooling that reads it.
 
 **Requirements**
 - Resolve the conflict by keeping the HEAD version (stages 9–24 from the main branch).
-- Remove all conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) from the file.
+- Remove all conflict markers (`&lt;&lt;&lt;&lt;&lt;&lt;&lt;`, `=======`, `&gt;&gt;&gt;&gt;&gt;&gt;&gt;`) from the file.
 - Verify the resulting file has no duplicate issue numbers.
 
 **Acceptance Criteria**

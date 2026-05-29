@@ -6,7 +6,7 @@ import useFreighter from "@/hooks/useFreighter.ts";
 import TransactionReview from "@/components/wallet/TransactionReview.tsx";
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actions/contribute";
-import type { ContractBasicInfo } from "@/lib/stellar/queries";
+import type { ContractBasicInfo } from "@/lib/stellar/types";
 
 type ContributePhase = "idle" | "building" | "review" | "submitting";
 
