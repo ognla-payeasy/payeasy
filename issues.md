@@ -3858,24 +3858,24 @@ The landing page has complex visual components (hero, features, how-it-works, st
 
 ---
 
-### [Issue #196] TypeScript: Fix `catch (e: any)` Pattern Across Codebase
+### [Issue #196] TypeScript: Fix broad catch-any Pattern Across Codebase
 **Description**
-`app/pay/[contractId]/page.tsx` line 24 and at least 3 other files use `catch (e: any)` which bypasses TypeScript's error narrowing. The correct pattern is `catch (e: unknown)` with `instanceof Error` checks.
+`app/pay/[contractId]/page.tsx` line 24 and at least 3 other files use broad catch-any annotations which bypass TypeScript's error narrowing. The correct pattern is `catch (e: unknown)` with `instanceof Error` checks.
 
 **Requirements**
-- Grep codebase for `catch (e: any)` and `catch (error: any)`.
+- Grep codebase for broad catch-any annotations.
 - Replace each with `catch (e: unknown)` and add proper `instanceof Error` narrowing.
 - Ensure error message extraction uses `e instanceof Error ? e.message : String(e)`.
 
 **Acceptance Criteria**
-- Zero `catch (e: any)` or `catch (error: any)` patterns remain in the codebase.
+- Zero broad catch-any patterns remain in the codebase.
 
 **Files to Create/Modify**
 - `app/pay/[contractId]/page.tsx` (Modify)
-- All other files with `catch (e: any)` (Modify)
+- All other files with broad catch-any annotations (Modify)
 
 **Test Requirements**
-- `grep -r "catch (e: any)"` and `grep -r "catch (error: any)"` return no results.
+- Recursive grep for broad catch-any annotations returns no results.
 
 ---
 
@@ -3923,7 +3923,7 @@ A merge conflict was introduced in `issues.md` (lines 611–3165) between `HEAD`
 
 ### [Issue #199] Code Quality: Enforce Consistent Error Handling Pattern via ESLint
 **Description**
-The codebase has a mix of error handling patterns: empty catch blocks, `catch (e: any)`, `console.error`, and silently swallowed errors. There is no ESLint rule enforcing a consistent approach, so new contributions continue adding inconsistent patterns.
+The codebase has a mix of error handling patterns: empty catch blocks, broad catch-any annotations, `console.error`, and silently swallowed errors. There is no ESLint rule enforcing a consistent approach, so new contributions continue adding inconsistent patterns.
 
 **Requirements**
 - Add ESLint rules to `.eslintrc.js`:

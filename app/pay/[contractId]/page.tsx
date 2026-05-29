@@ -26,8 +26,9 @@ export default function PayContractPage() {
       try {
         const info = await getContractBasicInfo(contractId);
         setContractInfo(info);
-      } catch {
-        setError("Failed to load contract info");
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        setError(`Failed to load contract info: ${message}`);
       } finally {
         setLoading(false);
       }
