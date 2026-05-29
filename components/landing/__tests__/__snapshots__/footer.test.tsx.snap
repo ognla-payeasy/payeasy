@@ -2,6 +2,7 @@
 
 exports[`Footer > matches snapshot 1`] = `
 <footer
+  aria-label="Footer"
   class="border-t border-white/5 pt-16 pb-8 px-6"
 >
   <div
@@ -70,28 +71,6 @@ exports[`Footer > matches snapshot 1`] = `
               />
             </svg>
           </a>
-          <a
-            aria-label="Twitter"
-            class="w-9 h-9 rounded-lg glass flex items-center justify-center text-dark-400 hover:text-white hover:border-brand-500/30 transition-all"
-            href="#"
-          >
-            <svg
-              class="lucide lucide-twitter"
-              fill="none"
-              height="16"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="16"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"
-              />
-            </svg>
-          </a>
         </div>
       </div>
       <div>
@@ -106,23 +85,7 @@ exports[`Footer > matches snapshot 1`] = `
           <li>
             <a
               class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Find Roommates
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Escrow Dashboard
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
+              href="/history"
             >
               Payment History
             </a>
@@ -130,7 +93,7 @@ exports[`Footer > matches snapshot 1`] = `
           <li>
             <a
               class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
+              href="/escrow/create"
             >
               Rent Builder
             </a>
@@ -149,15 +112,9 @@ exports[`Footer > matches snapshot 1`] = `
           <li>
             <a
               class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Documentation
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
               href="https://developers.stellar.org"
+              rel="noopener noreferrer"
+              target="_blank"
             >
               Stellar Docs
             </a>
@@ -165,15 +122,9 @@ exports[`Footer > matches snapshot 1`] = `
           <li>
             <a
               class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              API Reference
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="/CONTRIBUTING.md"
+              href="https://github.com/Ogstevyn/payeasy/blob/main/CONTRIBUTING.md"
+              rel="noopener noreferrer"
+              target="_blank"
             >
               Contributing
             </a>
@@ -193,32 +144,10 @@ exports[`Footer > matches snapshot 1`] = `
             <a
               class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
               href="https://github.com/Ogstevyn/payeasy"
+              rel="noopener noreferrer"
+              target="_blank"
             >
               GitHub
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Discord
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Twitter
-            </a>
-          </li>
-          <li>
-            <a
-              class="text-dark-500 hover:text-dark-300 transition-colors text-sm"
-              href="#"
-            >
-              Blog
             </a>
           </li>
         </ul>
@@ -237,15 +166,34 @@ exports[`Footer > matches snapshot 1`] = `
       <div
         class="flex items-center gap-6"
       >
+        <div
+          aria-label="Checking Stellar Network…"
+          class="relative group inline-flex items-center gap-1.5"
+        >
+          <span
+            class="inline-block w-2 h-2 rounded-full bg-dark-500 animate-pulse"
+          />
+          <span
+            class="text-dark-500 text-xs hidden sm:inline"
+          >
+            Stellar
+          </span>
+          <div
+            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg glass text-xs text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50"
+            role="tooltip"
+          >
+            Checking Stellar Network…
+          </div>
+        </div>
         <a
           class="text-dark-600 hover:text-dark-400 text-xs transition-colors"
-          href="#"
+          href="/privacy"
         >
           Privacy Policy
         </a>
         <a
           class="text-dark-600 hover:text-dark-400 text-xs transition-colors"
-          href="#"
+          href="/terms"
         >
           Terms of Service
         </a>

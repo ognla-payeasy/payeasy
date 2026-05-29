@@ -1,5 +1,5 @@
-import { describe, it, mock, beforeEach } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, vi, beforeEach, assert } from "vitest";
+
 import { exportTransactionsToCsv } from "../lib/exportCsv.ts";
 import type { Transaction } from "@/components/history/TransactionCard";
 
@@ -55,19 +55,19 @@ describe("exportTransactionsToCsv", () => {
     } as any;
 
     const mockElement = {
-      setAttribute: mock.fn(),
+      setAttribute: vi.fn(),
       style: {},
-      click: mock.fn(() => {
+      click: vi.fn(() => {
         clickedElement = mockElement;
       }),
     };
 
-    createElementMock = mock.fn(() => mockElement);
+    createElementMock = vi.fn(() => mockElement);
     global.document = {
       createElement: createElementMock,
       body: {
-        appendChild: mock.fn(),
-        removeChild: mock.fn(),
+        appendChild: vi.fn(),
+        removeChild: vi.fn(),
       },
     } as any;
   });
@@ -104,18 +104,18 @@ describe("exportTransactionsToCsv", () => {
 
     // 2. Verify download triggered
     assert.equal(
-      createElementMock.mock.calls[0].arguments[0],
+      createElementMock.mock.calls[0][0],
       "a",
       "Should create an anchor element"
     );
     
     const setAttributeCalls = clickedElement.setAttribute.mock.calls;
-    assert.equal(setAttributeCalls[0].arguments[0], "href");
-    assert.equal(setAttributeCalls[0].arguments[1], "blob:mocked-url");
+    assert.equal(setAttributeCalls[0][0], "href");
+    assert.equal(setAttributeCalls[0][1], "blob:mocked-url");
     
-    assert.equal(setAttributeCalls[1].arguments[0], "download");
-    assert.ok(setAttributeCalls[1].arguments[1].startsWith("payeasy-history-"));
-    assert.ok(setAttributeCalls[1].arguments[1].endsWith(".csv"));
+    assert.equal(setAttributeCalls[1][0], "download");
+    assert.ok(setAttributeCalls[1][1].startsWith("payeasy-history-"));
+    assert.ok(setAttributeCalls[1][1].endsWith(".csv"));
 
     assert.equal(clickedElement.click.mock.calls.length, 1, "Should click the link to trigger download");
   });

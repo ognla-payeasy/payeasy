@@ -1,5 +1,5 @@
-import test, { describe, it, beforeEach } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, beforeEach, assert, expect } from "vitest";
+
 import { fetchAccountBalances, fetchXlmBalance } from "../lib/stellar/horizon.ts";
 
 describe("fetchAccountBalances", () => {
@@ -51,10 +51,9 @@ describe("fetchAccountBalances", () => {
       loadAccount: async () => { throw error; }
     };
 
-    await assert.rejects(
-      fetchAccountBalances("GNOTFOUND", "testnet", mockServer as any),
-      { message: /Account not found: GNOTFOUND/ }
-    );
+    await expect(
+      fetchAccountBalances("GNOTFOUND", "testnet", mockServer as any)
+    ).rejects.toThrow(/Account not found: GNOTFOUND/);
   });
 
   it("throws on network failure", async () => {
@@ -62,10 +61,9 @@ describe("fetchAccountBalances", () => {
       loadAccount: async () => { throw new Error("Network error"); }
     };
 
-    await assert.rejects(
-      fetchAccountBalances("GABC123", "testnet", mockServer as any),
-      { message: /Failed to fetch balances: Network error/ }
-    );
+    await expect(
+      fetchAccountBalances("GABC123", "testnet", mockServer as any)
+    ).rejects.toThrow(/Failed to fetch balances: Network error/);
   });
 });
 

@@ -2,6 +2,7 @@
 
 exports[`Hero > matches snapshot 1`] = `
 <section
+  aria-label="Hero Section"
   class="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-6 overflow-hidden"
 >
   <div

@@ -1,5 +1,6 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import {  assert , test } from \"vitest\";
+
+
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 
 test("validateContributionAmount passes for valid amount", () => {

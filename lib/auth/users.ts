@@ -1,6 +1,15 @@
-import { DataStore, createDataStore } from "./db-adapter";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
+import { randomUUID } from "crypto";
 
-let dataStore: DataStore | null = null;
+const DATA_DIR = join(process.cwd(), "data");
+const USERS_FILE = join(DATA_DIR, "users.json");
+
+export interface NotificationPreferences {
+  marketingEmails: boolean;
+  securityAlerts: boolean;
+  pushNotifications: boolean;
+}
 
 export interface StoredUser {
   id: string;
@@ -8,6 +17,7 @@ export interface StoredUser {
   name: string;
   passwordHash: string;
   createdAt: string;
+  notificationPreferences?: NotificationPreferences; // Added to store preferences
 }
 
 export interface PublicUser {
@@ -16,46 +26,100 @@ export interface PublicUser {
   name: string;
 }
 
-/**
- * Initialize the data store (file or database based on environment)
- */
-async function getDataStore(): Promise<DataStore> {
-  if (!dataStore) {
-    dataStore = await createDataStore();
+const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
+  marketingEmails: false,
+  securityAlerts: true,
+  pushNotifications: true,
+};
+
+function readUsers(): StoredUser[] {
+  if (!existsSync(USERS_FILE)) {
+    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(USERS_FILE, "[]");
+    return [];
   }
-  return dataStore;
+  return JSON.parse(readFileSync(USERS_FILE, "utf-8")) as StoredUser[];
 }
 
-/**
- * Set a custom data store (useful for testing)
- */
-export function setDataStore(store: DataStore): void {
-  dataStore = store;
+function writeUsers(users: StoredUser[]): void {
+  writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
-export async function findUserByEmail(
-  email: string
-): Promise<StoredUser | undefined> {
-  const store = await getDataStore();
-  return store.findUserByEmail(email);
+export function findUserByEmail(email: string): StoredUser | undefined {
+  return readUsers().find(
+    (u) => u.email.toLowerCase() === email.toLowerCase()
+  );
 }
 
-export async function findUserById(
-  id: string
-): Promise<StoredUser | undefined> {
-  const store = await getDataStore();
-  return store.findUserById(id);
+export function findUserById(id: string): StoredUser | undefined {
+  return readUsers().find((u) => u.id === id);
 }
 
-export async function createUser(
+export function createUser(
   email: string,
   name: string,
   passwordHash: string
-): Promise<StoredUser> {
-  const store = await getDataStore();
-  return store.createUser(email, name, passwordHash);
+): StoredUser {
+  const users = readUsers();
+  const user: StoredUser = {
+    id: randomUUID(),
+    email: email.toLowerCase().trim(),
+    name: name.trim(),
+    passwordHash,
+    createdAt: new Date().toISOString(),
+    notificationPreferences: DEFAULT_NOTIFICATIONS, // Apply defaults on creation
+  };
+  users.push(user);
+  writeUsers(users);
+  return user;
 }
 
 export function toPublicUser(user: StoredUser): PublicUser {
   return { id: user.id, email: user.email, name: user.name };
+}
+
+// ---------------------------------------------------------------------------
+// Notification Preference Functions
+// ---------------------------------------------------------------------------
+
+export function getNotificationPreferences(userId: string): NotificationPreferences {
+  const user = findUserById(userId);
+  // Return the user's saved preferences, or defaults if they don't have any yet
+  return user?.notificationPreferences || DEFAULT_NOTIFICATIONS;
+}
+
+export function isValidNotificationPatch(body: any): boolean {
+  if (!body || typeof body !== 'object') return false;
+
+  const validKeys = ['marketingEmails', 'securityAlerts', 'pushNotifications'];
+
+  for (const key of Object.keys(body)) {
+    // If the key isn't allowed, or the value isn't a boolean, reject it
+    if (!validKeys.includes(key) || typeof body[key] !== 'boolean') {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function updateNotificationPreferences(
+  userId: string,
+  patch: Partial<NotificationPreferences>
+): NotificationPreferences {
+  const users = readUsers();
+  const userIndex = users.findIndex((u) => u.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error("User not found");
+  }
+
+  const currentPrefs = users[userIndex].notificationPreferences || DEFAULT_NOTIFICATIONS;
+  const updatedPrefs = { ...currentPrefs, ...patch };
+
+  // Update the user in the array and write back to the JSON file
+  users[userIndex].notificationPreferences = updatedPrefs;
+  writeUsers(users);
+
+  return updatedPrefs;
 }

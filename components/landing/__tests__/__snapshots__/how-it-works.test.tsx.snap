@@ -2,6 +2,7 @@
 
 exports[`HowItWorks > matches snapshot 1`] = `
 <section
+  aria-label="How it Works Step-by-Step"
   class="py-24 px-6"
   id="how-it-works"
 >

@@ -38,6 +38,16 @@ vi.mock("@/context/StellarContext", () => ({
   }),
 }));
 
+vi.mock("@/context/EmailAuthContext", () => ({
+  useEmailAuth: () => ({
+    user: null,
+    loading: false,
+    error: null,
+    signIn: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}));
 import Navbar from "../Navbar";
 
 describe("Navbar", () => {

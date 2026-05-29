@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import {  describe, it , assert } from "vitest";
+
 
 // ── Inline copy of the pure filtering logic from TransactionList ────────────
 // We test the filtering logic in isolation to avoid React/DOM dependencies.

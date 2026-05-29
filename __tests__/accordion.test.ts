@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import {  describe, it , assert } from "vitest";
+
 import type { AccordionItem } from "../components/ui/accordion";
 
 // Accordion State Management Logic Tests

@@ -9,9 +9,11 @@ import {
   Loader2,
   RotateCcw,
   Save,
+  Download,
 } from "lucide-react";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useEmailAuth } from "@/context/EmailAuthContext";
 import type { UserPreferences } from "@/lib/preferences/preferences";
 
 // ─── Toggle ──────────────────────────────────────────────────────────────────
@@ -39,7 +41,8 @@ function Toggle({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 
+          focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
           checked ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700"
         }`}
       >
@@ -421,13 +424,88 @@ function PrivacySection({
   );
 }
 
+// ─── Data Export (GDPR) ───────────────────────────────────────────────────────
+
+function DataExportSection() {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+
+      const res = await fetch("/api/user/export", {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+
+      const data = await res.json();
+      
+      // Format the current date as YYYY-MM-DD
+      const dateStr = new Date().toISOString().split("T")[0];
+      const emailSafe = data.email ? data.email.replace(/[^a-zA-Z0-9@.-]/g, "") : "user";
+      const filename = `payeasy-data-${emailSafe}-${dateStr}.json`;
+
+      // Create a blob from the JSON response
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to trigger the download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export data. Please try again later.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <Section title="Data & Privacy">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">Download My Data</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Export a JSON copy of your personal account data and preferences.
+          </p>
+        </div>
+        <button
+          onClick={handleExportData}
+          disabled={isExporting}
+          className="btn-secondary !w-full sm:!w-auto flex items-center justify-center gap-2"
+        >
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          {isExporting ? "Exporting..." : "Download Data"}
+        </button>
+      </div>
+    </Section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { user, isLoading } = useEmailAuth();
   const { isConnected } = useWalletConnection();
+  
   const { preferences, setPreferences, save, reset, saveStatus, saveError } =
     usePreferences();
+
   const [bannerStatus, setBannerStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -446,7 +524,7 @@ export default function SettingsPage() {
 
   const dismissBanner = useCallback(() => setBannerStatus("idle"), []);
 
-  if (!isConnected) return null;
+  if (isLoading || !isConnected || !user) return null;
 
   return (
     <main aria-label="Account Settings" className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
@@ -463,11 +541,11 @@ export default function SettingsPage() {
         onDismiss={dismissBanner}
       />
 
-      <BudgetSection prefs={preferences} update={setPreferences} />
+     <BudgetSection prefs={preferences} update={setPreferences} />
       <LocationSection prefs={preferences} update={setPreferences} />
       <NotificationsSection prefs={preferences} update={setPreferences} />
       <PrivacySection prefs={preferences} update={setPreferences} />
-
+      <DataExportSection />
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button onClick={save} className="btn-primary !w-full sm:!w-auto flex items-center justify-center gap-2">
           <Save className="w-4 h-4" />
