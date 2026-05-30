@@ -6,6 +6,8 @@ import FundingProgress from "@/components/escrow/FundingProgress";
 import MultiSigApproval from "@/components/escrow/MultiSigApproval";
 import RoommateTable from "@/components/escrow/RoommateTable";
 import ContributeForm from "@/components/escrow/ContributeForm";
+import MyPaymentHistory from "@/components/escrow/MyPaymentHistory";
+import PushReminderPrompt from "@/components/escrow/PushReminderPrompt";
 import EscrowDashboardSkeleton from "@/components/escrow/EscrowDashboardSkeleton";
 import TransactionReview from "@/components/wallet/TransactionReview";
 import {
@@ -393,8 +395,9 @@ export default function EscrowDashboardClient({ contractId }: Props) {
               <RoommateTable roommates={contractState!.roommates} />
 
               {/* Contribute Form — visible only to the current roommate if they haven't paid full share */}
-              {currentRoommate && !currentRoommate.isPaid && contractState?.status !== "funded" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {currentRoommate && contractState?.status !== "funded" && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4">
+                  <PushReminderPrompt contractId={contractId} roommateAddress={currentRoommate.address} />
                   <ContributeForm
                     escrowId={contractId}
                     expectedShare={currentRoommate.expectedShare}
@@ -404,6 +407,13 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                     onSuccess={() => void refresh()}
                   />
                 </div>
+              )}
+
+              {currentRoommate && (
+                <MyPaymentHistory
+                  contractId={contractId}
+                  roommateAddress={currentRoommate.address}
+                />
               )}
 
               {/* Claim Refund — visible only when eligible */}

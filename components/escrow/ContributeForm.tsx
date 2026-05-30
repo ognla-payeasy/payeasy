@@ -1,36 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Wallet, Info, ArrowRight, CheckCircle2 } from "lucide-react";
 import useFreighter from "@/hooks/useFreighter.ts";
 import TransactionReview from "@/components/wallet/TransactionReview.tsx";
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actions/contribute";
-import type { ContractBasicInfo } from "@/lib/stellar/types";
+import { recordPaymentHistoryEntry } from "@/lib/stellar/paymentHistory";
 
 type ContributePhase = "idle" | "building" | "review" | "submitting";
 
 interface ContributeFormProps {
-  contractId: string;
-  contractInfo: ContractBasicInfo;
+  contractId?: string;
+  escrowId?: string;
+  expectedShare: string;
+  remainingBalance: string;
   onSuccess?: (txHash: string) => void;
 }
 
 export default function ContributeForm({
   contractId,
-  contractInfo,
+  escrowId,
+  expectedShare,
+  remainingBalance,
   onSuccess,
 }: ContributeFormProps) {
-  const escrowId = contractId;
-  const expectedShare = contractInfo.totalRent;
-  const remainingBalance = contractInfo.totalRent;
+  const resolvedContractId = contractId ?? escrowId ?? "";
   const { isConnected, connect, publicKey } = useFreighter();
-  
-  const [amount, setAmount] = useState(expectedShare);
+
+  const [amount, setAmount] = useState(remainingBalance);
   const [phase, setPhase] = useState<ContributePhase>("idle");
   const [preparedXdr, setPreparedXdr] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (phase === "idle") {
+      setAmount(remainingBalance);
+    }
+  }, [phase, remainingBalance]);
+
+  const amountValue = useMemo(() => parseFloat(amount), [amount]);
+  const remainingValue = useMemo(() => parseFloat(remainingBalance), [remainingBalance]);
+  const expectedValue = useMemo(() => parseFloat(expectedShare), [expectedShare]);
+  const contributedValue = useMemo(
+    () => Math.max(0, expectedValue - remainingValue),
+    [expectedValue, remainingValue]
+  );
+  const remainingAfterPayment = useMemo(
+    () => Math.max(0, remainingValue - amountValue),
+    [remainingValue, amountValue]
+  );
 
   const validation = validateContributionAmount(amount, remainingBalance);
   const isValid = validation.isValid;
@@ -49,11 +69,11 @@ export default function ContributeForm({
 
     try {
       // amount is in XLM, we must convert to stroops for the contract
-      const stroopsAmount = BigInt(Math.floor(parseFloat(amount) * 1e7));
+      const stroopsAmount = BigInt(Math.floor(amountValue * 1e7));
       const xdr = await buildContributeXdr({
         from: publicKey,
         amount: stroopsAmount,
-        contractId: escrowId,
+        contractId: resolvedContractId,
       });
       setPreparedXdr(xdr);
       setPhase("review");
@@ -70,12 +90,19 @@ export default function ContributeForm({
     try {
       const result = await signAndSubmitContribute(preparedXdr, publicKey);
       setTxHash(result.txHash);
+      recordPaymentHistoryEntry({
+        contractId: resolvedContractId,
+        roommateAddress: publicKey,
+        amount: amount.trim(),
+        txHash: result.txHash,
+        recordedAt: new Date().toISOString(),
+      });
       onSuccess?.(result.txHash);
       setPhase("idle");
       setPreparedXdr(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transaction failed.");
-      setPhase("review"); // go back to review so they can try again or cancel
+      setPhase("review");
     }
   };
 
@@ -98,7 +125,7 @@ export default function ContributeForm({
         <div className="text-right">
           <p className="text-[10px] text-dark-500 uppercase tracking-widest font-black">Your Progress</p>
           <div className="flex items-center gap-1.5 mt-1 justify-end">
-            <span className="text-lg font-black text-white">{expectedShare}</span>
+            <span className="text-lg font-black text-white">{contributedValue.toFixed(2).replace(/\.00$/, "")}</span>
             <span className="text-xs text-brand-400 font-bold">/ {expectedShare}</span>
           </div>
         </div>
@@ -115,9 +142,9 @@ export default function ContributeForm({
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              aria-invalid={!isValid && parseFloat(amount) > 0}
+              aria-invalid={!isValid && amountValue > 0}
               aria-describedby={[
-                !isValid && parseFloat(amount) > 0 ? "amount-error" : undefined,
+                !isValid && amountValue > 0 ? "amount-error" : undefined,
                 "amount-helper"
               ].filter(Boolean).join(" ") || undefined}
               className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-4 pr-12 text-lg font-bold text-dark-100 focus:border-brand-400 focus:outline-none transition-all group-hover:bg-white/[0.08]"
@@ -137,15 +164,20 @@ export default function ContributeForm({
           <p className="text-2xl font-black text-dark-100 tracking-tight">
             {remainingBalance} <span className="text-xs text-dark-500 font-medium">XLM Total</span>
           </p>
+          {amountValue > 0 && isValid && amountValue < remainingValue ? (
+            <p className="text-xs text-brand-300 font-medium">
+              Paying {amount} of {remainingBalance} remaining.
+            </p>
+          ) : null}
         </div>
       </div>
 
-  {!isValid && parseFloat(amount) > 0 && (
-    <div id="amount-error" role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2">
-      <ArrowRight className="h-3 w-3 rotate-180" />
-      {validation.error}
-    </div>
-  )}
+      {!isValid && amountValue > 0 && (
+        <div id="amount-error" role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-2">
+          <ArrowRight className="h-3 w-3 rotate-180" />
+          {validation.error}
+        </div>
+      )}
 
       <button
         type="button"
@@ -190,7 +222,11 @@ export default function ContributeForm({
       {txHash && (
         <div className="mt-6 p-4 rounded-xl bg-accent-500/10 border border-accent-500/30 flex items-center gap-3 text-accent-100 text-sm animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
-          <p>Payment successful! Transaction recorded on-chain.</p>
+          <p>
+            Payment successful! {remainingAfterPayment > 0
+              ? `${remainingAfterPayment.toFixed(2).replace(/\.00$/, "")} XLM more needed.`
+              : "Your share is fully covered."}
+          </p>
         </div>
       )}
     </div>
