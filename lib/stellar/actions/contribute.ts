@@ -8,6 +8,7 @@ import {
   rpc,
 } from "@stellar/stellar-sdk";
 import { signTx } from "@/lib/stellar/wallet";
+import { assertValidStellarAddress, assertValidContractId } from "@/lib/stellar/validation";
 
 const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL;
 if (!rpcUrl) {
@@ -36,6 +37,8 @@ export async function buildContributeXdr(
   params: ContributeParams
 ): Promise<string> {
   const { from, amount, contractId } = params;
+  assertValidStellarAddress(from);
+  assertValidContractId(contractId);
   const server = new rpc.Server(rpcUrl);
 
   // Load the source account

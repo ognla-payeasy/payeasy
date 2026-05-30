@@ -1,4 +1,5 @@
 import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
+import { assertValidStellarAddress, assertValidContractId } from "./validation";
 
 /**
  * @description Retrieves all escrow contracts where the given address is the landlord,
@@ -8,6 +9,7 @@ import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, R
  * @throws {ContractQueryError} If a contract state query fails for any contract.
  */
 export async function getLandlordEscrows(address: string): Promise<EscrowContract[]> {
+  assertValidStellarAddress(address);
   const { createHorizonClient, fetchTransactionHistory } = await import("./history");
   const client = createHorizonClient();
 
@@ -381,6 +383,7 @@ function parseBoolRetval(retval: unknown): boolean {
 export async function getContractBasicInfo(
   contractId: string
 ): Promise<ContractBasicInfo | null> {
+  assertValidContractId(contractId);
   try {
     const { rpcServer, networkPassphrase } = await import("./config.ts");
     const {
@@ -465,6 +468,7 @@ export async function getContractBasicInfo(
  * @throws {ContractQueryError} If any individual field query fails or the RPC call errors.
  */
 export async function getContractState(contractId: string): Promise<ContractState> {
+  assertValidContractId(contractId);
   const { rpcServer, networkPassphrase } = await import("./config.ts");
   const { TransactionBuilder, Account, Contract, scValToNative, rpc: rpcHelpers } = await import("@stellar/stellar-sdk");
 
@@ -572,6 +576,7 @@ export async function getContractState(contractId: string): Promise<ContractStat
  * @throws {Error} If the account is not found on the network or the balance fetch fails.
  */
 export async function getAccountBalance(publicKey: string): Promise<number> {
+  assertValidStellarAddress(publicKey);
   const { fetchXlmBalance } = await import("./horizon.ts");
   const { getCurrentNetwork } = await import("./explorer.ts");
 
@@ -594,6 +599,7 @@ export async function getAccountBalance(publicKey: string): Promise<number> {
  * @throws {Error} If the account is not found on the network or the balance fetch fails.
  */
 export async function getNativeBalance(publicKey: string): Promise<string> {
+  assertValidStellarAddress(publicKey);
   const { fetchXlmBalance } = await import("./horizon.ts");
   const { getCurrentNetwork } = await import("./explorer.ts");
 
