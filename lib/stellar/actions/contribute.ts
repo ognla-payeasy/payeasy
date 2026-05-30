@@ -10,7 +10,7 @@ import {
 import { signTx } from "@/lib/stellar/wallet";
 import { assertValidStellarAddress, assertValidContractId } from "@/lib/stellar/validation";
 
-const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL;
+const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "";
 if (!rpcUrl) {
   throw new Error("Missing required environment variable: NEXT_PUBLIC_SOROBAN_RPC_URL");
 }

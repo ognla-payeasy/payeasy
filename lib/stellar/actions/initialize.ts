@@ -24,7 +24,7 @@ import {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL;
+const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "";
 if (!rpcUrl) {
   throw new Error("Missing required environment variable: NEXT_PUBLIC_SOROBAN_RPC_URL");
 }

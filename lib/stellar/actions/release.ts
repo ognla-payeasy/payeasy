@@ -97,10 +97,12 @@ export async function assertFullyFunded(
  * to obtain resource estimates, and returns the prepared transaction XDR.
  * Call this before showing the TransactionReview modal.
  */
-export async function buildReleaseXdr(params: ReleaseParams): Promise<string> {
+export async function buildReleaseXdr(params: ReleaseParams, isEarly = false): Promise<string> {
   const { contractId, landlordAddress } = params;
 
-  await assertFullyFunded(contractId, landlordAddress);
+  if (!isEarly) {
+    await assertFullyFunded(contractId, landlordAddress);
+  }
 
   const { isConnected } = await freighterApi.isConnected();
   if (!isConnected) {

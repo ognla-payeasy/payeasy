@@ -17,12 +17,12 @@ class MockResizeObserver {
 }
 
 if (typeof globalThis.IntersectionObserver === "undefined") {
-  // @ts-expect-error -- assigning a jsdom-compatible shim
+  // @ts-ignore -- assigning a jsdom-compatible shim
   globalThis.IntersectionObserver = MockIntersectionObserver;
 }
 
 if (typeof globalThis.ResizeObserver === "undefined") {
-  // @ts-expect-error -- assigning a jsdom-compatible shim
+  // @ts-ignore -- assigning a jsdom-compatible shim
   globalThis.ResizeObserver = MockResizeObserver;
 }
 

@@ -231,6 +231,7 @@ export async function createDataStore(): Promise<DataStore> {
 
   if (dataStoreType === "database") {
     // Lazy import to avoid requiring Prisma in file-only mode
+    // @ts-ignore
     const { PrismaClient } = await import("@prisma/client");
     const prisma = new PrismaClient();
     return new DatabaseDataStore(prisma);

@@ -57,7 +57,7 @@ export default function PushReminderPrompt({ contractId, roommateAddress }: Push
       const registration = await navigator.serviceWorker.register("/sw.js");
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: base64ToUint8Array(vapidKey),
+        applicationServerKey: base64ToUint8Array(vapidKey) as any,
       });
 
       const response = await fetch("/api/push/subscribe", {

@@ -27,7 +27,9 @@ function persistDispute(contractId: string): void {
   disputes[contractId] = true;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(disputes));
-  } catch {}
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 export default function DisputeFlag({

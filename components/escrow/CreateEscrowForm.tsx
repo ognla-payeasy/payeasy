@@ -390,7 +390,9 @@ export default function CreateEscrowForm({
               JSON.stringify([result.contractId, ...existing])
             );
           }
-        } catch {}
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       // Clear draft on successful submission

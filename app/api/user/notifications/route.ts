@@ -41,6 +41,6 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const updated = updateNotificationPreferences(userId, body);
+  const updated = updateNotificationPreferences(userId, body as any);
   return NextResponse.json({ notificationPreferences: updated });
 }

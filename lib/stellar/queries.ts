@@ -763,18 +763,18 @@ export async function getUserEscrows(publicKey: string): Promise<ContractState[]
     },
     {
       id: "ESCROW_X9Y8Z7W6",
-      landlord: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
+      landlord: publicKey,
       totalRent: "2000",
-      deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+      deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
         year: "numeric", month: "short", day: "numeric"
       }),
-      deadlineEpoch: Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60,
-      status: "funded",
-      totalFunded: 2000,
+      deadlineEpoch: Math.floor(Date.now() / 1000) + 10 * 24 * 60 * 60,
+      status: "active",
+      totalFunded: 1000,
       lastUpdate: new Date().toISOString(),
       roommates: [
         {
-          address: publicKey,
+          address: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
           expectedShare: "1000",
           paidAmount: "1000",
           isPaid: true
@@ -782,8 +782,8 @@ export async function getUserEscrows(publicKey: string): Promise<ContractState[]
         {
           address: "GBY4H3...9K2L",
           expectedShare: "1000",
-          paidAmount: "1000",
-          isPaid: true
+          paidAmount: "0",
+          isPaid: false
         }
       ]
     }

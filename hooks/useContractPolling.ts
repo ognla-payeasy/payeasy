@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getContractState, ContractQueryError, type ContractState } from "@/lib/stellar/queries";
+import { getContractState, ContractQueryError } from "@/lib/stellar/queries";
+import type { ContractState } from "@/lib/stellar/types";
 
 export interface UseContractPollingOptions {
   pollingInterval?: number;
