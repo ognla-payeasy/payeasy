@@ -18,6 +18,7 @@ import {
   Loader2,
   ArrowUpRight,
   RotateCcw,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
 import { getExplorerLink } from "@/lib/stellar/explorer";
@@ -30,6 +31,8 @@ import { buildReleaseXdr, signAndSubmitRelease } from "@/lib/stellar/actions/rel
 import { useToast } from "@/hooks/useToast";
 import CopyButton from "@/components/ui/copy-button";
 import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
+import ShareEscrowModal from "@/components/escrow/ShareEscrowModal";
+import DisputeFlag from "@/components/escrow/DisputeFlag";
 
 interface Props {
   contractId: string;
@@ -51,6 +54,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
   const [preparedXdr, setPreparedXdr] = useState<string | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
   const [isClaimingRefund, setIsClaimingRefund] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const isLandlord =
     isConnected &&
@@ -96,6 +100,12 @@ export default function EscrowDashboardClient({ contractId }: Props) {
   const hasNonZeroPaid =
     currentRoommate != null && BigInt(currentRoommate.paidAmount) > BigInt(0);
   const showClaimRefundButton = isDeadlinePassed && isNotFullyFunded && hasNonZeroPaid;
+
+  const showDisputeFlag =
+    !isLandlord &&
+    currentRoommate !== undefined &&
+    contractState?.status === "funded" &&
+    isDeadlinePassed;
 
   async function handleReleaseFunds() {
     if (!contractState) return;
@@ -171,6 +181,12 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     <main id="main-content" aria-label="Escrow Dashboard" className="min-h-screen pt-32 pb-24 relative overflow-hidden bg-[#07070a]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(92,124,250,0.1),transparent_50%)] pointer-events-none" />
       <div className="mesh-gradient opacity-30 mix-blend-screen pointer-events-none fixed inset-0 saturate-150" />
+
+      <ShareEscrowModal
+        contractId={contractId}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
 
       {/* TransactionReview modal overlay */}
       {(releasePhase === "review" || releasePhase === "submitting") && preparedXdr && (
@@ -284,7 +300,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                   status={contractState!.status}
                 />
 
-                {/* Release Funds — landlord only */}
+                {/* Release Funds + Share — landlord only */}
                 {isLandlord && (
                   <div className="flex flex-col gap-3">
                     {releaseError && (
@@ -293,23 +309,32 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                         {releaseError}
                       </div>
                     )}
-                    <button
-                      onClick={() => void handleReleaseFunds()}
-                      disabled={releasePhase !== "idle"}
-                      className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {releasePhase === "building" ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Preparing...
-                        </>
-                      ) : (
-                        <>
-                          <ArrowUpRight className="h-4 w-4" />
-                          Release Funds
-                        </>
-                      )}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        onClick={() => void handleReleaseFunds()}
+                        disabled={releasePhase !== "idle"}
+                        className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {releasePhase === "building" ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Preparing...
+                          </>
+                        ) : (
+                          <>
+                            <ArrowUpRight className="h-4 w-4" />
+                            Release Funds
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowShareModal(true)}
+                        className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        Share with Roommates
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -382,6 +407,15 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                       </>
                     )}
                   </button>
+                </div>
+              )}
+
+              {showDisputeFlag && publicKey && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <DisputeFlag
+                    contractId={contractId}
+                    roommateAddress={publicKey}
+                  />
                 </div>
               )}
 
