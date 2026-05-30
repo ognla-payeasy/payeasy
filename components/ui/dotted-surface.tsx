@@ -33,9 +33,6 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 
   useEffect(() => {
     if (!isWebGLAvailable()) {
-      console.warn(
-        "[DottedSurface] WebGL is not available in this browser. Skipping Three.js renderer."
-      );
       return;
     }
 

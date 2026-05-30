@@ -9,14 +9,14 @@ interface CopyButtonProps {
   value: string;
   label?: string;
   className?: string;
-  iconSize?: number;
+  size?: number;
 }
 
 export default function CopyButton({
   value,
   label = "Copy to clipboard",
   className = "",
-  iconSize = 16,
+  size = 16,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
@@ -62,7 +62,7 @@ export default function CopyButton({
             exit={{ opacity: 0, scale: 0.5, rotate: 45 }}
             transition={{ duration: 0.15 }}
           >
-            <Check size={iconSize} className="text-accent-400" />
+            <Check size={size} className="text-accent-400" />
           </motion.div>
         ) : (
           <motion.div
@@ -72,7 +72,7 @@ export default function CopyButton({
             exit={{ opacity: 0, scale: 0.5, rotate: -45 }}
             transition={{ duration: 0.15 }}
           >
-            <Copy size={iconSize} />
+            <Copy size={size} />
           </motion.div>
         )}
       </AnimatePresence>

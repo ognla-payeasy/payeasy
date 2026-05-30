@@ -8,7 +8,8 @@ import {
   MessageSquare,
   BarChart3,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 const features = [
   {
@@ -72,14 +73,19 @@ const cardVariants = {
 };
 
 export default function Features() {
+  const headerRef = useRef(null);
+  const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
+  const gridRef = useRef(null);
+  const isGridInView = useInView(gridRef, { once: true, margin: "-80px" });
+
   return (
     <section id="features" aria-label="Key Features" className="py-24 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div
+          ref={headerRef}
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -98,10 +104,10 @@ export default function Features() {
 
         {/* Feature Cards Grid */}
         <motion.div
+          ref={gridRef}
           variants={containerVariants}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
+          animate={isGridInView ? "visible" : "hidden"}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {features.map((feature) => {

@@ -53,11 +53,11 @@ test("parseContractEvent parses AgreementReleased from map payload", () => {
 });
 
 test("fetchContractEvents calls getEvents and filters by type/contract", async () => {
-  let capturedRequest: RpcGetEventsRequest | null = null;
+  const captured: { request: RpcGetEventsRequest | null } = { request: null };
 
   const server: SorobanRpcServer = {
     async getEvents(request: RpcGetEventsRequest): Promise<RpcGetEventsResponse> {
-      capturedRequest = request;
+      captured.request = request;
       return {
         latestLedger: 999,
         events: [
@@ -105,7 +105,8 @@ test("fetchContractEvents calls getEvents and filters by type/contract", async (
     limit: 20,
   });
 
-  assert.ok(capturedRequest);
+  assert.ok(captured.request);
+  const capturedRequest = captured.request;
   assert.equal(capturedRequest.startLedger, 90);
   assert.equal(capturedRequest.pagination?.cursor, "cursor-0");
   assert.equal(capturedRequest.pagination?.limit, 20);

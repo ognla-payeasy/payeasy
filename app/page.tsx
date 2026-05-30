@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { LogIn, UserPlus, LogOut, User, Wallet } from "lucide-react";
 import { PayEasyHero } from "@/components/ui/payeasy-hero";
 import { PayEasyLogo } from "@/components/ui/payeasy-logo";
 import Features from "@/components/landing/Features";
@@ -8,9 +10,11 @@ import HowItWorks from "@/components/landing/HowItWorks";
 import Stellar from "@/components/landing/Stellar";
 import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
+import { useEmailAuth } from "@/context/EmailAuthContext";
 
 export default function Home() {
   const router = useRouter();
+  const { user, logout } = useEmailAuth();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -41,10 +45,51 @@ export default function Home() {
           { label: "How It Works", href: "#how-it-works" },
           { label: "Stellar", href: "#stellar" },
         ]}
-        ctaButton={{
-          label: "Connect Wallet",
-          onClick: () => router.push("/connect"),
-        }}
+        headerActions={
+          <div className="hidden sm:flex items-center gap-2">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                  <User size={13} className="text-brand-400" />
+                  <span className="text-sm text-dark-200 font-medium max-w-[100px] truncate">
+                    {user.name}
+                  </span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-white/5 border border-white/10 text-dark-300 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <LogOut size={13} />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+                >
+                  <LogIn size={13} />
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-brand-500/20 to-accent-500/20 border border-brand-500/30 text-white hover:from-brand-500/30 hover:to-accent-500/30 transition-colors"
+                >
+                  <UserPlus size={13} />
+                  Sign Up
+                </Link>
+              </>
+            )}
+            <button
+              onClick={() => router.push("/connect")}
+              className="btn-primary !py-2 !px-4 !text-sm flex items-center gap-1.5"
+            >
+              <Wallet size={13} />
+              Connect Wallet
+            </button>
+          </div>
+        }
         title="Split Rent. Trust the Chain."
         subtitle="Find roommates, split rent, and pay securely through Stellar blockchain escrow. Transparent, trustless, and effortless."
         primaryAction={{

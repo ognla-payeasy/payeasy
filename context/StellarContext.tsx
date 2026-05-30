@@ -8,6 +8,7 @@ import {
   checkConnection
 } from "@/lib/stellar/wallet";
 import { getWalletError, type WalletError } from "@/lib/stellar/errors";
+import { useToast } from "@/hooks/useToast";
 
 interface StellarContextType {
   publicKey: string | null;
@@ -35,6 +36,7 @@ export function StellarProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<WalletError | null>(null);
   const [hasAccountChanged, setHasAccountChanged] = useState(false);
   const [announcement, setAnnouncement] = useState<string | null>(null);
+  const toast = useToast();
 
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
@@ -109,6 +111,8 @@ export function StellarProvider({ children }: { children: React.ReactNode }) {
       if (key) {
         setPublicKey(key);
         setIsConnected(true);
+        const truncatedKey = `${key.slice(0, 4)}...${key.slice(-4)}`;
+        toast.success("Wallet connected — " + truncatedKey);
         announce("Wallet connected successfully.");
       } else {
         throw new Error("User rejected connection or failed to retrieve public key.");

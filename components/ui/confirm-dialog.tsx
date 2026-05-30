@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,8 +17,6 @@ interface ConfirmDialogProps {
   variant?: "danger" | "primary";
 }
 
-import { useFocusTrap } from "@/hooks/useFocusTrap";
-
 export function ConfirmDialog({
   isOpen,
   onClose,
@@ -26,8 +25,6 @@ export function ConfirmDialog({
   description,
   confirmText = "Confirm",
   cancelText = "Cancel",
-  variant = "primary",
-}: ConfirmDialogProps) {
   variant = "primary",
 }: ConfirmDialogProps) {
   const containerRef = useFocusTrap(isOpen, onClose);

@@ -1,9 +1,9 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import HistoryClient from "./HistoryClient";
 import TransactionListSkeleton from "@/components/history/TransactionListSkeleton";
 import { History, LayoutDashboard, Database } from "lucide-react";
 import Link from "next/link";
+import HistoryClient from "./HistoryClient";
 
 export const metadata: Metadata = {
   title: "Transaction History | PayEasy",

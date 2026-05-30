@@ -10,11 +10,13 @@ import { exportTransactionsToCsv } from "@/lib/exportCsv";
 
 interface TransactionListProps {
   transactions: Transaction[];
+// New state for sort order
   hasMore: boolean;
   isLoadingMore: boolean;
+const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   onLoadMore: () => void;
   newBadgeHashes?: string[];
-}
+    const filtered = transactions.filter((tx) => {
 
 function toLocalDate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
@@ -41,6 +43,13 @@ export default function TransactionList({
   };
 
   const filteredTransactions = useMemo(() => {
+    return filtered.sort((a, b) => {
+      if (sortOrder === "desc") {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      } else {
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      }
+    });
     return transactions.filter((tx) => {
       const matchesSearch =
         searchQuery === "" ||

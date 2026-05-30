@@ -41,6 +41,11 @@
     outline: 2px solid #5c7cfa !important;
     outline-offset: 3px !important;
   }
+
+  .light body {
+    background-color: #f8f9fa;
+    color: #212529;
+  }
 }
 
 @layer components {
@@ -154,6 +159,30 @@
     background: linear-gradient(90deg, transparent, rgba(92, 124, 250, 0.2), transparent);
     margin: 0 auto;
     max-width: 800px;
+  }
+
+  .light .glass {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .light .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .light .glass-card:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(92, 124, 250, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  }
+
+  .light .text-dark-400 {
+    color: #6c757d;
+  }
+  
+  .light .text-dark-500 {
+    color: #495057;
   }
 }
 

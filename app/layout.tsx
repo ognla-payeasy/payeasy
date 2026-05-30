@@ -4,6 +4,8 @@ import "@/lib/env";
 import { AppShell } from "@/components/ui/app-shell";
 import { PageTransition } from "@/components/ui/page-transition";
 import { StellarProvider } from "@/context/StellarContext";
+import { ToastProvider } from "@/components/ui/toast-provider";
+import { EmailAuthProvider } from "@/context/EmailAuthContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -53,14 +55,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans`}
       >
-        <StellarProvider>
-          <AppShell>
-            <PageTransition>{children}</PageTransition>
-          </AppShell>
-        </StellarProvider>
+        <ToastProvider>
+          <EmailAuthProvider>
+            <StellarProvider>
+              <AppShell>
+                <PageTransition>{children}</PageTransition>
+              </AppShell>
+            </StellarProvider>
+          </EmailAuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

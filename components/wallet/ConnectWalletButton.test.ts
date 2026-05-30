@@ -1,5 +1,6 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import {  assert , test } from \"vitest\";
+
+
 
 // Tests for ConnectWalletButton connection-state logic.
 // Full render/interaction is verified manually per the acceptance criteria.

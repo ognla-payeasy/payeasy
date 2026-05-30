@@ -8,9 +8,6 @@ on:
       - '.github/workflows/contract-tests.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'contracts/rent-escrow/**'
-      - '.github/workflows/contract-tests.yml'
 
 jobs:
   build-and-test:
@@ -56,3 +53,4 @@ jobs:
           name: rent-escrow-wasm
           path: target/wasm32-unknown-unknown/release/*.wasm
           if-no-files-found: error
+          retention-days: 7

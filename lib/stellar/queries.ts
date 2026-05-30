@@ -1,3 +1,73 @@
+import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
+
+export async function getLandlordEscrows(address: string): Promise<EscrowContract[]> {
+  const { createHorizonClient, fetchTransactionHistory } = await import("./history");
+  const client = createHorizonClient();
+
+  const contractIds = new Set<string>();
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 10; page++) {
+    const result = await fetchTransactionHistory({
+      client,
+      accountId: address,
+      cursor,
+      limit: 50,
+      includeOperations: true,
+    });
+
+    for (const tx of result.transactions) {
+      for (const op of tx.operations) {
+        if (op.type === "invoke_host_function" && op.contractId) {
+          contractIds.add(op.contractId);
+        }
+      }
+    }
+
+    if (!result.nextCursor || result.transactions.length === 0) break;
+    cursor = result.nextCursor;
+  }
+
+  const escrows: EscrowContract[] = [];
+
+  await Promise.all(
+    Array.from(contractIds).map(async (contractId) => {
+      try {
+        const state = await getContractState(contractId);
+        if (state.landlord === address) {
+          escrows.push({
+            id: state.id,
+            landlord: state.landlord,
+            totalRent: state.totalRent,
+            deadline: state.deadline,
+            deadlineEpoch: state.deadlineEpoch,
+            status: state.status,
+            totalFunded: state.totalFunded,
+          });
+        }
+      } catch {
+        // not an escrow contract or contract unavailable, skip
+      }
+    })
+  );
+
+  return escrows;
+}
+
+export async function getLandlordStats(address: string): Promise<LandlordStats> {
+  const escrows = await getLandlordEscrows(address);
+
+  const totalEscrowed = escrows.reduce((sum, e) => sum + Number(e.totalRent), 0);
+  const activeEscrows = escrows.filter(
+    (e) => e.status === "active" || e.status === "funded"
+  ).length;
+  const totalReleased = escrows
+    .filter((e) => e.status === "released")
+    .reduce((sum, e) => sum + Number(e.totalRent), 0);
+
+  return { totalEscrowed, activeEscrows, totalReleased };
+}
+import type { xdr } from "@stellar/stellar-sdk";
 import { withRetry } from "./retry.ts";
 
 
@@ -261,22 +331,91 @@ function parseBoolRetval(retval: unknown): boolean {
 
 // ─── Full contract state ──────────────────────────────────────────────────────
 
-export interface ContractState {
-  id: string;
-  landlord: string;
-  totalRent: string;
-  deadline: string;
-  /** Unix timestamp (seconds) of the deadline, for numeric comparison. */
-  deadlineEpoch: number;
-  status: "active" | "funded" | "released" | "expired";
-  totalFunded: number;
-  lastUpdate: string;
-  roommates: {
-    address: string;
-    expectedShare: string;
-    paidAmount: string;
-    isPaid: boolean;
-  }[];
+
+// ─── Basic contract info (for /pay/[contractId]) ─────────────────────────────
+
+
+/**
+ * Returns the essential fields needed to render the contribute/pay page,
+ * or `null` when the contract does not exist or its data cannot be read.
+ */
+export async function getContractBasicInfo(
+  contractId: string
+): Promise<ContractBasicInfo | null> {
+  try {
+    const { rpcServer, networkPassphrase } = await import("./config.ts");
+    const {
+      TransactionBuilder,
+      Account,
+      Contract,
+      scValToNative,
+      rpc: rpcHelpers,
+    } = await import("@stellar/stellar-sdk");
+
+    const buildInvocationXdr = ({
+      contractId: cId,
+      method,
+      args = [],
+    }: BuildInvocationParams): string => {
+      const contract = new Contract(cId);
+      const source = new Account(cId, "0");
+      const tx = new TransactionBuilder(source, {
+        fee: "100",
+        networkPassphrase,
+      })
+        .addOperation(contract.call(method, ...(args as xdr.ScVal[])))
+        .setTimeout(60)
+        .build();
+      return tx.toXDR();
+    };
+
+    const ctx: QueryContext = {
+      client: {
+        async simulateTransaction(
+          xdrStr: string
+        ): Promise<SimulateTransactionResponse> {
+          try {
+            const tx = TransactionBuilder.fromXDR(xdrStr, networkPassphrase);
+            const result = await withRetry(() =>
+              rpcServer.simulateTransaction(tx)
+            );
+            if (rpcHelpers.Api.isSimulationError(result)) {
+              return { error: result.error };
+            }
+            let retval: unknown = undefined;
+            if (
+              rpcHelpers.Api.isSimulationSuccess(result) &&
+              result.result?.retval
+            ) {
+              try {
+                retval = scValToNative(result.result.retval);
+              } catch {
+                retval = result.result.retval.toString();
+              }
+            }
+            return { results: retval !== undefined ? [{ retval }] : [] };
+          } catch (err) {
+            throw new ContractQueryError(
+              `Soroban RPC simulation failed: ${String(err)}`
+            );
+          }
+        },
+      },
+      builder: { buildInvocationXdr },
+      contractId,
+    };
+
+    const [landlord, totalRent, deadline, token] = await Promise.all([
+      getLandlord(ctx),
+      getTotal(ctx),
+      getDeadline(ctx),
+      getTokenAddress(ctx),
+    ]);
+
+    return { landlord, totalRent, deadline, token };
+  } catch {
+    return null;
+  }
 }
 
 export async function getContractState(contractId: string): Promise<ContractState> {
@@ -291,7 +430,7 @@ export async function getContractState(contractId: string): Promise<ContractStat
       fee: "100",
       networkPassphrase,
     })
-      .addOperation(contract.call(method, ...(args as import("@stellar/stellar-sdk").xdr.ScVal[])))
+      .addOperation(contract.call(method, ...(args as xdr.ScVal[])))
       .setTimeout(60)
       .build();
 
@@ -395,6 +534,20 @@ export async function getAccountBalance(publicKey: string): Promise<number> {
   }
 }
 
+export async function getNativeBalance(publicKey: string): Promise<string> {
+  const { fetchXlmBalance } = await import("./horizon.ts");
+  const { getCurrentNetwork } = await import("./explorer.ts");
+
+  try {
+    return await fetchXlmBalance(publicKey, getCurrentNetwork());
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("not found")) {
+      throw new Error(`Account not found: ${publicKey}`);
+    }
+    throw err;
+  }
+}
+
 // ─── Horizon: fee stats ───────────────────────────────────────────────────────
 
 export interface FeeStats {
@@ -451,4 +604,67 @@ function stroopsToXlm(stroops: string): string {
   const fraction = value % STROOPS_PER_XLM;
   const fractionStr = fraction.toString().padStart(7, "0").replace(/0+$/, "");
   return fractionStr.length > 0 ? `${whole}.${fractionStr}` : whole.toString();
+}
+
+// ─── User Escrows (Mocked) ───────────────────────────────────────────────────
+
+export async function getUserEscrows(publicKey: string): Promise<ContractState[]> {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  // Mocked list of escrows for the connected wallet
+  return [
+    {
+      id: "ESCROW_A1B2C3D4",
+      landlord: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
+      totalRent: "1500",
+      deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "numeric"
+      }),
+      deadlineEpoch: Math.floor(Date.now() / 1000) + 5 * 24 * 60 * 60,
+      status: "active",
+      totalFunded: 750,
+      lastUpdate: new Date().toISOString(),
+      roommates: [
+        {
+          address: publicKey,
+          expectedShare: "750",
+          paidAmount: "750",
+          isPaid: true
+        },
+        {
+          address: "GBY4H3...9K2L",
+          expectedShare: "750",
+          paidAmount: "0",
+          isPaid: false
+        }
+      ]
+    },
+    {
+      id: "ESCROW_X9Y8Z7W6",
+      landlord: "GDX7F2UWKYY3Q5Z3B6L4D7U7Y3T5X2J6K7L8M9N0P1Q2R3S4T5U6V7W8",
+      totalRent: "2000",
+      deadline: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+        year: "numeric", month: "short", day: "numeric"
+      }),
+      deadlineEpoch: Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60,
+      status: "funded",
+      totalFunded: 2000,
+      lastUpdate: new Date().toISOString(),
+      roommates: [
+        {
+          address: publicKey,
+          expectedShare: "1000",
+          paidAmount: "1000",
+          isPaid: true
+        },
+        {
+          address: "GBY4H3...9K2L",
+          expectedShare: "1000",
+          paidAmount: "1000",
+          isPaid: true
+        }
+      ]
+    }
+  ];
 }

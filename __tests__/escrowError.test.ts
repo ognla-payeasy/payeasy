@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import {  describe, it , assert } from "vitest";
+
 
 describe("EscrowError boundary behaviour", () => {
   it("reset callback is invoked when Try Again is triggered", () => {

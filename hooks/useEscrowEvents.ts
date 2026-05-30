@@ -54,10 +54,6 @@ export interface UseEscrowEventsResult {
 
 const DEFAULT_INTERVAL_MS = 6_000;
 
-/**
- * Converts a single `ParsedContractEvent` into an `EscrowNotification`.
- * Pure function — exported so tests can call it without a React environment.
- */
 export function buildNotification(
   event: ParsedContractEvent
 ): EscrowNotification {
@@ -65,7 +61,7 @@ export function buildNotification(
 
   if (event.type === "Contribution") {
     const e = event as ContributionEvent;
-    const short = e.contributor.slice(0, 6) + "\u2026";
+    const short = e.contributor.slice(0, 6) + "…";
     return {
       id,
       type: "contribution",
@@ -77,7 +73,7 @@ export function buildNotification(
   }
 
   const e = event as AgreementReleasedEvent;
-  const short = e.landlord ? e.landlord.slice(0, 6) + "\u2026" : "landlord";
+  const short = e.landlord ? e.landlord.slice(0, 6) + "…" : "landlord";
   return {
     id,
     type: "released",
@@ -88,14 +84,6 @@ export function buildNotification(
   };
 }
 
-/**
- * Runs one poll cycle against the provided poller and converts the results
- * into notifications. Returns the new events and notifications only —
- * callers are responsible for merging with existing state.
- *
- * Pure async function — exported so tests can exercise the polling logic
- * without a React environment.
- */
 export async function pollOnce(poller: ContractEventPoller): Promise<{
   events: ParsedContractEvent[];
   notifications: EscrowNotification[];

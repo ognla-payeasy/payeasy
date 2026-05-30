@@ -15,3 +15,5 @@ lto = true
 [profile.release-with-logs]
 inherits = "release"
 debug = true
+
+level = true

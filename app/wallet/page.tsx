@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { useWallet } from "@/hooks/useWallet";
-import { Copy, Plus, History, Coins, ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, XCircle, Check } from "lucide-react";
+import { Copy, Plus, History, ArrowUpRight, ArrowDownLeft, CheckCircle2, Clock, XCircle, Check } from "lucide-react";
+import FundTestnetButton from "@/components/wallet/FundTestnetButton";
 
 export default function WalletDashboard() {
   const router = useRouter();
@@ -117,12 +118,7 @@ export default function WalletDashboard() {
           View History
         </button>
         {walletData?.network === "testnet" && (
-          <button
-            className="flex items-center justify-center gap-2 p-4 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 rounded-xl transition-colors font-medium"
-          >
-            <Coins className="w-5 h-5" />
-            Fund Testnet
-          </button>
+          <FundTestnetButton publicKey={walletData?.address ?? ""} />
         )}
       </div>
 

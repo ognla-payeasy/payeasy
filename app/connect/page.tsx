@@ -8,7 +8,6 @@ import {
   Zap,
   Globe,
   ArrowLeft,
-  Copy,
   Check,
   ExternalLink,
   AlertCircle,
@@ -20,6 +19,7 @@ import {
 import Link from "next/link";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 import { useStellar } from "@/context/StellarContext";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { PayEasyLogo } from "@/components/ui/payeasy-logo";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { OnboardingCard } from "@/components/ui/onboarding-card";
@@ -60,7 +60,6 @@ export default function ConnectWalletPage() {
     error,
   } = useStellar();
 
-  const [copied, setCopied] = useState(false);
   const [step, setStep] = useState<Step>("intro");
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [errorExpanded, setErrorExpanded] = useState(false);
@@ -68,6 +67,11 @@ export default function ConnectWalletPage() {
   const [checkingNetwork, setCheckingNetwork] = useState(false);
   const [freighterNetwork, setFreighterNetwork] = useState<"TESTNET" | "MAINNET" | null>(null);
   const [isVersionOutdated, setIsVersionOutdated] = useState(false);
+
+  const {
+    balance,
+    isLoading: isBalanceLoading,
+  } = useWalletBalance(publicKey ?? null, isConnected);
 
   useEffect(() => {
     if (isConnected && publicKey) {
@@ -92,13 +96,6 @@ export default function ConnectWalletPage() {
     await connect();
   };
 
-  const handleCopy = async () => {
-    if (publicKey) {
-      await navigator.clipboard.writeText(publicKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleDisconnect = () => {
     disconnect();
@@ -491,11 +488,11 @@ export default function ConnectWalletPage() {
                   <code className="flex-1 min-w-0 text-sm text-dark-200 bg-dark-950/60 rounded-xl px-4 py-3 font-mono truncate border border-white/5">
                     {publicKey}
                   </code>
-                  <CopyButton 
-                    value={publicKey} 
-                    label="Copy wallet address" 
-                    iconSize={18} 
-                    className="!p-3 rounded-xl glass hover:bg-white/10 transition-colors shrink-0" 
+                  <CopyButton
+                    value={publicKey}
+                    label="Copy wallet address"
+                    size={18}
+                    className="!p-3 rounded-xl glass hover:bg-white/10 transition-colors shrink-0"
                   />
                   <a
                     href={getExplorerLink("account", publicKey)}
@@ -509,15 +506,19 @@ export default function ConnectWalletPage() {
                   </a>
                 </div>
 
-                {copied && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-accent-400 text-center"
-                  >
-                    Address copied to clipboard
-                  </motion.p>
-                )}
+                {/* XLM Balance */}
+                <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                  <span className="text-xs uppercase tracking-widest text-dark-500 font-semibold font-display">
+                    Balance
+                  </span>
+                  {isBalanceLoading ? (
+                    <div className="h-4 w-28 rounded bg-white/10 animate-pulse" />
+                  ) : (
+                    <span className="text-sm font-semibold text-white font-mono">
+                      {balance != null ? `${balance} XLM` : "—"}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Fund testnet */}

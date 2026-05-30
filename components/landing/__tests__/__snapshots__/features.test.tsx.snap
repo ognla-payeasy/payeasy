@@ -1,0 +1,292 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Features > matches snapshot 1`] = `
+<section
+  aria-label="Key Features"
+  class="py-24 px-6"
+  id="features"
+>
+  <div
+    class="max-w-7xl mx-auto"
+  >
+    <div
+      class="text-center mb-16"
+      style="opacity: 0; transform: translateY(20px);"
+    >
+      <span
+        class="text-accent-400 text-sm font-semibold uppercase tracking-widest"
+      >
+        Features
+      </span>
+      <h2
+        class="text-4xl md:text-5xl font-bold mt-3 mb-5 text-balance"
+      >
+        Everything You Need to
+         
+        <span
+          class="gradient-text"
+        >
+          Share Rent
+        </span>
+      </h2>
+      <p
+        class="text-dark-400 text-lg max-w-2xl mx-auto text-balance"
+      >
+        From finding the perfect roommate to settling rent on the blockchain — PayEasy handles the entire flow.
+      </p>
+    </div>
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-search text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+            <path
+              d="m21 21-4.3-4.3"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          Find Roommates
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          Browse verified apartment listings and connect with compatible roommates looking to share rent.
+        </p>
+      </div>
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-shield-check text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          Trustless Escrow
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          Rent contributions are held in a Stellar smart contract. Funds are released only when all roommates pay.
+        </p>
+      </div>
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-400 to-accent-500 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-credit-card text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect
+              height="14"
+              rx="2"
+              width="20"
+              x="2"
+              y="5"
+            />
+            <line
+              x1="2"
+              x2="22"
+              y1="10"
+              y2="10"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          Instant Payments
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          Settle rent in ~5 seconds with near-zero fees using Stellar blockchain. Support for XLM and stablecoins.
+        </p>
+      </div>
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-brand-500 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-users text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+            />
+            <circle
+              cx="9"
+              cy="7"
+              r="4"
+            />
+            <path
+              d="M22 21v-2a4 4 0 0 0-3-3.87"
+            />
+            <path
+              d="M16 3.13a4 4 0 0 1 0 7.75"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          Roommate Profiles
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          View detailed profiles, preferences, and rating history before committing to share a space.
+        </p>
+      </div>
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-400 to-teal-500 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-message-square text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          In-App Messaging
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          Chat directly with potential roommates and landlords. Coordinate moves and settle details privately.
+        </p>
+      </div>
+      <div
+        class="glass-card p-8 group"
+        style="opacity: 0; transform: translateY(30px);"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center mb-5 transition-transform group-hover:scale-110"
+        >
+          <svg
+            class="lucide lucide-bar-chart3 text-white"
+            fill="none"
+            height="22"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="22"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 3v18h18"
+            />
+            <path
+              d="M18 17V9"
+            />
+            <path
+              d="M13 17V5"
+            />
+            <path
+              d="M8 17v-3"
+            />
+          </svg>
+        </div>
+        <h3
+          class="text-xl font-semibold text-white mb-3"
+        >
+          Payment History
+        </h3>
+        <p
+          class="text-dark-400 leading-relaxed text-[15px]"
+        >
+          Full on-chain transparency. Track every contribution, payout, and escrow status in real time.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+`;

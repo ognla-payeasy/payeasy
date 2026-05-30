@@ -18,7 +18,7 @@ export default function EscrowNotFound() {
           <div className="space-y-3">
             <h1 className="text-3xl font-black text-white tracking-tight">Escrow not found</h1>
             <p className="text-dark-400 text-sm leading-relaxed">
-              We couldn't locate an escrow agreement with that ID. Check the contract ID and try again, or explore your existing agreements.
+              We couldn&apos;t locate an escrow agreement with that ID. Check the contract ID and try again, or explore your existing agreements.
             </p>
           </div>
 

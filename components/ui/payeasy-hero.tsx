@@ -26,6 +26,7 @@ interface PayEasyHeroProps {
     label: string;
     onClick: () => void;
   };
+  headerActions?: React.ReactNode;
   title: string;
   subtitle: string;
   primaryAction?: {
@@ -55,6 +56,7 @@ export function PayEasyHero({
     { label: "Stellar", href: "#stellar" },
   ],
   ctaButton,
+  headerActions,
   title,
   subtitle,
   primaryAction,
@@ -220,14 +222,14 @@ export function PayEasyHero({
         </nav>
 
         <div className="flex items-center gap-3">
-          {ctaButton && (
+          {headerActions ?? (ctaButton && (
             <button
               onClick={ctaButton.onClick}
               className="hidden sm:inline-flex btn-primary text-sm"
             >
               {ctaButton.label}
             </button>
-          )}
+          ))}
 
           <button
             className="lg:hidden text-dark-400 hover:text-white transition-colors"
@@ -265,7 +267,9 @@ export function PayEasyHero({
               {item.label}
             </a>
           ))}
-          {ctaButton && (
+          {headerActions ? (
+            <div className="mt-3 flex flex-col gap-2">{headerActions}</div>
+          ) : ctaButton && (
             <button
               onClick={ctaButton.onClick}
               className="btn-primary w-full mt-3 justify-center text-sm"

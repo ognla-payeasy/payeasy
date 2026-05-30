@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-4">
-            <h2 className="text-2xl font-bold text-white tracking-tight">2. How It's Used</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">2. How It&apos;s Used</h2>
             <p>
               Your data is used strictly to facilitate testnet transactions, test the smart contracts, and improve the user experience.
               On-chain data is public by design of the Stellar network. We do not use your data for marketing.

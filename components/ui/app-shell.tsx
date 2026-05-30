@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { DottedSurface } from "@/components/ui/dotted-surface";
 import { useStellar } from "@/context/StellarContext";
-import { ToastProvider } from "@/components/ui/toast-provider";
 import { SkipLink } from "@/components/ui/skip-link";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import OfflineBanner from "./offline-banner";
@@ -57,13 +56,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
       <div className="mesh-gradient" aria-hidden="true" />
       <SkipLink />
-      <ToastProvider>
-        <ErrorBoundary>
-          <OfflineBanner />
-          <AccountChangedBanner />
-          <div className="relative z-10">{children}</div>
-        </ErrorBoundary>
-      </ToastProvider>
+      <ErrorBoundary>
+        <OfflineBanner />
+        <AccountChangedBanner />
+        <div className="relative z-10">{children}</div>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

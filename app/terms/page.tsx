@@ -57,7 +57,7 @@ export default function TermsPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-white tracking-tight">3. Limitation of Liability</h2>
             <p>
-              The PayEasy platform is provided "as is" and "as available". We do not guarantee the stability of the testnet environment. 
+              The PayEasy platform is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;. We do not guarantee the stability of the testnet environment.
               Under no circumstances shall PayEasy or its developers be liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use the service.
             </p>
           </section>

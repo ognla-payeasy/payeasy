@@ -7,7 +7,8 @@ import {
   Code2,
   ExternalLink,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 const benefits = [
   {
@@ -33,6 +34,12 @@ const benefits = [
 ];
 
 export default function Stellar() {
+  const contentRef = useRef(null);
+  const isContentInView = useInView(contentRef, { once: true, margin: "-100px" });
+  const benefitsRef = useRef(null);
+  const isBenefitsInView = useInView(benefitsRef, { once: true, margin: "-50px" });
+  const flowRef = useRef(null);
+  const isFlowInView = useInView(flowRef, { once: true, margin: "-80px" });
   return (
     <section id="stellar" aria-label="Stellar Blockchain Integration" className="py-24 px-6 relative overflow-hidden">
       {/* Background accent */}
@@ -42,9 +49,9 @@ export default function Stellar() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left — Content */}
           <motion.div
+            ref={contentRef}
             initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
+            animate={isContentInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
             transition={{ duration: 0.6 }}
           >
             <span className="text-accent-400 text-sm font-semibold uppercase tracking-widest">
@@ -74,15 +81,14 @@ export default function Stellar() {
           </motion.div>
 
           {/* Right — Benefit Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div ref={benefitsRef} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               return (
                 <motion.div
                   key={benefit.title}
                   initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
+                  animate={isBenefitsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="glass-card p-6 group"
                 >
@@ -104,9 +110,9 @@ export default function Stellar() {
 
         {/* Escrow Flow Visual */}
         <motion.div
+          ref={flowRef}
           initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
+          animate={isFlowInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
           transition={{ duration: 0.7, delay: 0.2 }}
           className="mt-20 glass-card p-8 md:p-12"
         >

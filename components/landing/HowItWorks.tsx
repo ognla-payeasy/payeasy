@@ -7,7 +7,8 @@ import {
   Home,
   ArrowRight,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 const steps = [
   {
@@ -41,14 +42,19 @@ const steps = [
 ];
 
 export default function HowItWorks() {
+  const headerRef = useRef(null);
+  const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
+  const stepsRef = useRef(null);
+  const isStepsInView = useInView(stepsRef, { once: true, margin: "-50px" });
+
   return (
     <section id="how-it-works" aria-label="How it Works Step-by-Step" className="py-24 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div
+          ref={headerRef}
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-20"
         >
@@ -77,8 +83,7 @@ export default function HowItWorks() {
                 <motion.div
                   key={step.number}
                   initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
+                  animate={isStepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                   transition={{ duration: 0.5, delay: index * 0.15 }}
                   className="relative text-center group"
                 >

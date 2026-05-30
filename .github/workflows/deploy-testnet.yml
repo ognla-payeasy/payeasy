@@ -229,14 +229,18 @@ jobs:
               '```',
             ].join('\n');
 
-            await github.rest.repos.createReleaseAsset;
-
-            // Post as a release comment (reactions on the release body)
-            await github.rest.issues.createComment({
+            // Append deployment summary to the release body
+            const release = await github.rest.repos.getRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.release.id,
-              body,
+              release_id: context.payload.release.id,
+            });
+
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id,
+              body: (release.data.body || '') + '\n\n' + body,
             });
 
             // Also set a step summary

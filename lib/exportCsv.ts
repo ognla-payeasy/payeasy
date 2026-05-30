@@ -27,7 +27,7 @@ export function exportTransactionsToCsv(transactions: Transaction[]) {
       escapeCsv(date),
       escapeCsv(tx.type.toUpperCase()),
       escapeCsv(tx.amount),
-      escapeCsv((tx as any).fee || "N/A"), // Fallback if fee is not in type
+      escapeCsv((tx as { fee?: string }).fee || "N/A"), // Fallback if fee is not in type
       escapeCsv(tx.txHash),
       escapeCsv(tx.status.toUpperCase()),
     ].join(",");

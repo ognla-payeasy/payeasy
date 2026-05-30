@@ -50,19 +50,12 @@ export default function useTransactionPolling<T extends HasTxHash>({
     let cancelled = false;
 
     const tick = async () => {
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
-        return;
-      }
-
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       const { newTransactions } = await pollForNewTransactions(currentTransactions, fetchLatest);
-      if (!cancelled && newTransactions.length > 0) {
-        onNewTransactions(newTransactions);
-      }
+      if (!cancelled && newTransactions.length > 0) onNewTransactions(newTransactions);
     };
 
-    const interval = window.setInterval(() => {
-      void tick();
-    }, intervalMs);
+    const interval = window.setInterval(() => { void tick(); }, intervalMs);
 
     return () => {
       cancelled = true;

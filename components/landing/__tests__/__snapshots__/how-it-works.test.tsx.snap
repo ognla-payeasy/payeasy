@@ -1,0 +1,303 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HowItWorks > matches snapshot 1`] = `
+<section
+  aria-label="How it Works Step-by-Step"
+  class="py-24 px-6"
+  id="how-it-works"
+>
+  <div
+    class="max-w-7xl mx-auto"
+  >
+    <div
+      class="text-center mb-20"
+      style="opacity: 0; transform: translateY(20px);"
+    >
+      <span
+        class="text-accent-400 text-sm font-semibold uppercase tracking-widest"
+      >
+        How It Works
+      </span>
+      <h2
+        class="text-4xl md:text-5xl font-bold mt-3 mb-5 text-balance"
+      >
+        Four Steps to
+         
+        <span
+          class="gradient-text"
+        >
+          Hassle-Free Rent
+        </span>
+      </h2>
+      <p
+        class="text-dark-400 text-lg max-w-2xl mx-auto text-balance"
+      >
+        No middlemen. No trust issues. Just a transparent, blockchain-backed process from listing to moving in.
+      </p>
+    </div>
+    <div
+      class="relative"
+    >
+      <div
+        class="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/30 to-transparent -translate-y-1/2"
+      />
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+      >
+        <div
+          class="relative text-center group"
+          style="opacity: 0; transform: translateY(40px);"
+        >
+          <div
+            class="text-7xl font-black text-white/[0.03] absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 select-none pointer-events-none"
+          >
+            01
+          </div>
+          <div
+            class="relative z-10 w-20 h-20 rounded-2xl glass mx-auto mb-6 flex items-center justify-center transition-all group-hover:bg-brand-500/10 group-hover:border-brand-500/30"
+          >
+            <svg
+              class="lucide lucide-search text-brand-400 group-hover:text-brand-300 transition-colors"
+              fill="none"
+              height="30"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="30"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="11"
+                cy="11"
+                r="8"
+              />
+              <path
+                d="m21 21-4.3-4.3"
+              />
+            </svg>
+          </div>
+          <div
+            class="hidden lg:block absolute top-10 -right-4 text-dark-600"
+          >
+            <svg
+              class="lucide lucide-arrow-right"
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12h14"
+              />
+              <path
+                d="m12 5 7 7-7 7"
+              />
+            </svg>
+          </div>
+          <h3
+            class="text-lg font-semibold text-white mb-3"
+          >
+            Browse Listings
+          </h3>
+          <p
+            class="text-dark-400 text-sm leading-relaxed max-w-xs mx-auto"
+          >
+            Explore apartments posted by landlords or users looking for roommates. Filter by price, location, and roommate count.
+          </p>
+        </div>
+        <div
+          class="relative text-center group"
+          style="opacity: 0; transform: translateY(40px);"
+        >
+          <div
+            class="text-7xl font-black text-white/[0.03] absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 select-none pointer-events-none"
+          >
+            02
+          </div>
+          <div
+            class="relative z-10 w-20 h-20 rounded-2xl glass mx-auto mb-6 flex items-center justify-center transition-all group-hover:bg-brand-500/10 group-hover:border-brand-500/30"
+          >
+            <svg
+              class="lucide lucide-handshake text-brand-400 group-hover:text-brand-300 transition-colors"
+              fill="none"
+              height="30"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="30"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m11 17 2 2a1 1 0 1 0 3-3"
+              />
+              <path
+                d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"
+              />
+              <path
+                d="m21 3 1 11h-2"
+              />
+              <path
+                d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"
+              />
+              <path
+                d="M3 4h8"
+              />
+            </svg>
+          </div>
+          <div
+            class="hidden lg:block absolute top-10 -right-4 text-dark-600"
+          >
+            <svg
+              class="lucide lucide-arrow-right"
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12h14"
+              />
+              <path
+                d="m12 5 7 7-7 7"
+              />
+            </svg>
+          </div>
+          <h3
+            class="text-lg font-semibold text-white mb-3"
+          >
+            Match & Agree
+          </h3>
+          <p
+            class="text-dark-400 text-sm leading-relaxed max-w-xs mx-auto"
+          >
+            Connect with potential roommates or landlords. Chat, review profiles, and agree on a rent split that works for everyone.
+          </p>
+        </div>
+        <div
+          class="relative text-center group"
+          style="opacity: 0; transform: translateY(40px);"
+        >
+          <div
+            class="text-7xl font-black text-white/[0.03] absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 select-none pointer-events-none"
+          >
+            03
+          </div>
+          <div
+            class="relative z-10 w-20 h-20 rounded-2xl glass mx-auto mb-6 flex items-center justify-center transition-all group-hover:bg-brand-500/10 group-hover:border-brand-500/30"
+          >
+            <svg
+              class="lucide lucide-wallet text-brand-400 group-hover:text-brand-300 transition-colors"
+              fill="none"
+              height="30"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="30"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
+              />
+              <path
+                d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"
+              />
+            </svg>
+          </div>
+          <div
+            class="hidden lg:block absolute top-10 -right-4 text-dark-600"
+          >
+            <svg
+              class="lucide lucide-arrow-right"
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5 12h14"
+              />
+              <path
+                d="m12 5 7 7-7 7"
+              />
+            </svg>
+          </div>
+          <h3
+            class="text-lg font-semibold text-white mb-3"
+          >
+            Contribute to Escrow
+          </h3>
+          <p
+            class="text-dark-400 text-sm leading-relaxed max-w-xs mx-auto"
+          >
+            Each roommate contributes their share to a Stellar smart contract. Funds are locked safely until all parties have paid.
+          </p>
+        </div>
+        <div
+          class="relative text-center group"
+          style="opacity: 0; transform: translateY(40px);"
+        >
+          <div
+            class="text-7xl font-black text-white/[0.03] absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 select-none pointer-events-none"
+          >
+            04
+          </div>
+          <div
+            class="relative z-10 w-20 h-20 rounded-2xl glass mx-auto mb-6 flex items-center justify-center transition-all group-hover:bg-brand-500/10 group-hover:border-brand-500/30"
+          >
+            <svg
+              class="lucide lucide-house text-brand-400 group-hover:text-brand-300 transition-colors"
+              fill="none"
+              height="30"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="30"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+              />
+              <path
+                d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+              />
+            </svg>
+          </div>
+          <h3
+            class="text-lg font-semibold text-white mb-3"
+          >
+            Move In
+          </h3>
+          <p
+            class="text-dark-400 text-sm leading-relaxed max-w-xs mx-auto"
+          >
+            Once all contributions are complete, funds are automatically released to the landlord. Pick up your keys and move in!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+`;

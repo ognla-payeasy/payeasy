@@ -173,7 +173,7 @@ const ERROR_MAPPINGS: Record<number | string, UserFriendlyError> = {
  * Translates a raw error from Stellar, Soroban, or Freighter into a user-friendly message.
  * @param error The raw error object or message string.
  */
-export function translateStellarError(error: any): UserFriendlyError {
+export function translateStellarError(error: unknown): UserFriendlyError {
   let errorKey: string | number = "UNKNOWN";
 
   if (typeof error === "string") {
@@ -185,11 +185,12 @@ export function translateStellarError(error: any): UserFriendlyError {
     else errorKey = error;
   } else if (error && typeof error === "object") {
     // Handle Soroban contract error codes (e.g., from simulation or resultXdr)
-    if (typeof error.code === "number") {
-      errorKey = error.code;
-    } else if (error.message) {
+    const err = error as { code?: unknown; message?: unknown };
+    if (typeof err.code === "number") {
+      errorKey = err.code;
+    } else if (typeof err.message === "string") {
       // Handle known error message substrings
-      const msg = error.message.toLowerCase();
+      const msg = err.message.toLowerCase();
       if (msg.includes("timeout")) errorKey = "TIMEOUT";
       else if (msg.includes("unavailable") || msg.includes("fetch")) errorKey = "NODE_UNAVAILABLE";
       else if (msg.includes("declined") || msg.includes("reject")) errorKey = "User declined";
@@ -207,6 +208,6 @@ export function translateStellarError(error: any): UserFriendlyError {
   return {
     type: StellarErrorType.UNKNOWN,
     message: "An unexpected Stellar error occurred.",
-    guidance: typeof error?.message === "string" ? error.message : "If the problem persists, please contact support with details of the action you were performing.",
+    guidance: typeof (error as { message?: unknown })?.message === "string" ? (error as { message: string }).message : "If the problem persists, please contact support with details of the action you were performing.",
   };
 }

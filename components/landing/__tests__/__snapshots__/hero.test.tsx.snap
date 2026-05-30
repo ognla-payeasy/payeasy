@@ -1,0 +1,182 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Hero > matches snapshot 1`] = `
+<section
+  aria-label="Hero Section"
+  class="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-6 overflow-hidden"
+>
+  <div
+    class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl animate-float"
+  />
+  <div
+    class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent-500/8 rounded-full blur-3xl animate-float"
+    style="animation-delay: 3s;"
+  />
+  <div
+    class="max-w-7xl mx-auto text-center relative z-10"
+  >
+    <div
+      class="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8"
+      style="opacity: 0; transform: translateY(20px);"
+    >
+      <svg
+        class="lucide lucide-sparkles text-accent-400"
+        fill="none"
+        height="14"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="14"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"
+        />
+        <path
+          d="M20 3v4"
+        />
+        <path
+          d="M22 5h-4"
+        />
+        <path
+          d="M4 17v2"
+        />
+        <path
+          d="M5 18H3"
+        />
+      </svg>
+      <span
+        class="text-sm text-dark-300"
+      >
+        Powered by Stellar Blockchain
+      </span>
+      <span
+        class="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse"
+      />
+    </div>
+    <h1
+      class="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight mb-6 text-balance"
+      style="opacity: 0; transform: translateY(30px);"
+    >
+      Split Rent.
+      <br />
+      <span
+        class="gradient-text"
+      >
+        Trust the Chain.
+      </span>
+    </h1>
+    <p
+      class="text-lg md:text-xl text-dark-400 max-w-2xl mx-auto mb-10 leading-relaxed text-balance"
+      style="opacity: 0; transform: translateY(30px);"
+    >
+      Find perfect roommates, contribute rent to a trustless escrow, and move in when everyone's paid. Secured by Stellar, designed for humans.
+    </p>
+    <div
+      class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+      style="opacity: 0; transform: translateY(30px);"
+    >
+      <a
+        class="btn-primary !py-4 !px-8 !text-lg !rounded-xl group"
+        href="#"
+      >
+        Find Roommates
+        <svg
+          class="lucide lucide-arrow-right transition-transform group-hover:translate-x-1"
+          fill="none"
+          height="18"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M5 12h14"
+          />
+          <path
+            d="m12 5 7 7-7 7"
+          />
+        </svg>
+      </a>
+      <a
+        class="btn-secondary !py-4 !px-8 !text-lg !rounded-xl"
+        href="#"
+      >
+        <svg
+          class="lucide lucide-shield"
+          fill="none"
+          height="18"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="18"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+          />
+        </svg>
+        How Escrow Works
+      </a>
+    </div>
+    <div
+      class="glass rounded-2xl p-6 sm:p-8 max-w-3xl mx-auto"
+      style="opacity: 0; transform: translateY(30px);"
+    >
+      <div
+        class="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-0 sm:divide-x divide-white/10"
+      >
+        <div
+          class="text-center px-4"
+        >
+          <div
+            class="text-2xl sm:text-3xl font-bold gradient-text mb-1"
+          >
+            ~$0.00001
+          </div>
+          <div
+            class="text-sm text-dark-500"
+          >
+            Transaction Fee
+          </div>
+        </div>
+        <div
+          class="text-center px-4"
+        >
+          <div
+            class="text-2xl sm:text-3xl font-bold gradient-text mb-1"
+          >
+            ~5 sec
+          </div>
+          <div
+            class="text-sm text-dark-500"
+          >
+            Settlement Time
+          </div>
+        </div>
+        <div
+          class="text-center px-4"
+        >
+          <div
+            class="text-2xl sm:text-3xl font-bold gradient-text mb-1"
+          >
+            100%
+          </div>
+          <div
+            class="text-sm text-dark-500"
+          >
+            Transparent & On-Chain
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+`;

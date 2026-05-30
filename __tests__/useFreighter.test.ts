@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, assert, expect } from "vitest";
+
 
 // Since we cannot easily mock the ESM module ../lib/stellar/wallet.ts 
 // without experimental loaders in node:test, and the original test was 
@@ -35,10 +35,7 @@ describe("Freighter wallet logic", () => {
         throw new Error("Freighter wallet extension is not installed");
       };
 
-      await assert.rejects(
-        mockConnectWallet(),
-        { message: "Freighter wallet extension is not installed" }
-      );
+      await expect(mockConnectWallet()).rejects.toThrow("Freighter wallet extension is not installed");
     });
 
     it("throws when user rejects connection", async () => {
@@ -46,10 +43,7 @@ describe("Freighter wallet logic", () => {
         throw new Error("User rejected wallet connection");
       };
 
-      await assert.rejects(
-        mockConnectWallet(),
-        { message: "User rejected wallet connection" }
-      );
+      await expect(mockConnectWallet()).rejects.toThrow("User rejected wallet connection");
     });
   });
 

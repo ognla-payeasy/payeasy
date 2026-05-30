@@ -1,0 +1,4 @@
+# Husky hooks are executed through `sh`; force LF so they run on every platform
+# regardless of the local core.autocrlf setting.
+.husky/pre-commit text eol=lf
+.husky/typecheck-staged.mjs text eol=lf

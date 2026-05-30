@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import EscrowDashboardClient from "./EscrowDashboardClient";
 
 export async function generateMetadata({ params }: { params: { contractId: string } }): Promise<Metadata> {
@@ -27,4 +27,3 @@ export default async function EscrowDashboardPage({ params }: { params: { contra
 
   return <EscrowDashboardClient contractId={params.contractId} />;
 }
-
