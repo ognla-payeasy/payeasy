@@ -6,6 +6,7 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { StellarProvider } from "@/context/StellarContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { EmailAuthProvider } from "@/context/EmailAuthContext";
+import { WebVitals } from "@/components/web-vitals";
 import "./globals.css";
 
 const inter = Inter({
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans`}
       >
+        <WebVitals />
         <ToastProvider>
           <EmailAuthProvider>
             <StellarProvider>

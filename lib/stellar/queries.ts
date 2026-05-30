@@ -1,5 +1,12 @@
 import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
 
+/**
+ * @description Retrieves all escrow contracts where the given address is the landlord,
+ * by scanning transaction history for invoked contracts and filtering by landlord field.
+ * @param address - The Stellar public key of the landlord to query.
+ * @returns A promise that resolves to an array of escrow contracts owned by the landlord.
+ * @throws {ContractQueryError} If a contract state query fails for any contract.
+ */
 export async function getLandlordEscrows(address: string): Promise<EscrowContract[]> {
   const { createHorizonClient, fetchTransactionHistory } = await import("./history");
   const client = createHorizonClient();
@@ -54,6 +61,13 @@ export async function getLandlordEscrows(address: string): Promise<EscrowContrac
   return escrows;
 }
 
+/**
+ * @description Computes aggregate statistics for a landlord by fetching all their escrows
+ * and summarising total escrowed, active escrow count, and total released amounts.
+ * @param address - The Stellar public key of the landlord.
+ * @returns A promise resolving to an object with totalEscrowed, activeEscrows, and totalReleased.
+ * @throws {ContractQueryError} If the underlying getLandlordEscrows call fails.
+ */
 export async function getLandlordStats(address: string): Promise<LandlordStats> {
   const escrows = await getLandlordEscrows(address);
 
@@ -110,42 +124,58 @@ export class ContractQueryError extends Error {
 // ─── Read-only getters ────────────────────────────────────────────────────────
 
 /**
- * Returns the landlord `Address` stored in the escrow contract.
+ * @description Returns the landlord `Address` stored in the escrow contract.
  * Maps to `get_landlord()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to the landlord's Stellar address as a string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getLandlord(ctx: QueryContext): Promise<string> {
   return callReadOnly(ctx, "get_landlord", [], parseAddressRetval);
 }
 
 /**
- * Returns the token contract `Address` used by the escrow.
+ * @description Returns the token contract `Address` used by the escrow for payments.
  * Maps to `get_token_address()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to the token contract address as a string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getTokenAddress(ctx: QueryContext): Promise<string> {
   return callReadOnly(ctx, "get_token_address", [], parseAddressRetval);
 }
 
 /**
- * Returns the total rent amount (`i128`) as a decimal string.
+ * @description Returns the total rent amount (`i128`) as a decimal string.
  * Returns `"0"` when the escrow has not been initialized.
  * Maps to `get_amount()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to the total rent amount as a decimal string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getTotal(ctx: QueryContext): Promise<string> {
   return callReadOnly(ctx, "get_amount", [], parseI128Retval);
 }
 
 /**
- * Returns the deadline ledger timestamp (`u64`) as a decimal string.
+ * @description Returns the deadline ledger timestamp (`u64`) as a decimal string.
  * Maps to `get_deadline()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to the deadline epoch timestamp as a decimal string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getDeadline(ctx: QueryContext): Promise<string> {
   return callReadOnly(ctx, "get_deadline", [], parseU64Retval);
 }
 
 /**
- * Returns the amount paid so far by `address` (`i128`) as a decimal string.
+ * @description Returns the amount paid so far by `address` (`i128`) as a decimal string.
  * Returns `"0"` when the address is not a registered roommate.
  * Maps to `get_balance(from)` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @param address - The Stellar public key of the roommate whose contribution to look up.
+ * @returns A promise resolving to the paid amount as a decimal string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getBalance(
   ctx: QueryContext,
@@ -160,16 +190,22 @@ export async function getBalance(
 }
 
 /**
- * Returns the sum of all roommate contributions (`i128`) as a decimal string.
+ * @description Returns the sum of all roommate contributions (`i128`) as a decimal string.
  * Maps to `get_total_funded()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to the total funded amount as a decimal string.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function getTotalFunded(ctx: QueryContext): Promise<string> {
   return callReadOnly(ctx, "get_total_funded", [], parseI128Retval);
 }
 
 /**
- * Returns `true` when total contributions meet or exceed the rent goal.
+ * @description Returns `true` when total contributions meet or exceed the rent goal.
  * Maps to `is_fully_funded()` on the Rust contract.
+ * @param ctx - The query context containing the Soroban client, builder, and contract ID.
+ * @returns A promise resolving to `true` if fully funded, `false` otherwise.
+ * @throws {ContractQueryError} If the simulation fails or the return value cannot be parsed.
  */
 export async function isFullyFunded(ctx: QueryContext): Promise<boolean> {
   return callReadOnly(ctx, "is_fully_funded", [], parseBoolRetval);
@@ -336,8 +372,11 @@ function parseBoolRetval(retval: unknown): boolean {
 
 
 /**
- * Returns the essential fields needed to render the contribute/pay page,
+ * @description Returns the essential fields needed to render the contribute/pay page,
  * or `null` when the contract does not exist or its data cannot be read.
+ * @param contractId - The Soroban contract ID to query.
+ * @returns A promise resolving to a `ContractBasicInfo` object, or `null` on failure.
+ * @throws Never — errors are caught internally and converted to a `null` return value.
  */
 export async function getContractBasicInfo(
   contractId: string
@@ -418,6 +457,13 @@ export async function getContractBasicInfo(
   }
 }
 
+/**
+ * @description Fetches the full on-chain state of an escrow contract, including landlord,
+ * rent amounts, deadline, funding status, and roommate list.
+ * @param contractId - The Soroban contract ID to query.
+ * @returns A promise resolving to a fully-populated `ContractState` object.
+ * @throws {ContractQueryError} If any individual field query fails or the RPC call errors.
+ */
 export async function getContractState(contractId: string): Promise<ContractState> {
   const { rpcServer, networkPassphrase } = await import("./config.ts");
   const { TransactionBuilder, Account, Contract, scValToNative, rpc: rpcHelpers } = await import("@stellar/stellar-sdk");
@@ -519,6 +565,12 @@ export async function getContractState(contractId: string): Promise<ContractStat
   }
 }
 
+/**
+ * @description Fetches the native XLM balance for a Stellar account as a JavaScript number.
+ * @param publicKey - The Stellar public key (G…) of the account to query.
+ * @returns A promise resolving to the XLM balance as a number.
+ * @throws {Error} If the account is not found on the network or the balance fetch fails.
+ */
 export async function getAccountBalance(publicKey: string): Promise<number> {
   const { fetchXlmBalance } = await import("./horizon.ts");
   const { getCurrentNetwork } = await import("./explorer.ts");
@@ -534,6 +586,13 @@ export async function getAccountBalance(publicKey: string): Promise<number> {
   }
 }
 
+/**
+ * @description Fetches the native XLM balance for a Stellar account as a decimal string.
+ * Prefer this over `getAccountBalance` when precision beyond a JS number is needed.
+ * @param publicKey - The Stellar public key (G…) of the account to query.
+ * @returns A promise resolving to the XLM balance as a string (e.g. "9999.9999999").
+ * @throws {Error} If the account is not found on the network or the balance fetch fails.
+ */
 export async function getNativeBalance(publicKey: string): Promise<string> {
   const { fetchXlmBalance } = await import("./horizon.ts");
   const { getCurrentNetwork } = await import("./explorer.ts");
@@ -567,6 +626,15 @@ type FetchLike = (
   init?: { signal?: AbortSignal }
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
 
+/**
+ * @description Fetches current fee statistics from the Horizon API for the specified network.
+ * Returns the base fee in both stroops and XLM.
+ * @param network - The Stellar network to query (`"testnet"` or `"mainnet"`). Defaults to `"testnet"`.
+ * @param fetchImpl - Optional fetch implementation (defaults to global `fetch`). Useful for testing.
+ * @param options - Optional request options including an `AbortSignal` for cancellation.
+ * @returns A promise resolving to a `FeeStats` object with `baseFeeStroops` and `baseFeeXlm`.
+ * @throws {Error} If the Horizon request fails or returns a non-numeric fee value.
+ */
 export async function getFeeStats(
   network: FeeStatsNetwork = "testnet",
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
@@ -608,6 +676,13 @@ function stroopsToXlm(stroops: string): string {
 
 // ─── User Escrows (Mocked) ───────────────────────────────────────────────────
 
+/**
+ * @description Returns a mocked list of escrow contracts associated with a wallet public key.
+ * Simulates a network delay and returns deterministic fixture data for UI development.
+ * @param publicKey - The Stellar public key of the connected wallet.
+ * @returns A promise resolving to an array of `ContractState` objects for the given wallet.
+ * @throws Never — this is a mock implementation that always resolves successfully.
+ */
 export async function getUserEscrows(publicKey: string): Promise<ContractState[]> {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 800));

@@ -11,7 +11,8 @@ import { getCurrentNetwork, getNetworkConfig } from "./config";
 import { toStellarAmount } from "./format";
 
 /**
- * Thrown when a Soroban operation cannot be completed.
+ * @description Thrown when a Soroban operation cannot be completed due to RPC, simulation,
+ * or account-loading failures within `TokenHelper`.
  */
 export class StellarError extends Error {
   constructor(message: string) {
@@ -21,7 +22,8 @@ export class StellarError extends Error {
 }
 
 /**
- * Interaction helper for Stellar Asset Contracts (SAC)
+ * @description Interaction helper for Stellar Asset Contracts (SAC). Wraps the SAC interface
+ * to provide typed `balance`, `allowance`, `approve`, and `transfer` operations.
  */
 export class TokenHelper {
   private contract: Contract;
@@ -31,7 +33,10 @@ export class TokenHelper {
   }
 
   /**
-   * Fetches the token balance for a given account.
+   * @description Fetches the SAC token balance for a given Stellar account via simulation.
+   * @param accountId - The Stellar public key of the account to query.
+   * @returns A promise resolving to the token balance as a `bigint`. Returns `0n` on error.
+   * @throws Never — RPC errors are caught and `0n` is returned instead.
    */
   async balance(accountId: string): Promise<bigint> {
     try {
@@ -46,7 +51,11 @@ export class TokenHelper {
   }
 
   /**
-   * Fetches the spending allowance for a spender on behalf of an owner.
+   * @description Fetches the spending allowance granted by an owner to a spender on this SAC.
+   * @param ownerId - The Stellar public key of the token owner.
+   * @param spenderId - The Stellar public key of the spender whose allowance to query.
+   * @returns A promise resolving to the approved spending amount as a `bigint`. Returns `0n` on error.
+   * @throws Never — RPC errors are caught and `0n` is returned instead.
    */
   async allowance(ownerId: string, spenderId: string): Promise<bigint> {
     try {
@@ -62,7 +71,12 @@ export class TokenHelper {
   }
 
   /**
-   * Creates an "approve" operation for the SAC.
+   * @description Builds an `approve` contract operation for inclusion in a Stellar transaction.
+   * The caller is responsible for assembling and submitting the transaction.
+   * @param spenderId - The Stellar public key of the account being granted spending rights.
+   * @param amount - The amount to approve; accepts `bigint`, decimal string, or number.
+   * @returns A Stellar `Operation` object ready to be added to a `TransactionBuilder`.
+   * @throws {StellarError} If the amount conversion or contract call construction fails.
    */
   approve(spenderId: string, amount: bigint | string | number) {
     const finalAmount = typeof amount === "bigint" ? amount : toStellarAmount(amount);
@@ -73,7 +87,12 @@ export class TokenHelper {
   }
 
   /**
-   * Creates a "transfer" operation for the SAC.
+   * @description Builds a `transfer` contract operation for inclusion in a Stellar transaction.
+   * The caller is responsible for assembling and submitting the transaction.
+   * @param toId - The Stellar public key of the recipient account.
+   * @param amount - The amount to transfer; accepts `bigint`, decimal string, or number.
+   * @returns A Stellar `Operation` object ready to be added to a `TransactionBuilder`.
+   * @throws {StellarError} If the amount conversion or contract call construction fails.
    */
   transfer(toId: string, amount: bigint | string | number) {
     const finalAmount = typeof amount === "bigint" ? amount : toStellarAmount(amount);
