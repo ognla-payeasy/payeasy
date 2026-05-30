@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import ApprovalStatus from "@/components/escrow/ApprovalStatus";
 import EscrowStatus from "@/components/escrow/EscrowStatus";
+import ExtendDeadlineModal from "@/components/escrow/ExtendDeadlineModal";
 import FundingProgress from "@/components/escrow/FundingProgress";
 import MultiSigApproval from "@/components/escrow/MultiSigApproval";
 import RoommateTable from "@/components/escrow/RoommateTable";
@@ -16,6 +17,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Activity,
+  Calendar,
   Globe,
   AlertCircle,
   Loader2,
@@ -59,6 +61,8 @@ export default function EscrowDashboardClient({ contractId }: Props) {
   const [releaseError, setReleaseError] = useState<string | null>(null);
   const [isClaimingRefund, setIsClaimingRefund] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showExtendDeadlineModal, setShowExtendDeadlineModal] = useState(false);
+  const [extendBanner, setExtendBanner] = useState<string | null>(null);
   const [approvals, setApprovals] = useState<ApprovalState[]>([]);
 
   const isLandlord =
@@ -193,6 +197,21 @@ export default function EscrowDashboardClient({ contractId }: Props) {
         onClose={() => setShowShareModal(false)}
       />
 
+      {contractState && (
+        <ExtendDeadlineModal
+          contractId={contractId}
+          landlordAddress={contractState.landlord}
+          currentDeadlineEpoch={contractState.deadlineEpoch}
+          isOpen={showExtendDeadlineModal}
+          onClose={() => setShowExtendDeadlineModal(false)}
+          onExtended={(newEpoch) => {
+            const formatted = new Date(newEpoch * 1000).toLocaleString();
+            setExtendBanner(`Deadline extended to ${formatted}.`);
+            void refresh();
+          }}
+        />
+      )}
+
       {/* TransactionReview modal overlay */}
       {(releasePhase === "review" || releasePhase === "submitting") && preparedXdr && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -323,6 +342,25 @@ export default function EscrowDashboardClient({ contractId }: Props) {
           </div>
         )}
 
+        {extendBanner && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-6 flex items-start gap-3 rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm font-medium text-brand-100"
+          >
+            <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-brand-300" />
+            <div className="flex-1">{extendBanner}</div>
+            <button
+              type="button"
+              onClick={() => setExtendBanner(null)}
+              className="text-xs font-bold uppercase tracking-widest text-brand-200 hover:text-white"
+              aria-label="Dismiss deadline extension notice"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Dashboard Grid — skeleton or real content */}
         <div className="space-y-12">
           {isLoading ? (
@@ -389,6 +427,14 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                       >
                         <Share2 className="h-4 w-4" />
                         Share with Roommates
+                      </button>
+                      <button
+                        onClick={() => setShowExtendDeadlineModal(true)}
+                        disabled={releasePhase !== "idle"}
+                        className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Request Extension
                       </button>
                     </div>
                   </div>
