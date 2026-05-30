@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import { DottedSurface } from "@/components/ui/dotted-surface";
 import { useStellar } from "@/context/StellarContext";
 import { SkipLink } from "@/components/ui/skip-link";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import OfflineBanner from "./offline-banner";
 import AccountChangedBanner from "./account-changed-banner";
+
+const DottedSurfaceLazy = React.lazy(() =>
+  import("@/components/ui/dotted-surface").then((mod) => ({ default: mod.DottedSurface }))
+);
 
 /** True when the device reports fewer than 4 logical CPU cores. */
 const isLowEnd =
@@ -52,7 +55,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
         />
       ) : (
-        <DottedSurface />
+        <React.Suspense
+          fallback={
+            <div
+              aria-hidden="true"
+              className="pointer-events-none fixed inset-0 -z-[1] bg-dark-950"
+            />
+          }
+        >
+          <DottedSurfaceLazy />
+        </React.Suspense>
       )}
       <div className="mesh-gradient" aria-hidden="true" />
       <SkipLink />

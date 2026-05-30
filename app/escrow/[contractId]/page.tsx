@@ -15,8 +15,9 @@ import { getContractState } from "@/lib/stellar/queries";
 import EscrowNotFound from "@/components/escrow/EscrowNotFound";
 
 export default async function EscrowDashboardPage({ params }: { params: { contractId: string } }) {
+  let contractState = null;
   try {
-    const contractState = await getContractState(params.contractId);
+    contractState = await getContractState(params.contractId);
     if (!contractState) {
       return <EscrowNotFound />;
     }
@@ -25,5 +26,5 @@ export default async function EscrowDashboardPage({ params }: { params: { contra
     return <EscrowNotFound />;
   }
 
-  return <EscrowDashboardClient contractId={params.contractId} />;
+  return <EscrowDashboardClient contractId={params.contractId} initialContractState={contractState} />;
 }

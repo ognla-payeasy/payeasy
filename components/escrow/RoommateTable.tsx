@@ -1,6 +1,6 @@
 "use client";
 
-import { User, CheckCircle2, Clock, Users, Activity, ExternalLink, AlertCircle } from "lucide-react";
+import { User, CheckCircle2, Clock, Users, Activity, ExternalLink, AlertCircle, Loader2 } from "lucide-react";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 import CopyButton from "@/components/ui/copy-button";
 
@@ -21,6 +21,10 @@ export interface Roommate {
    * Boolean flag indicating if the contribution is complete.
    */
   isPaid: boolean;
+  /**
+   * Boolean flag indicating if the contribution is currently confirming on-chain.
+   */
+  isConfirming?: boolean;
 }
 
 interface RoommateTableProps {
@@ -37,6 +41,8 @@ interface RoommateTableProps {
 export default function RoommateTable({ roommates }: RoommateTableProps) {
   // Sorting logic: Pending/Partial first, then Paid
   const sortedRoommates = [...roommates].sort((a, b) => {
+    if (a.isConfirming && !b.isConfirming) return -1;
+    if (!a.isConfirming && b.isConfirming) return 1;
     if (a.isPaid === b.isPaid) return 0;
     return a.isPaid ? 1 : -1;
   });
@@ -46,11 +52,11 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
       <header className="flex items-center justify-between px-6 py-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-md">
          <div className="flex items-center gap-4">
             <div className="p-2.5 bg-brand-500/10 rounded-xl border border-brand-500/20 shadow-inner group transition-transform hover:rotate-12 duration-500">
-              <Users className="h-5 w-5 text-brand-400" />
+               <Users className="h-5 w-5 text-brand-400" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-sm font-black text-white uppercase tracking-[0.1em] leading-none">Agreement Participants</h3>
-              <p className="text-[10px] text-dark-500 font-bold uppercase tracking-widest">{roommates.length} Active Roommates</p>
+               <h3 className="text-sm font-black text-white uppercase tracking-[0.1em] leading-none">Agreement Participants</h3>
+               <p className="text-[10px] text-dark-500 font-bold uppercase tracking-widest">{roommates.length} Active Roommates</p>
             </div>
          </div>
          <div className="h-10 w-10 flex items-center justify-center rounded-full bg-dark-900 shadow-inner border border-white/5">
@@ -80,7 +86,11 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-2xl border transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) ${
-                           roommate.isPaid ? 'bg-accent-500/10 text-accent-400 border-accent-500/30 shadow-[0_0_15px_rgba(32,201,151,0.2)] rotate-6' : 'bg-dark-900/60 text-dark-500 border-white/5'
+                           roommate.isConfirming
+                             ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                             : roommate.isPaid 
+                               ? 'bg-accent-500/10 text-accent-400 border-accent-500/30 shadow-[0_0_15px_rgba(32,201,151,0.2)] rotate-6' 
+                               : 'bg-dark-900/60 text-dark-500 border-white/5'
                         } group-hover:scale-110 shadow-inner`}>
                            <User className="h-5 w-5" />
                         </div>
@@ -96,7 +106,7 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
                                rel="noopener noreferrer"
                                className="p-1 rounded-md text-dark-600 hover:text-brand-400 hover:bg-brand-500/10 transition-all"
                                aria-label="View on Stellar Expert"
-                             >
+                              >
                                <ExternalLink className="h-3 w-3" />
                              </a>
                            </div>
@@ -111,14 +121,16 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
                     <td className="p-4 pr-6">
                       <div className="flex justify-center">
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
-                          roommate.isPaid 
-                            ? 'bg-accent-500/15 text-accent-300 border-accent-500/20' 
-                            : isPartial 
-                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/20' 
-                              : 'bg-white/5 text-dark-500 border-white/5'
+                          roommate.isConfirming
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/20'
+                            : roommate.isPaid 
+                              ? 'bg-accent-500/15 text-accent-300 border-accent-500/20' 
+                              : isPartial 
+                                ? 'bg-amber-500/15 text-amber-300 border-amber-500/20' 
+                                : 'bg-white/5 text-dark-500 border-white/5'
                         }`}>
-                           {roommate.isPaid ? <CheckCircle2 className="h-3 w-3" /> : isPartial ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3 animate-pulse" />}
-                           {roommate.isPaid ? "Paid" : isPartial ? "Partial" : "Pending"}
+                           {roommate.isConfirming ? <Loader2 className="h-3 w-3 animate-spin" /> : roommate.isPaid ? <CheckCircle2 className="h-3 w-3" /> : isPartial ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3 animate-pulse" />}
+                           {roommate.isConfirming ? "Confirming on-chain..." : roommate.isPaid ? "Paid" : isPartial ? "Partial" : "Pending"}
                         </div>
                       </div>
                     </td>

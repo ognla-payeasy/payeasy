@@ -1,4 +1,3 @@
-import { test } from "vitest";
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,13 +7,12 @@ import { type Transaction, type TransactionType } from "@/components/history/Tra
 import { useStellar } from "@/context/StellarContext";
 import {
   createHorizonClient,
-  createTransactionHistoryPager,
   fetchTransactionHistory,
   type ParsedOperation,
   type ParsedTransaction,
-  type TransactionHistoryPager,
 } from "@/lib/stellar/history";
 import useTransactionPolling from "@/hooks/useTransactionPolling";
+import useTransactionHistory from "@/hooks/useTransactionHistory";
 import EmptyState from "@/components/ui/empty-state";
 import { History } from "lucide-react";
 
@@ -71,14 +69,18 @@ export default function HistoryClient() {
   const { publicKey, isConnected, isRestoring } = useStellar();
   const router = useRouter();
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const {
+    transactions,
+    isLoading: isLoadingInitial,
+    hasNextPage: hasMore,
+    isFetchingNextPage: isLoadingMore,
+    fetchNextPage,
+    prependTransactions,
+  } = useTransactionHistory(publicKey);
+
   const [isPollingError, setIsPollingError] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [newHashes, setNewHashes] = useState<string[]>([]);
 
-  const pagerRef = useRef<TransactionHistoryPager | null>(null);
   const fadeTimersRef = useRef<Record<string, number>>({});
 
   const horizonClient = useMemo(() => createHorizonClient(), []);
@@ -129,62 +131,18 @@ export default function HistoryClient() {
     return result.transactions.map(mapParsedTransaction);
   }, [horizonClient, publicKey]);
 
-  const loadInitial = useCallback(async () => {
-    if (!publicKey) {
-      setTransactions([]);
-      setHasMore(false);
-      setIsLoadingInitial(false);
-      return;
-    }
-
-    setIsLoadingInitial(true);
-
-    const pager = createTransactionHistoryPager({
-      client: horizonClient,
-      accountId: publicKey,
-      limit: 10,
-      order: "desc",
-      includeOperations: true,
-    });
-
-    pagerRef.current = pager;
-
-    const firstPage = await pager.fetchNext();
-    const mapped = firstPage.transactions.map(mapParsedTransaction);
-
-    setTransactions(mapped);
-    setHasMore(Boolean(firstPage.nextCursor) && mapped.length === 10);
-    setIsLoadingInitial(false);
-  }, [horizonClient, publicKey]);
-
-  useEffect(() => {
-    if (publicKey) {
-      void loadInitial();
-    }
-  }, [loadInitial, publicKey]);
-
   const handleLoadMore = useCallback(async () => {
-    const pager = pagerRef.current;
-    if (!pager || !hasMore || !publicKey) return;
-
-    setIsLoadingMore(true);
-    try {
-      const nextPage = await pager.fetchNext();
-      const mapped = nextPage.transactions.map(mapParsedTransaction);
-
-      setTransactions((prev) => [...prev, ...mapped]);
-      setHasMore(Boolean(nextPage.nextCursor) && mapped.length === 10);
-    } finally {
-      setIsLoadingMore(false);
+    if (hasMore && !isLoadingMore) {
+      await fetchNextPage();
     }
-  }, [hasMore, publicKey]);
+  }, [hasMore, isLoadingMore, fetchNextPage]);
 
   useTransactionPolling<Transaction>({
     enabled: isConnected && Boolean(publicKey),
     currentTransactions: transactions,
     fetchLatest: fetchLatestPage,
     onNewTransactions: (newTransactions) => {
-      setTransactions((prev) => [...newTransactions, ...prev]);
+      prependTransactions(newTransactions);
       markAsNew(newTransactions);
       setIsPollingError(false);
     },

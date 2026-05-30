@@ -7,6 +7,8 @@ import TransactionReview from "@/components/wallet/TransactionReview.tsx";
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actions/contribute";
 import { recordPaymentHistoryEntry } from "@/lib/stellar/paymentHistory";
+import { useQueryClient } from "@tanstack/react-query";
+import { type ContractState } from "@/lib/stellar/queries";
 
 type ContributePhase = "idle" | "building" | "review" | "submitting";
 
@@ -27,6 +29,7 @@ export default function ContributeForm({
 }: ContributeFormProps) {
   const resolvedContractId = contractId ?? escrowId ?? "";
   const { isConnected, connect, publicKey } = useFreighter();
+  const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState(remainingBalance);
   const [phase, setPhase] = useState<ContributePhase>("idle");
@@ -87,6 +90,31 @@ export default function ContributeForm({
     if (!preparedXdr || !publicKey) return;
     setPhase("submitting");
     setError(null);
+
+    const amountVal = parseFloat(amount);
+    const queryKey = ["contractState", resolvedContractId];
+    const previousState = queryClient.getQueryData<ContractState>(queryKey);
+
+    // Optimistically update roommate paid amount and isConfirming flag
+    if (previousState) {
+      const updatedState = {
+        ...previousState,
+        roommates: previousState.roommates.map((r) => {
+          if (r.address === publicKey) {
+            const newPaid = (Number(r.paidAmount) + amountVal).toString();
+            return {
+              ...r,
+              paidAmount: newPaid,
+              isPaid: Number(newPaid) >= Number(r.expectedShare),
+              isConfirming: true,
+            };
+          }
+          return r;
+        }),
+      };
+      queryClient.setQueryData(queryKey, updatedState);
+    }
+
     try {
       const result = await signAndSubmitContribute(preparedXdr, publicKey);
       setTxHash(result.txHash);
@@ -101,6 +129,10 @@ export default function ContributeForm({
       setPhase("idle");
       setPreparedXdr(null);
     } catch (err) {
+      // Rollback on failure
+      if (previousState) {
+        queryClient.setQueryData(queryKey, previousState);
+      }
       setError(err instanceof Error ? err.message : "Transaction failed.");
       setPhase("review");
     }
