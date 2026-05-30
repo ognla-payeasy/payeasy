@@ -27,6 +27,11 @@ interface EmailAuthContextValue {
 
 const EmailAuthContext = createContext<EmailAuthContextValue | null>(null);
 
+interface AuthResponseData {
+  error?: string;
+  user?: AuthUser;
+}
+
 /**
  * Handles HTTP responses with automatic token refresh on 401.
  * If the response is 401 and we haven't already tried to refresh,
@@ -99,7 +104,7 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
         return res;
       };
 
-      const result = await handleAuthResponse(await doLogin(), doLogin);
+      const result = await handleAuthResponse<AuthResponseData>(await doLogin(), doLogin);
 
       if (!result.ok) {
         throw new Error(result.data?.error ?? "Login failed");
@@ -129,7 +134,7 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
         return res;
       };
 
-      const result = await handleAuthResponse(await doSignup(), doSignup);
+      const result = await handleAuthResponse<AuthResponseData>(await doSignup(), doSignup);
 
       if (!result.ok) {
         throw new Error(result.data?.error ?? "Sign up failed");

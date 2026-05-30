@@ -12,8 +12,10 @@ Thank you for your interest in contributing to **PayEasy**! This document will h
 - [Project Structure](#project-structure)
 - [How to Contribute](#how-to-contribute)
 - [Branch Naming Convention](#branch-naming-convention)
-- [Commit Convention](#commit-convention)
-- [Pull Request Guidelines](#pull-request-guidelines)
+- [Commit Message Format](#commit-message-format)
+- [Pull Request Checklist](#pull-request-checklist)
+- [Issue Labels](#issue-labels)
+- [Review Process](#review-process)
 - [Coding Standards](#coding-standards)
 - [Available Scripts](#available-scripts)
 - [Need Help?](#need-help)
@@ -114,6 +116,35 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ```bash
 git remote add upstream https://github.com/Ogstevyn/payeasy.git
+```
+
+### 6. Run the Test Suite
+
+```bash
+# Run all tests once
+npm run test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run linting
+npm run lint
+
+# Verify production build
+npm run build
+```
+
+All tests must pass before opening a PR. If you add new functionality, add corresponding tests.
+
+### 7. Sync Your Fork with Upstream
+
+Keep your fork up to date before starting new work:
+
+```bash
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
 ```
 
 ---
@@ -219,7 +250,7 @@ Use the following prefixes:
 
 ---
 
-## Commit Convention
+## Commit Message Format
 
 We follow **Conventional Commits**:
 
@@ -245,26 +276,98 @@ test(escrow): add unit tests for contribution logic
 
 ---
 
-## Pull Request Guidelines
+## Pull Request Checklist
 
-1. **One PR per issue** — Don't bundle unrelated changes
-2. **Keep it small** — Smaller PRs are reviewed faster
-3. **Describe your changes** — Explain what and why in the PR description
-4. **Include screenshots** — For any UI changes, include before/after screenshots
-5. **Test locally** — Make sure `npm run build` passes before submitting
-6. **No console.logs** — Remove all debugging logs before submitting
-7. **No `any` types** — Use proper TypeScript types
-
-### PR Checklist
+Before opening a PR, make sure you can check every box:
 
 ```markdown
 - [ ] My code follows the project's coding standards
-- [ ] I've tested my changes locally
-- [ ] `npm run build` passes without errors
-- [ ] I've included screenshots for UI changes
-- [ ] I've linked the relevant issue
-- [ ] I've written meaningful commit messages
+- [ ] I've run `npm run lint` and fixed all warnings/errors
+- [ ] I've run `npm run test` and all tests pass
+- [ ] I've run `npm run build` and it completes without errors
+- [ ] I've added tests for new functionality (if applicable)
+- [ ] I've included screenshots or screen recordings for UI changes
+- [ ] I've linked the relevant issue in the PR description (Closes #N)
+- [ ] I've written a clear PR description explaining what and why
+- [ ] I've removed all `console.log` debugging statements
+- [ ] I've used proper TypeScript types (no `any`)
+- [ ] I'm opening this PR against the `main` branch
 ```
+
+### Opening a PR
+
+1. Push your branch to your fork: `git push origin your-branch-name`
+2. Open a PR from your fork against `Ogstevyn/payeasy:main` on GitHub
+3. Fill out the PR template — include a summary, what was changed, and why
+4. Link the issue you're resolving with `Closes #N` in the body
+5. Assign yourself and add relevant labels
+6. Wait for CI checks to complete before requesting review
+
+---
+
+## Issue Labels
+
+Labels are applied by maintainers to categorise and prioritise work:
+
+| Label | Meaning |
+|---|---|
+| `good first issue` | Beginner-friendly — great starting point for new contributors |
+| `bug` | Something is broken or not behaving as expected |
+| `enhancement` | A new feature or improvement to existing functionality |
+| `documentation` | Docs-only change (README, CONTRIBUTING, JSDoc, etc.) |
+| `help wanted` | Maintainers are actively looking for contributors |
+| `in progress` | Someone is actively working on this issue |
+| `needs review` | PR or solution is ready for maintainer review |
+| `blocked` | Work is paused pending external action or decision |
+| `wontfix` | Issue acknowledged but out of scope or won't be addressed |
+| `duplicate` | Issue or PR already reported elsewhere |
+| `question` | Clarification needed before work can begin |
+| `automerge` | PR will be merged automatically once all CI checks pass |
+
+When you pick up an issue, comment to let others know. A maintainer will apply the `in progress` label after assigning you.
+
+---
+
+## Review Process
+
+All contributions go through the following review workflow:
+
+### 1. Automated Checks (CI)
+
+On every PR, the CI pipeline runs:
+- **Lint** — ESLint must report zero errors
+- **Type check** — TypeScript compiler must report zero errors
+- **Tests** — All Vitest/Jest tests must pass
+- **Build** — `next build` must complete successfully
+
+All checks must pass before human review begins.
+
+### 2. Human Review
+
+Once CI is green, a maintainer will review your PR:
+
+- **Response time**: Maintainers aim to provide initial feedback within 48 hours
+- **Requested changes**: If changes are requested, address each comment and push to your branch — the PR updates automatically
+- **Approvals**: At least **1 maintainer approval** is required before merging
+- **Merging**: Only maintainers can merge. Approved PRs with the `automerge` label merge automatically
+
+### 3. Code Review Expectations
+
+As an author:
+- Respond to all review comments before re-requesting review
+- Mark conversations as resolved after addressing them
+- Keep your branch up to date with `main` if it falls behind
+- Don't force-push to a branch that is under active review
+
+As a reviewer:
+- Provide constructive, specific, and actionable feedback
+- Point to the relevant line; explain *why* a change is needed
+- Use `[nit]` prefix for non-blocking style suggestions
+- Approve explicitly when satisfied — don't leave PRs in limbo
+
+### 4. 4-Hour Rule
+
+Once you are assigned an issue, submit your PR within **4 hours**. If you need more time, comment on the issue to let the maintainer know. Unactioned assignments will be re-opened for other contributors.
 
 ---
 

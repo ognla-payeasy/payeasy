@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Landing Page JS",
+    "path": ".next/static/chunks/app/page*.js",
+    "limit": "150 kB",
+    "gzip": true
+  },
+  {
+    "name": "Escrow Page JS",
+    "path": ".next/static/chunks/app/escrow/**/*.js",
+    "limit": "200 kB",
+    "gzip": true
+  }
+]

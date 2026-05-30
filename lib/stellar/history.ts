@@ -154,6 +154,14 @@ export interface CreateHorizonClientOptions {
 
 import { withRetry } from "./retry.ts";
 
+/**
+ * @description Creates a `HorizonClient` instance for fetching transaction and operation
+ * history from the Stellar Horizon REST API.
+ * @param options - Optional configuration including `baseUrl`, `network` (`"testnet"` or
+ * `"mainnet"`), and a custom `fetchFn` for testing or SSR environments.
+ * @returns A `HorizonClient` with `fetchTransactions` and `fetchOperations` methods.
+ * @throws {Error} If a Horizon request fails with a non-OK HTTP status.
+ */
 export function createHorizonClient(
   options: CreateHorizonClientOptions = {}
 ): HorizonClient {
