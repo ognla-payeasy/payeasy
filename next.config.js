@@ -8,6 +8,8 @@ try {
   // Keep builds working until the dependency is installed locally.
 }
 
+const createNextIntlPlugin = require("next-intl/plugin");
+const withNextIntl = createNextIntlPlugin("./i18n.ts");
 let withSentryConfig = (config) => config;
 
 try {
@@ -85,4 +87,5 @@ const nextConfig = {
   },
 };
 
+module.exports = withBundleAnalyzer(withNextIntl(nextConfig));
 module.exports = withSentryConfig(withBundleAnalyzer(nextConfig));

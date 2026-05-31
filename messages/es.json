@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "features": "Funcionalidades",
+    "howItWorks": "Cómo Funciona",
+    "stellar": "Stellar",
+    "signIn": "Iniciar sesión",
+    "connectWallet": "Conectar billetera"
+  },
+  "hero": {
+    "title": "Divida el alquiler. Confíe en la cadena.",
+    "subtitle": "Encuentre compañeros de cuarto, divida el alquiler y pague de forma segura a través del depósito en garantía de Stellar. Transparente, sin intermediarios y sin esfuerzo.",
+    "getStarted": "Comenzar",
+    "viewOnGithub": "Ver en GitHub",
+    "disclaimer": "Impulsado por Stellar Blockchain",
+    "socialProof": "Con la confianza de compañeros de cuarto en todo el mundo",
+    "stats": {
+      "transactionFee": "Comisión por transacción",
+      "settlementTime": "Tiempo de liquidación",
+      "transparency": "Transparencia en cadena"
+    },
+    "programs": {
+      "findRoommates": "ENCONTRAR COMPAÑEROS",
+      "findRoommatesDesc": "Explore perfiles y anuncios verificados",
+      "smartEscrow": "DEPÓSITO INTELIGENTE",
+      "smartEscrowDesc": "Cobro de alquiler en cadena sin intermediarios",
+      "instantPayments": "PAGOS INSTANTÁNEOS",
+      "instantPaymentsDesc": "Liquide en segundos, no en días",
+      "moveIn": "MUDARSE",
+      "moveInDesc": "Asegure su nuevo hogar con confianza",
+      "community": "COMUNIDAD",
+      "communityDesc": "Conéctese con compañeros de cuarto de confianza"
+    }
+  },
+  "errors": {
+    "walletNotConnected": "Billetera no conectada",
+    "insufficientBalance": "Saldo insuficiente",
+    "transactionFailed": "Transacción fallida",
+    "networkError": "Error de red. Por favor, inténtelo de nuevo.",
+    "invalidAddress": "Dirección de billetera no válida"
+  },
+  "forms": {
+    "amount": "Monto",
+    "recipient": "Destinatario",
+    "memo": "Nota",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "escrow": {
+    "create": "Crear depósito en garantía",
+    "deposit": "Depositar",
+    "release": "Liberar",
+    "refund": "Reembolsar",
+    "status": {
+      "pending": "Pendiente",
+      "active": "Activo",
+      "completed": "Completado",
+      "disputed": "En disputa"
+    }
+  },
+  "language": {
+    "en": "English",
+    "es": "Español",
+    "select": "Seleccionar idioma"
+  }
+}

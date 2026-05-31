@@ -5,6 +5,7 @@ import { Menu, X, LogIn, UserPlus, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConnectWalletButton from "@/components/wallet/ConnectWalletButton";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useEmailAuth } from "@/context/EmailAuthContext";
@@ -72,6 +73,18 @@ export default function Navbar() {
 
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-3">
+          <LanguageSelector />
+          <a href="#" className="btn-secondary !py-2.5 !px-5 !text-sm !rounded-lg">
+            Sign In
+          </a>
+          <a
+            href="#"
+            className="btn-primary !py-2.5 !px-5 !text-sm !rounded-lg"
+            onMouseEnter={() => router.prefetch("/connect")}
+          >
+            <Wallet size={16} />
+            Connect Wallet
+          </a>
           {user ? (
             <>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
@@ -137,6 +150,21 @@ export default function Navbar() {
               </a>
             ))}
             <div className="h-px bg-white/10 my-2" />
+            <div className="flex justify-center">
+              <LanguageSelector />
+            </div>
+            <a href="#" className="btn-secondary !justify-center">
+              Sign In
+            </a>
+            <a
+              href="#"
+              className="btn-primary !justify-center"
+              onMouseEnter={() => router.prefetch("/connect")}
+            >
+              <Wallet size={16} />
+              Connect Wallet
+            </a>
+            <div className="flex justify-center">
             {user ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
