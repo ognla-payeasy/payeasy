@@ -47,8 +47,4 @@ scripts/
 test_snapshots/
 scripts/*
 !scripts/mint-test-tokens.sh
-
-.vercel
-
-# Email auth user store
-data/users.json
+!scripts/check-env.ts

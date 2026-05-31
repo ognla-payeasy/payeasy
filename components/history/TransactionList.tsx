@@ -1,22 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Search, Download, Loader2 } from "lucide-react";
 import TransactionCard, { type Transaction } from "./TransactionCard";
 import TransactionDetailModal from "./TransactionDetailModal";
 import DateRangeFilter from "./DateRangeFilter";
 import TypeFilter, { type TypeFilterValue } from "./TypeFilter";
 import { exportTransactionsToCsv } from "@/lib/exportCsv";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface TransactionListProps {
   transactions: Transaction[];
-// New state for sort order
   hasMore: boolean;
   isLoadingMore: boolean;
-const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   onLoadMore: () => void;
   newBadgeHashes?: string[];
-    const filtered = transactions.filter((tx) => {
+}
 
 function toLocalDate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
@@ -34,8 +33,23 @@ export default function TransactionList({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>("all");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth < 1024);
+      }
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleCardClick = (tx: Transaction) => {
     setSelectedTx(tx);
@@ -43,14 +57,7 @@ export default function TransactionList({
   };
 
   const filteredTransactions = useMemo(() => {
-    return filtered.sort((a, b) => {
-      if (sortOrder === "desc") {
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      } else {
-        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-      }
-    });
-    return transactions.filter((tx) => {
+    const filtered = transactions.filter((tx) => {
       const matchesSearch =
         searchQuery === "" ||
         tx.txHash.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,7 +84,25 @@ export default function TransactionList({
 
       return matchesSearch && matchesType && matchesDate;
     });
-  }, [transactions, searchQuery, typeFilter, dateFrom, dateTo]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortOrder === "desc") {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      } else {
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      }
+    });
+  }, [transactions, searchQuery, typeFilter, dateFrom, dateTo, sortOrder]);
+
+  const cols = isMobile ? 1 : 2;
+  const rowCount = Math.ceil(filteredTransactions.length / cols);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 140, // typical height of a card row plus gap
+    overscan: 5,
+  });
 
   const isDateFilterActive = dateFrom !== "" || dateTo !== "";
 
@@ -111,9 +136,10 @@ export default function TransactionList({
 
               <button
                 type="button"
+                onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
                 className="flex-1 md:flex-none btn-secondary !py-2.5 !px-4 !text-xs !bg-dark-900/40 !border-white/10 hover:!border-white/20"
               >
-                Latest First
+                {sortOrder === "desc" ? "Latest First" : "Oldest First"}
               </button>
             </div>
 
@@ -142,15 +168,47 @@ export default function TransactionList({
       </div>
 
       {filteredTransactions.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {filteredTransactions.map((tx) => (
-            <TransactionCard
-              key={tx.id}
-              transaction={tx}
-              isNew={newBadgeHashes.includes(tx.txHash)}
-              onClick={handleCardClick}
-            />
-          ))}
+        <div
+          ref={parentRef}
+          className="w-full max-h-[70vh] overflow-y-auto pr-2 relative scrollbar-thin"
+        >
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const rowIndex = virtualRow.index;
+              const startIndex = rowIndex * cols;
+              const rowItems = filteredTransactions.slice(startIndex, startIndex + cols);
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6"
+                >
+                  {rowItems.map((tx) => (
+                    <TransactionCard
+                      key={tx.id}
+                      transaction={tx}
+                      isNew={newBadgeHashes.includes(tx.txHash)}
+                      onClick={handleCardClick}
+                    />
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : (
         <div className="py-24 text-center glass-card border-dashed">
@@ -189,7 +247,7 @@ export default function TransactionList({
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
-        <p className="text-[11px] text-dark-500 uppercase tracking-widest font-black">
+        <p className="text-[11px] text-dark-500 uppercase tracking-widest font-black font-sans">
           Showing <span className="text-brand-400 px-1">{filteredTransactions.length}</span> of <span className="text-dark-200 px-1">{transactions.length}</span> loaded
         </p>
 

@@ -1,4 +1,4 @@
-import redis from '../redis';
+import redis from './redis';
 
 const LISTINGS_ALL_KEY = (page: number) => `listings:all:page:${page}`;
 const LISTING_DETAIL_KEY = (id: string) => `listings:detail:${id}`;
@@ -41,5 +41,5 @@ export async function invalidateListingDetail(id: string) {
 }
 
 export async function monitorCache() {
-  return redis.info();
+  return (redis as any).info();
 }

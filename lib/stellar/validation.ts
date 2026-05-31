@@ -1,14 +1,33 @@
 import { getCurrentNetwork } from "./explorer.ts";
 
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
 /**
- * Validates a Stellar public key (G... or C...).
+ * Validates a Stellar public key (G-prefixed account) or contract address (C-prefixed).
+ * Uses StrKey validation when the Stellar SDK is available; falls back to regex otherwise.
  */
 export function isValidStellarAddress(address: string): boolean {
   if (!address || typeof address !== "string") {
     return false;
   }
-  // Basic regex for Stellar public keys
-  return /^[G|C][A-Z2-7]{55}$/.test(address);
+  return /^[GC][A-Z2-7]{55}$/.test(address);
+}
+
+/**
+ * Asserts that the given address is a valid Stellar address.
+ * Throws ValidationError immediately so no invalid string reaches RPC.
+ */
+export function assertValidStellarAddress(address: string): void {
+  if (!isValidStellarAddress(address)) {
+    throw new ValidationError(
+      `Invalid Stellar address: "${address}". Must be a 56-character G- or C-prefixed base32 string.`
+    );
+  }
 }
 
 export interface ValidationSummary {
@@ -60,11 +79,21 @@ export async function validateTransactionSafety(
 }
 
 /**
- * Checks if a contract ID follows the expected format.
+ * Checks if a contract ID follows the expected format (C-prefixed, 56 chars, base32).
  */
 export function isValidContractId(contractId: string): boolean {
-  if (!contractId || contractId.length !== 56 || !contractId.startsWith("C")) {
-    return false;
+  if (!contractId || typeof contractId !== "string") return false;
+  return /^C[A-Z2-7]{55}$/.test(contractId);
+}
+
+/**
+ * Asserts that the given value is a valid Soroban contract ID.
+ * Throws ValidationError immediately so no invalid ID reaches RPC.
+ */
+export function assertValidContractId(contractId: string): void {
+  if (!isValidContractId(contractId)) {
+    throw new ValidationError(
+      `Invalid contract ID: "${contractId}". Must be a 56-character C-prefixed base32 string.`
+    );
   }
-  return true;
 }

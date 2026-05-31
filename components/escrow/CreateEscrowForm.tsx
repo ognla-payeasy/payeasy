@@ -27,6 +27,8 @@ import {
   type EscrowFormDraft,
   type RoommateInputValue,
 } from "./createEscrowForm.helpers";
+import { useEscrowTemplates } from "@/hooks/useEscrowTemplates";
+import { BookmarkPlus, ChevronDown, Trash2 } from "lucide-react";
 
 interface InitializeEscrowParams {
   totalRent: string;
@@ -164,6 +166,12 @@ export default function CreateEscrowForm({
   const [submission, setSubmission] = useState<SubmissionState | null>(null);
   const [feeEstimateXlm, setFeeEstimateXlm] = useState<string | null>(null);
   const [feeStatus, setFeeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+
+  const { templates, saveTemplate, deleteTemplate, applyTemplate } = useEscrowTemplates();
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState("");
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
 
   function clearFieldError(field: string) {
     setFieldErrors((prev) => {
@@ -370,11 +378,28 @@ export default function CreateEscrowForm({
       const result = await createEscrow();
       setSubmission(result);
 
+      // Register escrow ID for the escrows listing page
+      if (result.contractId) {
+        try {
+          const existing: string[] = JSON.parse(
+            localStorage.getItem("escrow_registry") ?? "[]"
+          ) as string[];
+          if (!existing.includes(result.contractId)) {
+            localStorage.setItem(
+              "escrow_registry",
+              JSON.stringify([result.contractId, ...existing])
+            );
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       // Clear draft on successful submission
       clearDraft();
 
-      // Redirect to success page
-      router.push(`/escrow/success?id=${result.contractId || ""}`);
+      // Show save-as-template prompt before redirect
+      setShowSaveTemplate(true);
     } catch (error) {
       setErrors([
         error instanceof Error
@@ -385,11 +410,122 @@ export default function CreateEscrowForm({
     }
   }
 
+  function handleProceedAfterTemplate() {
+    router.push(`/escrow/success?id=${submission?.contractId ?? ""}`);
+  }
+
+  function handleSaveAndProceed() {
+    if (saveTemplateName.trim()) {
+      saveTemplate(saveTemplateName.trim(), draft);
+    }
+    setTemplateSaved(true);
+    setTimeout(() => {
+      router.push(`/escrow/success?id=${submission?.contractId ?? ""}`);
+    }, 600);
+  }
+
   return (
     <section className="max-w-3xl mx-auto rounded-3xl glass overflow-hidden transition-all duration-500">
       <StepIndicator steps={STEP_LABELS} currentStep={step} />
-      
+
       <div className="p-6 sm:p-8 pt-0">
+
+      {/* Save-as-template prompt shown after successful submission */}
+      {showSaveTemplate && (
+        <div className="mb-6 rounded-xl border border-brand-400/40 bg-brand-500/10 p-5 space-y-4 animate-fade-in">
+          <div className="flex items-center gap-2 text-brand-200 font-black text-sm uppercase tracking-widest">
+            <BookmarkPlus className="h-4 w-4" />
+            Save as Template
+          </div>
+          <p className="text-dark-400 text-sm">
+            Save this setup so you can reuse it next month without re-entering details.
+          </p>
+          {templateSaved ? (
+            <p className="text-accent-300 text-sm font-medium">Template saved.</p>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={saveTemplateName}
+                onChange={(e) => setSaveTemplateName(e.target.value)}
+                placeholder="Template name (e.g. Apt 4B Monthly)"
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-dark-100 outline-none focus:border-brand-400 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={handleSaveAndProceed}
+                className="btn-primary !px-5 !py-2.5 !text-sm font-black"
+              >
+                Save & Continue
+              </button>
+              <button
+                type="button"
+                onClick={handleProceedAfterTemplate}
+                className="btn-secondary !px-5 !py-2.5 !text-sm"
+              >
+                Skip
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Template selector — only on step 1, before any draft banner */}
+      {!showSaveTemplate && step === 1 && templates.length > 0 && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowTemplates((v) => !v)}
+            className="flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200 transition-colors font-medium"
+          >
+            <BookmarkPlus className="h-4 w-4" />
+            Use a saved template
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${showTemplates ? "rotate-180" : ""}`}
+            />
+          </button>
+          {showTemplates && (
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/5 divide-y divide-white/5 animate-fade-in">
+              {templates.map((tpl) => (
+                <div
+                  key={tpl.id}
+                  className="flex items-center justify-between gap-4 px-4 py-3"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium text-dark-200">{tpl.name}</p>
+                    <p className="text-xs text-dark-500">
+                      {tpl.totalRent} {tpl.tokenAddress} · {tpl.roommates.length} roommate
+                      {tpl.roommates.length !== 1 ? "s" : ""} · +{tpl.deadlineOffsetDays}d deadline
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const applied = applyTemplate(tpl);
+                        setDraft((current) => ({ ...current, ...applied }));
+                        setShowTemplates(false);
+                      }}
+                      className="btn-secondary !px-3 !py-1.5 !text-xs"
+                    >
+                      Apply
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteTemplate(tpl.id)}
+                      aria-label="Delete template"
+                      className="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {hasDraft && (
         <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-brand-400/40 bg-brand-500/10 p-4 text-sm animate-fade-in">
           <p className="text-brand-100 font-medium">You have an unsaved draft. Resume?</p>

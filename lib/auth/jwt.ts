@@ -54,6 +54,14 @@ function getTokenExpiry(): string {
   return process.env.JWT_EXPIRY || "7d";
 }
 
+/**
+ * @description Signs a JWT token containing the provided authentication payload using
+ * the HS256 algorithm. The token expiry is controlled by the `JWT_EXPIRY` environment
+ * variable (defaults to `"7d"`).
+ * @param payload - The authentication data to embed in the token (`userId`, `email`, `name`).
+ * @returns A promise resolving to a signed JWT string.
+ * @throws {Error} If `AUTH_SECRET` is unset or equals the development placeholder value.
+ */
 export async function signToken(payload: AuthPayload): Promise<string> {
   // Validate secret on first token generation
   validateAuthSecret();
@@ -65,6 +73,13 @@ export async function signToken(payload: AuthPayload): Promise<string> {
     .sign(getSecret());
 }
 
+/**
+ * @description Verifies a JWT token's signature and expiry, then returns the decoded payload.
+ * @param token - The JWT string to verify.
+ * @returns A promise resolving to the decoded `AuthPayload` if valid, or `null` if the token
+ * is expired, has an invalid signature, or cannot be parsed.
+ * @throws Never — verification failures are caught and returned as `null`.
+ */
 export async function verifyToken(
   token: string
 ): Promise<AuthPayload | null> {

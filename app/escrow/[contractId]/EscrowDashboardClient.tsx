@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import ApprovalStatus from "@/components/escrow/ApprovalStatus";
 import EscrowStatus from "@/components/escrow/EscrowStatus";
+import ExtendDeadlineModal from "@/components/escrow/ExtendDeadlineModal";
 import FundingProgress from "@/components/escrow/FundingProgress";
 import MultiSigApproval from "@/components/escrow/MultiSigApproval";
+import RefundPreview from "@/components/escrow/RefundPreview";
 import RoommateTable from "@/components/escrow/RoommateTable";
+import RoommateStatusPublic from "@/components/escrow/RoommateStatusPublic";
 import ContributeForm from "@/components/escrow/ContributeForm";
+import MyPaymentHistory from "@/components/escrow/MyPaymentHistory";
+import PushReminderPrompt from "@/components/escrow/PushReminderPrompt";
 import EscrowDashboardSkeleton from "@/components/escrow/EscrowDashboardSkeleton";
 import TransactionReview from "@/components/wallet/TransactionReview";
 import {
@@ -13,26 +19,36 @@ import {
   ExternalLink,
   ShieldCheck,
   Activity,
+  Calendar,
   Globe,
   AlertCircle,
   Loader2,
   ArrowUpRight,
   RotateCcw,
+  Share2,
+  Clock,
+  CheckCircle2,
+  RefreshCcw,
 } from "lucide-react";
 import Link from "next/link";
 import { getExplorerLink } from "@/lib/stellar/explorer";
-import { createLandlordMajorityConfig } from "@/lib/stellar/multisig";
+import { createLandlordMajorityConfig, type ApprovalState } from "@/lib/stellar/multisig";
 import RefreshIndicator from "@/components/escrow/RefreshIndicator";
 import { useStellar } from "@/context/StellarContext";
 import { claimRefund, stroopsToXlm } from "@/lib/stellar/actions/claimRefund";
-import useContractPolling from "@/hooks/useContractPolling";
+import useContractState from "@/hooks/useContractState";
+import { usePreferences } from "@/hooks/usePreferences";
 import { buildReleaseXdr, signAndSubmitRelease } from "@/lib/stellar/actions/release";
 import { useToast } from "@/hooks/useToast";
 import CopyButton from "@/components/ui/copy-button";
 import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
+import ShareEscrowModal from "@/components/escrow/ShareEscrowModal";
+import DisputeFlag from "@/components/escrow/DisputeFlag";
+import EarlyReleaseModal from "@/components/escrow/EarlyReleaseModal";
 
 interface Props {
   contractId: string;
+  initialContractState?: any;
 }
 
 type ReleasePhase = "idle" | "building" | "review" | "submitting";
@@ -43,15 +59,21 @@ function formatContractId(contractId: string): string {
 }
 
 
-export default function EscrowDashboardClient({ contractId }: Props) {
-  const { contractState, isLoading, error, refresh } = useContractPolling(contractId);
+export default function EscrowDashboardClient({ contractId, initialContractState }: Props) {
+  const { contractState, isLoading, error, refresh } = useContractState(contractId, initialContractState);
   const { isConnected, publicKey } = useStellar();
   const toast = useToast();
+  const { preferences } = usePreferences();
 
   const [releasePhase, setReleasePhase] = useState<ReleasePhase>("idle");
   const [preparedXdr, setPreparedXdr] = useState<string | null>(null);
   const [releaseError, setReleaseError] = useState<string | null>(null);
   const [isClaimingRefund, setIsClaimingRefund] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showEarlyReleaseModal, setShowEarlyReleaseModal] = useState(false);
+  const [showExtendDeadlineModal, setShowExtendDeadlineModal] = useState(false);
+  const [extendBanner, setExtendBanner] = useState<string | null>(null);
+  const [approvals, setApprovals] = useState<ApprovalState[]>([]);
 
   const isLandlord =
     isConnected &&
@@ -60,7 +82,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     publicKey === contractState.landlord;
 
   const currentRoommate = contractState?.roommates.find(
-    (r) => r.address === publicKey
+    (r: { address: string }) => r.address === publicKey
   );
 
   // #550 — memoize derived values so they don't recompute on unrelated state changes.
@@ -68,7 +90,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     () =>
       contractState
         ? contractState.roommates.reduce(
-            (sum, r) => sum + Number(r.paidAmount),
+            (sum: number, r: { paidAmount: string }) => sum + Number(r.paidAmount),
             0
           )
         : 0,
@@ -86,7 +108,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
   const roommateStatusMap = useMemo(() => {
     if (!contractState) return new Map<string, boolean>();
     return new Map(
-      contractState.roommates.map((r) => [r.address, r.isPaid])
+      contractState.roommates.map((r: { address: string; isPaid: boolean }) => [r.address, r.isPaid] as [string, boolean])
     );
   }, [contractState]);
 
@@ -98,7 +120,13 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     currentRoommate != null && BigInt(currentRoommate.paidAmount) > BigInt(0);
   const showClaimRefundButton = isDeadlinePassed && isNotFullyFunded && hasNonZeroPaid;
 
-  async function handleReleaseFunds() {
+  const showDisputeFlag =
+    !isLandlord &&
+    currentRoommate !== undefined &&
+    contractState?.status === "funded" &&
+    isDeadlinePassed;
+
+  async function handleReleaseFunds(isEarly = false) {
     if (!contractState) return;
     setReleasePhase("building");
     setReleaseError(null);
@@ -106,7 +134,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
       const xdr = await buildReleaseXdr({
         contractId,
         landlordAddress: contractState.landlord,
-      });
+      }, isEarly);
       setPreparedXdr(xdr);
       setReleasePhase("review");
     } catch (err) {
@@ -119,7 +147,25 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     if (!preparedXdr || !contractState) return;
     setReleasePhase("submitting");
     try {
-      await signAndSubmitRelease(preparedXdr, contractState.landlord);
+      const result = await signAndSubmitRelease(preparedXdr, contractState.landlord);
+      
+      try {
+        const stored = localStorage.getItem("released_escrows");
+        const currentList = stored ? JSON.parse(stored) : [];
+        if (!currentList.some((item: { id: string }) => item.id === contractState.id)) {
+          currentList.push({
+            id: contractState.id,
+            totalRent: contractState.totalRent,
+            status: "released",
+            releaseDate: result.confirmedAt ? new Date(result.confirmedAt).toISOString() : new Date().toISOString(),
+            txHash: result.txHash
+          });
+          localStorage.setItem("released_escrows", JSON.stringify(currentList));
+        }
+      } catch (e) {
+        console.error("Failed to save to released_escrows:", e);
+      }
+
       toast.success("Funds released to landlord.");
       setReleasePhase("idle");
       setPreparedXdr(null);
@@ -162,7 +208,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     ? createLandlordMajorityConfig({
         escrowAccountId: contractState.id,
         landlordAddress: contractState.landlord,
-        roommateAddresses: contractState.roommates.map((r) => r.address),
+        roommateAddresses: contractState.roommates.map((r: { address: string }) => r.address),
       })
     : null;
 
@@ -172,6 +218,41 @@ export default function EscrowDashboardClient({ contractId }: Props) {
     <main id="main-content" aria-label="Escrow Dashboard" className="min-h-screen pt-32 pb-24 relative overflow-hidden bg-[#07070a]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(92,124,250,0.1),transparent_50%)] pointer-events-none" />
       <div className="mesh-gradient opacity-30 mix-blend-screen pointer-events-none fixed inset-0 saturate-150" />
+
+      <ShareEscrowModal
+        contractId={contractId}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
+
+      {contractState && (
+        <ExtendDeadlineModal
+          contractId={contractId}
+          landlordAddress={contractState.landlord}
+          currentDeadlineEpoch={contractState.deadlineEpoch}
+          isOpen={showExtendDeadlineModal}
+          onClose={() => setShowExtendDeadlineModal(false)}
+          onExtended={(newEpoch) => {
+            const formatted = new Date(newEpoch * 1000).toLocaleString();
+            setExtendBanner(`Deadline extended to ${formatted}.`);
+            void refresh();
+          }}
+        />
+      )}
+
+      {contractState && (
+        <EarlyReleaseModal
+          isOpen={showEarlyReleaseModal}
+          onClose={() => setShowEarlyReleaseModal(false)}
+          onConfirm={() => {
+            setShowEarlyReleaseModal(false);
+            void handleReleaseFunds(true);
+          }}
+          contractId={contractId}
+          totalRent={contractState.totalRent}
+          totalFunded={totalFunded}
+        />
+      )}
 
       {/* TransactionReview modal overlay */}
       {(releasePhase === "review" || releasePhase === "submitting") && preparedXdr && (
@@ -254,7 +335,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
 
         {!isLoading && contractState && (
           <div className="mb-10 space-y-3">
-            {preferences.deadlineReminders && contractState.status === "active" && (
+            {preferences.notifications.deadlineReminders && contractState.status === "active" && (
               <div
                 role="status"
                 className="flex items-start gap-3 rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 text-brand-100"
@@ -272,7 +353,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                 </div>
               </div>
             )}
-            {preferences.paymentConfirmed && contractState.status === "funded" && (
+            {preferences.notifications.escrowContributions && contractState.status === "funded" && (
               <div
                 role="status"
                 className="flex items-start gap-3 rounded-xl border border-accent-500/30 bg-accent-500/10 p-4 text-accent-100"
@@ -286,7 +367,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                 </div>
               </div>
             )}
-            {preferences.refundAvailable && contractState.status === "expired" && (
+            {preferences.notifications.escrowContributions && contractState.status === "expired" && (
               <div
                 role="status"
                 className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100"
@@ -300,6 +381,25 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {extendBanner && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-6 flex items-start gap-3 rounded-xl border border-brand-500/30 bg-brand-500/10 p-4 text-sm font-medium text-brand-100"
+          >
+            <Calendar className="h-4 w-4 mt-0.5 shrink-0 text-brand-300" />
+            <div className="flex-1">{extendBanner}</div>
+            <button
+              type="button"
+              onClick={() => setExtendBanner(null)}
+              className="text-xs font-bold uppercase tracking-widest text-brand-200 hover:text-white"
+              aria-label="Dismiss deadline extension notice"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -336,7 +436,7 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                   status={contractState!.status}
                 />
 
-                {/* Release Funds — landlord only */}
+                {/* Release Funds + Share — landlord only */}
                 {isLandlord && (
                   <div className="flex flex-col gap-3">
                     {releaseError && (
@@ -345,23 +445,60 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                         {releaseError}
                       </div>
                     )}
-                    <button
-                      onClick={() => void handleReleaseFunds()}
-                      disabled={releasePhase !== "idle"}
-                      className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {releasePhase === "building" ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Preparing...
-                        </>
-                      ) : (
-                        <>
-                          <ArrowUpRight className="h-4 w-4" />
-                          Release Funds
-                        </>
-                      )}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {fundingPercentage >= 100 ? (
+                        <button
+                          onClick={() => void handleReleaseFunds(false)}
+                          disabled={releasePhase !== "idle" || contractState.status === "released"}
+                          className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {releasePhase === "building" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <ArrowUpRight className="h-4 w-4" />
+                              Release Funds
+                            </>
+                          )}
+                        </button>
+                      ) : fundingPercentage >= 50 ? (
+                        <button
+                          onClick={() => setShowEarlyReleaseModal(true)}
+                          disabled={releasePhase !== "idle" || contractState.status === "released"}
+                          className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest bg-gradient-to-r from-amber-500 to-brand-500 border-amber-400 hover:from-amber-600 hover:to-brand-600 shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {releasePhase === "building" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <ArrowUpRight className="h-4 w-4" />
+                              Early Release
+                            </>
+                          )}
+                        </button>
+                      ) : null}
+                      <button
+                        onClick={() => setShowShareModal(true)}
+                        className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        Share with Roommates
+                      </button>
+                      <button
+                        onClick={() => setShowExtendDeadlineModal(true)}
+                        disabled={releasePhase !== "idle"}
+                        className="inline-flex items-center gap-2 w-full sm:w-auto justify-center btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Request Extension
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -390,11 +527,19 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                 </div>
               </div>
 
-              <RoommateTable roommates={contractState!.roommates} />
+              {isLandlord ? (
+                <RoommateTable roommates={contractState!.roommates} />
+              ) : (
+                <RoommateStatusPublic
+                  roommates={contractState!.roommates}
+                  currentRoommateAddress={publicKey}
+                />
+              )}
 
               {/* Contribute Form — visible only to the current roommate if they haven't paid full share */}
-              {currentRoommate && !currentRoommate.isPaid && contractState?.status !== "funded" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {currentRoommate && contractState?.status !== "funded" && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-4">
+                  <PushReminderPrompt contractId={contractId} roommateAddress={currentRoommate.address} />
                   <ContributeForm
                     escrowId={contractId}
                     expectedShare={currentRoommate.expectedShare}
@@ -406,38 +551,69 @@ export default function EscrowDashboardClient({ contractId }: Props) {
                 </div>
               )}
 
+              {currentRoommate && (
+                <MyPaymentHistory
+                  contractId={contractId}
+                  roommateAddress={currentRoommate.address}
+                />
+              )}
+
               {/* Claim Refund — visible only when eligible */}
-              {showClaimRefundButton && (
-                <div className="glass-card p-8 flex flex-col sm:flex-row items-center justify-between gap-6 border border-amber-500/20 bg-amber-500/5">
-                  <div className="space-y-1 text-center sm:text-left">
-                    <h3 className="text-white font-black text-lg uppercase tracking-widest">
-                      Refund Available
-                    </h3>
-                    <p className="text-dark-400 text-sm">
-                      The funding deadline has passed and the escrow was not fully funded. You can reclaim your deposit.
-                    </p>
+              {showClaimRefundButton && currentRoommate && (
+                <div className="space-y-4">
+                  <RefundPreview
+                    refundableStroops={currentRoommate.paidAmount}
+                  />
+                  <div className="glass-card p-8 flex flex-col sm:flex-row items-center justify-between gap-6 border border-amber-500/20 bg-amber-500/5">
+                    <div className="space-y-1 text-center sm:text-left">
+                      <h3 className="text-white font-black text-lg uppercase tracking-widest">
+                        Refund Available
+                      </h3>
+                      <p className="text-dark-400 text-sm">
+                        The funding deadline has passed and the escrow was not fully funded. You can reclaim your deposit.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => void handleClaimRefund()}
+                      disabled={isClaimingRefund}
+                      className="btn-primary !w-full sm:!w-auto !justify-center !py-3 !px-8 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 disabled:opacity-50"
+                    >
+                      {isClaimingRefund ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Claiming...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="h-4 w-4" />
+                          Claim Refund
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => void handleClaimRefund()}
-                    disabled={isClaimingRefund}
-                    className="btn-primary !w-full sm:!w-auto !justify-center !py-3 !px-8 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 disabled:opacity-50"
-                  >
-                    {isClaimingRefund ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Claiming...
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="h-4 w-4" />
-                        Claim Refund
-                      </>
-                    )}
-                  </button>
                 </div>
               )}
 
-              <MultiSigApproval config={multiSigConfig!} mockMode />
+              {showDisputeFlag && publicKey && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <DisputeFlag
+                    contractId={contractId}
+                    roommateAddress={publicKey}
+                  />
+                </div>
+              )}
+
+              <ApprovalStatus
+                config={multiSigConfig!}
+                approvals={approvals}
+              />
+
+              <MultiSigApproval
+                config={multiSigConfig!}
+                mockMode
+                initialApprovals={approvals}
+                onApprovalChange={setApprovals}
+              />
             </div>
           )}
         </div>
