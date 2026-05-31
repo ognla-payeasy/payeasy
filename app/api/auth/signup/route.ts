@@ -5,6 +5,7 @@ import { findUserByEmail, createUser, toPublicUser } from "@/lib/auth/users";
 import { signToken } from "@/lib/auth/jwt";
 import { createRateLimiter, getClientIp } from "@/lib/auth/rate-limit";
 import { sanitizeEmail, sanitizeName, sanitizePassword } from "@/lib/auth/sanitize";
+import { validateCsrf } from "@/lib/auth/csrf";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -21,6 +22,14 @@ const rateLimiter = createRateLimiter({
 });
 
 export async function POST(req: NextRequest) {
+  // Validate CSRF
+  if (!validateCsrf(req)) {
+    return NextResponse.json(
+      { error: "Invalid or missing CSRF token" },
+      { status: 403 }
+    );
+  }
+
   // Extract client IP for rate limiting
   const clientIp = getClientIp(req.headers);
 
