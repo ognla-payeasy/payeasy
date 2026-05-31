@@ -17,6 +17,9 @@ export interface StoredUser {
   name: string;
   passwordHash: string;
   createdAt: string;
+  emailVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpiresAt?: string;
   notificationPreferences?: NotificationPreferences; // Added to store preferences
 }
 
@@ -24,6 +27,7 @@ export interface PublicUser {
   id: string;
   email: string;
   name: string;
+  emailVerified: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
@@ -55,27 +59,70 @@ export function findUserById(id: string): StoredUser | undefined {
   return readUsers().find((u) => u.id === id);
 }
 
+export function findUserByVerificationToken(token: string): StoredUser | undefined {
+  return readUsers().find(
+    (u) =>
+      u.verificationToken === token &&
+      u.verificationTokenExpiresAt &&
+      new Date(u.verificationTokenExpiresAt) > new Date()
+  );
+}
+
+export function verifyEmailToken(token: string): StoredUser | null {
+  const users = readUsers();
+  const userIndex = users.findIndex(
+    (u) =>
+      u.verificationToken === token &&
+      u.verificationTokenExpiresAt &&
+      new Date(u.verificationTokenExpiresAt) > new Date()
+  );
+
+  if (userIndex === -1) {
+    return null;
+  }
+
+  users[userIndex].emailVerified = true;
+  delete users[userIndex].verificationToken;
+  delete users[userIndex].verificationTokenExpiresAt;
+  writeUsers(users);
+
+  return users[userIndex];
+}
+
 export function createUser(
   email: string,
   name: string,
   passwordHash: string
 ): StoredUser {
   const users = readUsers();
+  const verificationToken = randomUUID();
+  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
   const user: StoredUser = {
     id: randomUUID(),
     email: email.toLowerCase().trim(),
     name: name.trim(),
     passwordHash,
     createdAt: new Date().toISOString(),
+    emailVerified: false,
+    verificationToken,
+    verificationTokenExpiresAt: tokenExpiresAt,
+    notificationPreferences: DEFAULT_NOTIFICATIONS, // Apply defaults on creation
     notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES, // Apply defaults on creation
   };
+
   users.push(user);
   writeUsers(users);
   return user;
 }
 
 export function toPublicUser(user: StoredUser): PublicUser {
-  return { id: user.id, email: user.email, name: user.name };
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    emailVerified: user.emailVerified,
+  };
 }
 
 // ---------------------------------------------------------------------------

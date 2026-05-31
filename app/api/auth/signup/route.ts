@@ -1,4 +1,3 @@
-import { test } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { findUserByEmail, createUser, toPublicUser } from "@/lib/auth/users";
