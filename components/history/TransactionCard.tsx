@@ -192,4 +192,4 @@ export default memo(function TransactionCard({ transaction, isNew = false, onCli
       </div>
     </div>
   );
-}
+});
