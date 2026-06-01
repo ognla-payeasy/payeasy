@@ -529,7 +529,7 @@ export default function EscrowDashboardClient({ contractId, initialContractState
               </div>
 
               {isLandlord ? (
-                <RoommateTable roommates={contractState!.roommates} />
+                <RoommateTable roommates={contractState!.roommates} contractId={contractId} />
               ) : (
                 <RoommateStatusPublic
                   roommates={contractState!.roommates}
