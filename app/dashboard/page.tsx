@@ -10,7 +10,7 @@ import FundingProgress from "@/components/escrow/FundingProgress";
 import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 import { useStellar } from "@/context/StellarContext";
 import PaymentHistoryTab, { type ReleasedEscrow } from "@/components/dashboard/PaymentHistoryTab";
-import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload } from "lucide-react";
+import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload, TrendingUp } from "lucide-react";
 import EscrowLabel from "@/components/escrow/EscrowLabel";
 import PortfolioSummary from "@/components/dashboard/PortfolioSummary";
 
@@ -112,6 +112,13 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/tax-summary"
+              className="btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Tax Summary
+            </Link>
             <Link
               href="/escrow/create-bulk"
               className="btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
