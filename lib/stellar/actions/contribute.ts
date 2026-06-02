@@ -9,6 +9,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { signTx } from "@/lib/stellar/wallet";
 import { assertValidStellarAddress, assertValidContractId } from "@/lib/stellar/validation";
+import { recordTransaction } from "@/lib/metrics";
 
 const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "";
 if (!rpcUrl) {
@@ -84,40 +85,48 @@ export async function signAndSubmitContribute(
 ): Promise<ContributeResult> {
   const server = new rpc.Server(rpcUrl);
 
-  // Sign with Freighter
-  const signedXdr = await signTx(xdr, "TESTNET");
-  if (!signedXdr) {
-    throw new Error("Transaction signing was rejected or failed");
+  // Record the outcome for failure-rate metrics (issue #224). Any throw on the
+  // submit/confirm path counts as a failure; a confirmed tx counts as success.
+  try {
+    // Sign with Freighter
+    const signedXdr = await signTx(xdr, "TESTNET");
+    if (!signedXdr) {
+      throw new Error("Transaction signing was rejected or failed");
+    }
+
+    // Submit the signed transaction
+    const signedTx = TransactionBuilder.fromXDR(
+      signedXdr,
+      Networks.TESTNET
+    );
+
+    const sendResult = await server.sendTransaction(signedTx);
+
+    if (sendResult.status === "ERROR") {
+      throw new Error(`Transaction submission failed: ${sendResult.status}`);
+    }
+
+    // Poll for confirmation
+    const txHash = sendResult.hash;
+    let getResult = await server.getTransaction(txHash);
+
+    while (getResult.status === "NOT_FOUND") {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      getResult = await server.getTransaction(txHash);
+    }
+
+    if (getResult.status === "FAILED") {
+      throw new Error("Transaction failed on-chain");
+    }
+
+    recordTransaction("contribute", "success");
+    return {
+      success: true,
+      txHash,
+      ledger: getResult.latestLedger,
+    };
+  } catch (err) {
+    recordTransaction("contribute", "failure");
+    throw err;
   }
-
-  // Submit the signed transaction
-  const signedTx = TransactionBuilder.fromXDR(
-    signedXdr,
-    Networks.TESTNET
-  );
-
-  const sendResult = await server.sendTransaction(signedTx);
-
-  if (sendResult.status === "ERROR") {
-    throw new Error(`Transaction submission failed: ${sendResult.status}`);
-  }
-
-  // Poll for confirmation
-  const txHash = sendResult.hash;
-  let getResult = await server.getTransaction(txHash);
-
-  while (getResult.status === "NOT_FOUND") {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    getResult = await server.getTransaction(txHash);
-  }
-
-  if (getResult.status === "FAILED") {
-    throw new Error("Transaction failed on-chain");
-  }
-
-  return {
-    success: true,
-    txHash,
-    ledger: getResult.latestLedger,
-  };
 }

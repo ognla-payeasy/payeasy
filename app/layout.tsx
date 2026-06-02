@@ -8,6 +8,7 @@ import { StellarProvider } from "@/context/StellarContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { EmailAuthProvider } from "@/context/EmailAuthContext";
 import { WebVitals } from "@/components/web-vitals";
+import { Analytics } from "@/components/ui/analytics";
 import { LocaleDirection } from "@/components/ui/locale-direction";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import "./globals.css";
@@ -70,6 +71,7 @@ export default function RootLayout({
       >
         <LocaleDirection />
         <WebVitals />
+        <Analytics />
         <ToastProvider>
           <QueryProvider>
             <EmailAuthProvider>

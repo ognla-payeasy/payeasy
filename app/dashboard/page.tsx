@@ -13,6 +13,7 @@ import PaymentHistoryTab, { type ReleasedEscrow } from "@/components/dashboard/P
 import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload, TrendingUp } from "lucide-react";
 import EscrowLabel from "@/components/escrow/EscrowLabel";
 import PortfolioSummary from "@/components/dashboard/PortfolioSummary";
+import DeadlineBanners from "@/components/dashboard/DeadlineBanners";
 
 const MOCK_RELEASED_ESCROWS = (landlordKey: string): ReleasedEscrow[] => [
   {
@@ -135,6 +136,9 @@ export default function DashboardPage() {
             </Link>
           </div>
         </header>
+
+        {/* Deadline reminder banners (issue #238) */}
+        <DeadlineBanners escrows={escrows} />
 
         {/* Sticky Stats Header */}
         <PortfolioSummary escrows={escrows} releasedEscrows={releasedEscrows} />
