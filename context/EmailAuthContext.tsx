@@ -11,6 +11,14 @@ import {
 import { useRouter } from "next/navigation";
 import { sanitizeEmail, sanitizeName, sanitizePassword } from "@/lib/auth/sanitize";
 
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift() ?? null;
+  return null;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -94,9 +102,13 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
       const sanitizedPassword = sanitizePassword(password);
 
       const doLogin = async (): Promise<Response> => {
+        const csrfToken = getCookie("csrf_token") || "";
         const res = await fetch("/api/auth/login", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+          },
           body: JSON.stringify({
             email: sanitizedEmail,
             password: sanitizedPassword,
@@ -123,9 +135,13 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
       const sanitizedPassword = sanitizePassword(password);
 
       const doSignup = async (): Promise<Response> => {
+        const csrfToken = getCookie("csrf_token") || "";
         const res = await fetch("/api/auth/signup", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+          },
           body: JSON.stringify({
             email: sanitizedEmail,
             name: sanitizedName,
@@ -148,7 +164,13 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const csrfToken = getCookie("csrf_token") || "";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": csrfToken,
+        },
+      });
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
