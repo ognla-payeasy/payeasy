@@ -13,7 +13,8 @@ import {
   ShieldCheck, 
   XCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 

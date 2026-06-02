@@ -11,6 +11,13 @@ export interface NotificationPreferences {
   pushNotifications: boolean;
 }
 
+export interface WebAuthnCredentialJSON {
+  id: string;
+  publicKeyBase64: string;
+  counter: number;
+  transports?: string[];
+}
+
 export interface StoredUser {
   id: string;
   email: string;
@@ -20,7 +27,9 @@ export interface StoredUser {
   emailVerified: boolean;
   verificationToken?: string;
   verificationTokenExpiresAt?: string;
-  notificationPreferences?: NotificationPreferences; // Added to store preferences
+  notificationPreferences?: NotificationPreferences;
+  currentChallenge?: string;
+  webAuthnCredentials?: WebAuthnCredentialJSON[];
 }
 
 export interface PublicUser {
@@ -182,4 +191,19 @@ export function updateUserPasswordHash(userId: string, passwordHash: string): vo
 
   users[userIndex].passwordHash = passwordHash;
   writeUsers(users);
+}
+
+export function updateUser(userId: string, patch: Partial<StoredUser>): StoredUser {
+  const users = readUsers();
+  const userIndex = users.findIndex((u) => u.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error("User not found");
+  }
+
+  const updatedUser = { ...users[userIndex], ...patch };
+  users[userIndex] = updatedUser;
+  writeUsers(users);
+
+  return updatedUser;
 }

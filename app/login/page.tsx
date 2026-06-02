@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Mail, Lock, LogIn, ArrowLeft, Eye, EyeOff, AlertCircle, Fingerprint } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PayEasyLogo } from "@/components/ui/payeasy-logo";
 import { useEmailAuth } from "@/context/EmailAuthContext";
+import { registerWebAuthn, authenticateWebAuthn } from "@/lib/auth/webauthn";
+import { browserSupportsWebAuthn } from "@simplewebauthn/browser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,18 +20,104 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isWebAuthnSupported, setIsWebAuthnSupported] = useState(false);
+  const [showBiometricsPrompt, setShowBiometricsPrompt] = useState(false);
+
+  useEffect(() => {
+    setIsWebAuthnSupported(browserSupportsWebAuthn());
+  }, []);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
     try {
       await login(email, password);
-      router.push("/connect");
+      if (isWebAuthnSupported) {
+        setShowBiometricsPrompt(true);
+      } else {
+        router.push("/connect");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function handleBiometricLogin() {
+    if (!email) {
+      setError("Please enter your email to login with biometrics.");
+      return;
+    }
+    setError(null);
+    setIsLoading(true);
+    try {
+      await authenticateWebAuthn(email);
+      window.location.href = "/connect"; // Force reload to update context
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Biometric login failed");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleRegisterBiometrics() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await registerWebAuthn();
+      window.location.href = "/connect";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+      // Skip on error
+      setTimeout(() => {
+        window.location.href = "/connect";
+      }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  if (showBiometricsPrompt) {
+    return (
+      <main className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
+        <div className="relative z-10 w-full max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center p-8 rounded-2xl glass-card"
+          >
+            <Fingerprint className="w-16 h-16 text-brand-400 mb-6" />
+            <h1 className="text-2xl font-bold text-center text-white mb-2">
+              Enable Face ID / Fingerprint
+            </h1>
+            <p className="text-dark-400 text-center mb-8">
+              Would you like to log in faster next time using biometrics?
+            </p>
+
+            {error && (
+              <p className="text-red-400 text-sm mb-4">{error}</p>
+            )}
+
+            <button
+              onClick={handleRegisterBiometrics}
+              disabled={isLoading}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white rounded-xl py-3.5 mb-3 transition font-semibold"
+            >
+              {isLoading ? "Setting up..." : "Enable Biometrics"}
+            </button>
+            <button
+              onClick={() => router.push("/connect")}
+              disabled={isLoading}
+              className="w-full bg-dark-800 hover:bg-dark-700 text-dark-300 rounded-xl py-3.5 transition"
+            >
+              Not now
+            </button>
+          </motion.div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -192,6 +280,20 @@ export default function LoginPage() {
                 </span>
               </div>
             </button>
+
+            {isWebAuthnSupported && (
+              <button
+                type="button"
+                onClick={handleBiometricLogin}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 border border-brand-500/30 hover:bg-brand-500/10 text-brand-400 rounded-[15px] px-8 py-4 transition-colors"
+              >
+                <Fingerprint className="w-5 h-5" />
+                <span className="font-semibold text-lg font-display">
+                  Login with Face ID / Fingerprint
+                </span>
+              </button>
+            )}
           </form>
 
           {/* Divider */}

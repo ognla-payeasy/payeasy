@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { Menu, X, LogIn, UserPlus, LogOut, User, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ConnectWalletButton from "@/components/wallet/ConnectWalletButton";
@@ -201,6 +201,7 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            </div>
             <div className="flex justify-center gap-3">
               <ConnectWalletButton />
               <ThemeToggle />
