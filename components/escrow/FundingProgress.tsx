@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { TrendingUp, Percent, ShieldCheck, Wallet, Zap } from "lucide-react";
+import { formatXLM } from "@/lib/utils/format";
 
 interface FundingProgressProps {
   /**
@@ -80,14 +81,14 @@ export default function FundingProgress({
         <div className="space-y-1.5 border-r border-white/10 pr-6 text-left">
           <p className="text-[10px] text-dark-500 uppercase tracking-widest font-black">Currently Funded</p>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-accent-300 tracking-tight">{totalFunded.toLocaleString()}</span>
+            <span className="text-2xl font-black text-accent-300 tracking-tight">{formatXLM(totalFunded)}</span>
             <span className="text-[10px] font-black text-accent-500 uppercase">XLM</span>
           </div>
         </div>
         <div className="space-y-1.5 pl-6 text-right">
           <p className="text-[10px] text-dark-500 uppercase tracking-widest font-black">Target Amount</p>
           <div className="flex items-baseline justify-end gap-1.5">
-            <span className="text-2xl font-black text-dark-100 tracking-tight">{totalRequired.toLocaleString()}</span>
+            <span className="text-2xl font-black text-dark-100 tracking-tight">{formatXLM(totalRequired)}</span>
             <span className="text-[10px] font-black text-dark-500 uppercase">XLM</span>
           </div>
         </div>

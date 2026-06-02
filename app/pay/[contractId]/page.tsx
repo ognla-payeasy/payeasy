@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Wallet, Info } from "lucide-react";
+import { Wallet, Info, RefreshCw } from "lucide-react";
 import ContributeForm from "@/components/escrow/ContributeForm";
+import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 import useFreighter from "@/hooks/useFreighter.ts";
 import {
   getContractState,
@@ -128,14 +129,47 @@ export default function PayContractPage() {
     Number(currentRoommate.expectedShare) - Number(currentRoommate.paidAmount)
   ).toFixed(2).replace(/\.00$/, "");
 
+  const isDeadlinePassed = contractState.status === "expired";
+
   return (
     <div className="max-w-md mx-auto py-12 px-4">
-      <ContributeForm
-        escrowId={contractId}
-        expectedShare={expectedShare}
-        remainingBalance={remainingBalance}
-        onSuccess={handleSuccess}
-      />
+      <div className="space-y-6">
+        {/* Deadline Countdown */}
+        <div className="flex justify-center">
+          <DeadlineCountdown deadlineEpoch={contractState.deadlineEpoch} />
+        </div>
+
+        {/* Content */}
+        {isDeadlinePassed ? (
+          <div className="glass-card p-6 sm:p-8 text-center space-y-6">
+            <div className="mx-auto w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-400/20">
+              <RefreshCw className="h-8 w-8 text-yellow-400" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white">Payment Deadline Passed</h2>
+              <p className="text-sm text-dark-400">
+                The payment deadline for this rent agreement has expired. Refund is available if you contributed.
+              </p>
+              <p className="text-xs text-dark-500 font-mono mt-4">
+                Deadline was: {new Date(contractState.deadline).toLocaleString()}
+              </p>
+            </div>
+            <button
+              onClick={() => router.push(`/escrow/${contractId}`)}
+              className="w-full btn-secondary !py-3 !text-sm"
+            >
+              Go to Escrow Details
+            </button>
+          </div>
+        ) : (
+          <ContributeForm
+            escrowId={contractId}
+            expectedShare={expectedShare}
+            remainingBalance={remainingBalance}
+            onSuccess={handleSuccess}
+          />
+        )}
+      </div>
     </div>
   );
 }

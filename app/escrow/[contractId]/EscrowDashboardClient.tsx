@@ -45,6 +45,7 @@ import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 import ShareEscrowModal from "@/components/escrow/ShareEscrowModal";
 import DisputeFlag from "@/components/escrow/DisputeFlag";
 import EarlyReleaseModal from "@/components/escrow/EarlyReleaseModal";
+import ContractTimeline from "@/components/escrow/ContractTimeline";
 
 interface Props {
   contractId: string;
@@ -528,13 +529,15 @@ export default function EscrowDashboardClient({ contractId, initialContractState
               </div>
 
               {isLandlord ? (
-                <RoommateTable roommates={contractState!.roommates} />
+                <RoommateTable roommates={contractState!.roommates} contractId={contractId} />
               ) : (
                 <RoommateStatusPublic
                   roommates={contractState!.roommates}
                   currentRoommateAddress={publicKey}
                 />
               )}
+
+              <ContractTimeline contractId={contractId} contractState={contractState!} />
 
               {/* Contribute Form — visible only to the current roommate if they haven't paid full share */}
               {currentRoommate && contractState?.status !== "funded" && (

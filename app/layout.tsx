@@ -3,28 +3,34 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "@/lib/env";
 import { AppShell } from "@/components/ui/app-shell";
 import { PageTransition } from "@/components/ui/page-transition";
+import QueryProvider from "@/components/providers/QueryProvider";
 import { StellarProvider } from "@/context/StellarContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { EmailAuthProvider } from "@/context/EmailAuthContext";
 import { WebVitals } from "@/components/web-vitals";
+import { LocaleDirection } from "@/components/ui/locale-direction";
+import { BottomNav } from "@/components/ui/bottom-nav";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  preload: true,
 });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
   display: "swap",
+  preload: true,
 });
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -60,8 +66,9 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans pb-16 md:pb-0`}
       >
+        <LocaleDirection />
         <WebVitals />
         <ToastProvider>
           <QueryProvider>
@@ -70,6 +77,7 @@ export default function RootLayout({
                 <AppShell>
                   <PageTransition>{children}</PageTransition>
                 </AppShell>
+                <BottomNav />
               </StellarProvider>
             </EmailAuthProvider>
           </QueryProvider>

@@ -1,52 +1,96 @@
+import createMiddleware from "next-intl/middleware";
+
+export default createMiddleware({
+  locales: ["en", "es"],
+  defaultLocale: "en",
+  localeDetection: true,
+  localePrefix: "as-needed",
+});
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { generateCsrfToken, setCsrfCookie, CSRF_COOKIE_NAME } from "@/lib/auth/csrf";
+import { jwtVerify } from "jose";
 
-export function middleware(req: NextRequest) {
-  // Generate a cryptographically secure random base64-encoded nonce
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+// Edge Runtime declaration - runs middleware on Vercel Edge Network for lower latency
+export const runtime = "edge";
 
-  // Set the nonce on the request headers so it can be read in server components (if needed)
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-nonce", nonce);
+// Public API routes that don't require authentication
+const PUBLIC_ROUTES = [
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/verify-email",
+  "/api/health",
+];
 
-  // Set the updated CSP header value on the request
-  const cspHeader = `default-src 'self'; script-src 'self' 'nonce-${nonce}'; connect-src 'self' https://horizon-testnet.stellar.org https://soroban-testnet.stellar.org; img-src 'self' data: https://images.unsplash.com https://i.pravatar.cc`;
-  requestHeaders.set("Content-Security-Policy", cspHeader);
+/**
+ * Gets the JWT secret as a Uint8Array (Web Crypto API compatible for Edge Runtime)
+ */
+function getSecret(): Uint8Array {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET env var is not set");
+  return new TextEncoder().encode(secret);
+}
 
-  // Create response passing modified request headers
-  const res = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+/**
+ * Verifies if a request is to a public route
+ */
+function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+}
 
-  // Set the CSP header on the response
-  res.headers.set("Content-Security-Policy", cspHeader);
+/**
+ * Extracts JWT token from Authorization header
+ */
+function extractToken(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.slice(7);
+}
 
-  const path = req.nextUrl.pathname;
+/**
+ * Middleware to add request tracing and JWT verification for protected routes.
+ * Uses Edge-compatible APIs (Web Crypto for JWT verification, no Node.js-only APIs).
+ */
+export async function middleware(request: NextRequest) {
+  const requestId =
+    request.headers.get("x-request-id") ?? crypto.randomUUID();
 
-  // On GET requests to auth pages, set a csrf_token cookie if it doesn't exist yet
-  if (req.method === "GET" && (path === "/login" || path === "/signup")) {
-    if (!req.cookies.has(CSRF_COOKIE_NAME)) {
-      const token = generateCsrfToken();
-      setCsrfCookie(res, token);
-    }
+  const pathname = new URL(request.url).pathname;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  // Skip JWT verification for public routes
+  if (isPublicRoute(pathname)) {
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set("x-request-id", requestId);
+    return response;
   }
 
-  return res;
+  // Verify JWT token for protected routes using jose (Web Crypto API compatible)
+  const token = extractToken(request);
+  if (!token) {
+    return NextResponse.json(
+      { error: "Missing authorization token" },
+      { status: 401, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  try {
+    await jwtVerify(token, getSecret());
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid or expired token" },
+      { status: 401, headers: { "x-request-id": requestId } }
+    );
+  }
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("x-request-id", requestId);
+
+  return response;
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: "/api/:path*",
 };
 

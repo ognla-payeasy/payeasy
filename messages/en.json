@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How It Works",
+    "stellar": "Stellar",
+    "signIn": "Sign In",
+    "connectWallet": "Connect Wallet"
+  },
+  "hero": {
+    "title": "Split Rent. Trust the Chain.",
+    "subtitle": "Find roommates, split rent, and pay securely through Stellar blockchain escrow. Transparent, trustless, and effortless.",
+    "getStarted": "Get Started",
+    "viewOnGithub": "View on GitHub",
+    "disclaimer": "Powered by Stellar Blockchain",
+    "socialProof": "Trusted by roommates worldwide",
+    "stats": {
+      "transactionFee": "Transaction Fee",
+      "settlementTime": "Settlement Time",
+      "transparency": "On-Chain Transparency"
+    },
+    "programs": {
+      "findRoommates": "FIND ROOMMATES",
+      "findRoommatesDesc": "Browse verified listings & profiles",
+      "smartEscrow": "SMART ESCROW",
+      "smartEscrowDesc": "Trustless rent collection on-chain",
+      "instantPayments": "INSTANT PAYMENTS",
+      "instantPaymentsDesc": "Settle in seconds, not days",
+      "moveIn": "MOVE IN",
+      "moveInDesc": "Secure your new home with confidence",
+      "community": "COMMUNITY",
+      "communityDesc": "Connect with trusted roommates"
+    }
+  },
+  "errors": {
+    "walletNotConnected": "Wallet not connected",
+    "insufficientBalance": "Insufficient balance",
+    "transactionFailed": "Transaction failed",
+    "networkError": "Network error. Please try again.",
+    "invalidAddress": "Invalid wallet address"
+  },
+  "forms": {
+    "amount": "Amount",
+    "recipient": "Recipient",
+    "memo": "Memo",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "escrow": {
+    "create": "Create Escrow",
+    "deposit": "Deposit",
+    "release": "Release",
+    "refund": "Refund",
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "completed": "Completed",
+      "disputed": "Disputed"
+    }
+  },
+  "language": {
+    "en": "English",
+    "es": "Español",
+    "select": "Select language"
+  }
+}

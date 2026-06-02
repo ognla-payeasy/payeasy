@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -51,7 +51,7 @@ interface TransactionCardProps {
  * A card component that displays an individual transaction's details.
  * Features specialized icons and color schemes based on the transaction type.
  */
-export default function TransactionCard({ transaction, isNew = false, onClick }: TransactionCardProps) {
+export default memo(function TransactionCard({ transaction, isNew = false, onClick }: TransactionCardProps) {
   const router = useRouter();
 
   const explorerLink = useMemo(() => {
@@ -192,4 +192,4 @@ export default function TransactionCard({ transaction, isNew = false, onClick }:
       </div>
     </div>
   );
-}
+});
