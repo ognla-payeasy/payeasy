@@ -426,6 +426,110 @@ function PrivacySection({
   );
 }
 
+// ─── Profile section ─────────────────────────────────────────────────────────
+
+function ProfileSection({
+  initialName,
+  initialEmail,
+}: {
+  initialName: string;
+  initialEmail: string;
+}) {
+  const toast = useToast();
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (trimmedName.length < 2) {
+      setError("Name must be at least 2 characters.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Invalid email address.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName, email: trimmedEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to update profile.");
+      }
+
+      toast.success("Profile updated successfully.");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Section title="Profile Settings">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Display Name">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. John Doe"
+            className={inputClass}
+            required
+          />
+        </Field>
+        <Field label="Email Address">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="e.g. john@example.com"
+            className={inputClass}
+            required
+          />
+        </Field>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary !w-full sm:!w-auto flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {isSubmitting ? "Saving..." : "Save Profile"}
+        </button>
+      </form>
+    </Section>
+  );
+}
+
 // ─── Password section ────────────────────────────────────────────────────────
 
 function PasswordSection() {
@@ -658,7 +762,8 @@ export default function SettingsPage() {
         onDismiss={dismissBanner}
       />
 
-     <BudgetSection prefs={preferences} update={setPreferences} />
+      <ProfileSection key={user.id} initialName={user.name} initialEmail={user.email} />
+      <BudgetSection prefs={preferences} update={setPreferences} />
       <LocationSection prefs={preferences} update={setPreferences} />
       <NotificationsSection prefs={preferences} update={setPreferences} />
       <PrivacySection prefs={preferences} update={setPreferences} />
