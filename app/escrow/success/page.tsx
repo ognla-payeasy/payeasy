@@ -49,6 +49,8 @@ function SuccessContent() {
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     } catch {
+      // TODO(issue-168): replace empty catch with `setClipboardError(true)`
+      // and surface a fallback UI instead of silently swallowing the error.
       // Ignore clipboard errors silently
     }
   };
@@ -60,6 +62,8 @@ function SuccessContent() {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
+      // TODO(issue-168): replace empty catch with `setClipboardError(true)`
+      // and surface a fallback UI instead of silently swallowing the error.
       // Ignore clipboard errors silently
     }
   };

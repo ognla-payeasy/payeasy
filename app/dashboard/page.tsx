@@ -64,6 +64,8 @@ export default function DashboardPage() {
           setReleasedEscrows(seeded);
         }
       } catch (e) {
+        // TODO(issue-168): replace empty catch with proper error handling:
+        //   setError(e instanceof Error ? e.message : "Failed to load dashboard")
         // handle error
       } finally {
         setLoading(false);
