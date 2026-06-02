@@ -142,16 +142,31 @@
 
   .mesh-gradient {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     pointer-events: none;
     z-index: 0;
     background:
       radial-gradient(ellipse 80% 60% at 10% 20%, rgba(92, 124, 250, 0.08) 0%, transparent 60%),
       radial-gradient(ellipse 60% 40% at 90% 80%, rgba(32, 201, 151, 0.06) 0%, transparent 60%),
       radial-gradient(ellipse 50% 50% at 50% 50%, rgba(116, 143, 252, 0.04) 0%, transparent 60%);
+  }
+
+  [dir="rtl"] .mesh-gradient {
+    background:
+      radial-gradient(ellipse 80% 60% at 90% 20%, rgba(92, 124, 250, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 10% 80%, rgba(32, 201, 151, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(116, 143, 252, 0.04) 0%, transparent 60%);
+  }
+
+  [dir="rtl"] .gradient-text {
+    background: linear-gradient(225deg, #5c7cfa 0%, #20c997 50%, #748ffc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  [dir="rtl"] .gradient-border::before {
+    background: linear-gradient(225deg, rgba(92, 124, 250, 0.4), rgba(32, 201, 151, 0.4));
   }
 
   .section-divider {
@@ -189,6 +204,10 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 

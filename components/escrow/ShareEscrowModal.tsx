@@ -101,7 +101,9 @@ export default function ShareEscrowModal({
               </div>
               <h2 className="text-xl font-black text-white">Payment Link</h2>
               <p className="text-dark-400 text-sm leading-relaxed">
-                Scan the QR code or copy the link to share this escrow with your roommates.
+                {canShare
+                  ? "Scan the QR code or use Share to send this escrow link to your roommates."
+                  : "Scan the QR code or copy the link to share this escrow with your roommates."}
               </p>
             </div>
 
@@ -124,44 +126,75 @@ export default function ShareEscrowModal({
               <span className="text-dark-300 text-xs font-mono truncate flex-1">
                 {shareUrl}
               </span>
-              <button
-                onClick={() => void handleCopy()}
-                aria-label="Copy link"
-                className="shrink-0 p-1.5 rounded-lg text-dark-400 hover:text-brand-400 hover:bg-white/5 transition-all"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  {copied ? (
-                    <motion.div
-                      key="check"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <Check className="h-4 w-4 text-accent-400" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="copy"
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
+              {!canShare && (
+                <button
+                  onClick={() => void handleCopy()}
+                  aria-label="Copy link"
+                  className="shrink-0 p-1.5 rounded-lg text-dark-400 hover:text-brand-400 hover:bg-white/5 transition-all"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {copied ? (
+                      <motion.div
+                        key="check"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Check className="h-4 w-4 text-accent-400" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="copy"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </button>
+              )}
             </div>
 
-            {canShare && (
+            {canShare ? (
               <button
                 onClick={() => void handleNativeShare()}
                 className="btn-primary w-full !py-3 !rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 <Share2 className="h-4 w-4" />
                 Share
+              </button>
+            ) : (
+              <button
+                onClick={() => void handleCopy()}
+                className="btn-primary w-full !py-3 !rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {copied ? (
+                    <motion.span
+                      key="copied"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Check className="h-4 w-4" />
+                      Copied!
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="copy"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy Link
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </button>
             )}
           </motion.div>

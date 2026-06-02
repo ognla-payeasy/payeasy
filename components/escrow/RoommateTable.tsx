@@ -1,8 +1,9 @@
 "use client";
 
-import { User, CheckCircle2, Clock, Users, Activity, ExternalLink, AlertCircle, Loader2 } from "lucide-react";
+import { User, CheckCircle2, Clock, Users, Activity, ExternalLink, AlertCircle, Loader2, Bell } from "lucide-react";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 import CopyButton from "@/components/ui/copy-button";
+import { useToast } from "@/hooks/useToast";
 
 export interface Roommate {
   /**
@@ -32,13 +33,31 @@ interface RoommateTableProps {
    * Array of roommate objects to display.
    */
   roommates: Roommate[];
+  /**
+   * The contract ID for generating payment reminder links.
+   */
+  contractId?: string;
 }
 
 /**
  * A comprehensive list of agreement participants and their funding statuses.
  * Integrates with Stellar explorer links for individual account verification.
+ * Landlords can send payment nudge reminders to unpaid roommates.
  */
-export default function RoommateTable({ roommates }: RoommateTableProps) {
+export default function RoommateTable({ roommates, contractId }: RoommateTableProps) {
+  const toast = useToast();
+
+  const handleNudge = (roommateAddress: string) => {
+    if (!contractId) {
+      toast.error("Contract ID not available");
+      return;
+    }
+
+    const reminderUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/pay/${contractId}`;
+    void navigator.clipboard.writeText(reminderUrl);
+    toast.success("Payment reminder link copied to clipboard!");
+  };
+
   // Sorting logic: Pending/Partial first, then Paid
   const sortedRoommates = [...roommates].sort((a, b) => {
     if (a.isConfirming && !b.isConfirming) return -1;
@@ -73,7 +92,8 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
                 <th className="p-4 text-[10px] text-dark-500 font-black uppercase tracking-widest">Expected</th>
                 <th className="p-4 text-[10px] text-dark-500 font-black uppercase tracking-widest">Paid</th>
                 <th className="p-4 text-[10px] text-dark-500 font-black uppercase tracking-widest">Remaining</th>
-                <th className="p-4 pr-6 text-[10px] text-dark-500 font-black uppercase tracking-widest text-center">Status</th>
+                <th className="p-4 text-[10px] text-dark-500 font-black uppercase tracking-widest text-center">Status</th>
+                <th className="p-4 pr-6 text-[10px] text-dark-500 font-black uppercase tracking-widest text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -132,6 +152,20 @@ export default function RoommateTable({ roommates }: RoommateTableProps) {
                            {roommate.isConfirming ? <Loader2 className="h-3 w-3 animate-spin" /> : roommate.isPaid ? <CheckCircle2 className="h-3 w-3" /> : isPartial ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3 animate-pulse" />}
                            {roommate.isConfirming ? "Confirming on-chain..." : roommate.isPaid ? "Paid" : isPartial ? "Partial" : "Pending"}
                         </div>
+                      </div>
+                    </td>
+                    <td className="p-4 pr-6">
+                      <div className="flex justify-center">
+                        {!roommate.isPaid && !roommate.isConfirming && (
+                          <button
+                            onClick={() => handleNudge(roommate.address)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-500/30 bg-brand-500/10 text-brand-300 hover:bg-brand-500/20 hover:border-brand-500/50 text-[9px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95"
+                            title="Send payment reminder to this roommate"
+                          >
+                            <Bell className="h-3 w-3" />
+                            Nudge
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

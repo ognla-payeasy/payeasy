@@ -8,6 +8,8 @@ try {
   // Keep builds working until the dependency is installed locally.
 }
 
+const createNextIntlPlugin = require("next-intl/plugin");
+const withNextIntl = createNextIntlPlugin("./i18n.ts");
 let withSentryConfig = (config) => config;
 
 try {
@@ -56,6 +58,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  compress: true,
   images: {
     remotePatterns: [
       {
@@ -76,10 +79,17 @@ const nextConfig = {
     return [
       {
         source: "/:path*",
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Accept-Encoding",
+            value: "br, gzip, deflate",
+          },
+        ],
       },
     ];
   },
 };
 
+module.exports = withBundleAnalyzer(withNextIntl(nextConfig));
 module.exports = withSentryConfig(withBundleAnalyzer(nextConfig));

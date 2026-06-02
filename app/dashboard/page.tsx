@@ -10,8 +10,9 @@ import FundingProgress from "@/components/escrow/FundingProgress";
 import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 import { useStellar } from "@/context/StellarContext";
 import PaymentHistoryTab, { type ReleasedEscrow } from "@/components/dashboard/PaymentHistoryTab";
-import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock } from "lucide-react";
+import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload, TrendingUp } from "lucide-react";
 import EscrowLabel from "@/components/escrow/EscrowLabel";
+import PortfolioSummary from "@/components/dashboard/PortfolioSummary";
 
 const MOCK_RELEASED_ESCROWS = (landlordKey: string): ReleasedEscrow[] => [
   {
@@ -110,30 +111,33 @@ export default function DashboardPage() {
             </h1>
           </div>
           
-          <Link
-            href="/escrow/create"
-            className="btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Create Escrow
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/tax-summary"
+              className="btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Tax Summary
+            </Link>
+            <Link
+              href="/escrow/create-bulk"
+              className="btn-secondary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
+            >
+              <Upload className="h-4 w-4" />
+              Upload CSV
+            </Link>
+            <Link
+              href="/escrow/create"
+              className="btn-primary !py-3 !px-6 !rounded-xl font-black uppercase tracking-widest flex items-center gap-2 shrink-0 self-start md:self-auto"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Create Escrow
+            </Link>
+          </div>
         </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card p-6 flex flex-col justify-between border border-white/5 bg-white/[0.02]">
-            <span className="text-[10px] text-dark-500 font-black uppercase tracking-widest">Total Escrowed</span>
-            <span className="text-3xl font-black text-white mt-2">{stats.totalEscrowed} <span className="text-xs text-dark-500 font-bold ml-1">XLM</span></span>
-          </div>
-          <div className="glass-card p-6 flex flex-col justify-between border border-white/5 bg-white/[0.02]">
-            <span className="text-[10px] text-dark-500 font-black uppercase tracking-widest">Active Escrows</span>
-            <span className="text-3xl font-black text-white mt-2">{stats.activeEscrows}</span>
-          </div>
-          <div className="glass-card p-6 flex flex-col justify-between border border-white/5 bg-white/[0.02]">
-            <span className="text-[10px] text-dark-500 font-black uppercase tracking-widest">Total Released</span>
-            <span className="text-3xl font-black text-accent-400 mt-2">{stats.totalReleased} <span className="text-xs text-dark-500 font-bold ml-1">XLM</span></span>
-          </div>
-        </div>
+        {/* Sticky Stats Header */}
+        <PortfolioSummary escrows={escrows} releasedEscrows={releasedEscrows} />
 
         {/* Tabs Selection */}
         <div className="flex border-b border-white/10 gap-6 text-sm">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Search, Download, Loader2 } from "lucide-react";
 import TransactionCard, { type Transaction } from "./TransactionCard";
 import TransactionDetailModal from "./TransactionDetailModal";
@@ -51,10 +51,10 @@ export default function TransactionList({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const handleCardClick = (tx: Transaction) => {
+  const handleCardClick = useCallback((tx: Transaction) => {
     setSelectedTx(tx);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const filteredTransactions = useMemo(() => {
     const filtered = transactions.filter((tx) => {

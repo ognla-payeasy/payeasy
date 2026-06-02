@@ -7,6 +7,7 @@ import TransactionReview from "@/components/wallet/TransactionReview.tsx";
 import { validateContributionAmount } from "./contributeForm.helpers.ts";
 import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actions/contribute";
 import { recordPaymentHistoryEntry } from "@/lib/stellar/paymentHistory";
+import { useEmailAuth } from "@/context/EmailAuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ContractState } from "@/lib/stellar/queries";
 
@@ -29,6 +30,7 @@ export default function ContributeForm({
 }: ContributeFormProps) {
   const resolvedContractId = contractId ?? escrowId ?? "";
   const { isConnected, connect, publicKey } = useFreighter();
+  const { user } = useEmailAuth();
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState(remainingBalance);
@@ -125,6 +127,29 @@ export default function ContributeForm({
         txHash: result.txHash,
         recordedAt: new Date().toISOString(),
       });
+
+      // Send payment confirmation email
+      if (user?.email && user?.name) {
+        try {
+          await fetch("/api/notifications/payment-confirmed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              roommateEmail: user.email,
+              roommateeName: user.name,
+              escrowId: resolvedContractId,
+              amount: amount.trim(),
+              txHash: result.txHash,
+              date: new Date().toISOString(),
+              dashboardUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/dashboard`,
+            }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send payment confirmation email:", emailErr);
+          // Don't fail the whole transaction if email fails
+        }
+      }
+
       onSuccess?.(result.txHash);
       setPhase("idle");
       setPreparedXdr(null);
