@@ -44,6 +44,10 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=()",
   },
+  {
+    key: "Content-Security-Policy",
+    value: "default-src 'self'; script-src 'self' 'nonce-{nonce}'; connect-src 'self' https://horizon-testnet.stellar.org https://soroban-testnet.stellar.org; img-src 'self' data: https://images.unsplash.com https://i.pravatar.cc",
+  },
 ];
 
 /**
