@@ -1,4 +1,4 @@
- name: Security Scanning, DAST & Dependency Verification
+name: Security Scanning, DAST & Dependency Verification
 
 env:
   NODE_VERSION: '18'
@@ -399,19 +399,21 @@ jobs:
             
             const icon = (status) => status === 'success' ? '✅' : '⚠️';
             
-            const comment = `## 🔒 Security Scan Results
-
-| Scanner | Result |
-|---------|--------|
-| CodeQL | ${icon(results.codeql)} |
-| Snyk | ${icon(results.snyk)} |
-| Semgrep | ${icon(results.semgrep)} |
-| Container | ${icon(results.trivy)} |
-
-**Vulnerabilities**: ${results.vulnCount}
-**Patch Status**: ${results.patches === 'success' ? '✅' : '⚠️'}
-
-[View Details](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/security)`;
+            const comment = [
+              '## 🔒 Security Scan Results',
+              '',
+              '| Scanner | Result |',
+              '|---------|--------|',
+              `| CodeQL | ${icon(results.codeql)} |`,
+              `| Snyk | ${icon(results.snyk)} |`,
+              `| Semgrep | ${icon(results.semgrep)} |`,
+              `| Container | ${icon(results.trivy)} |`,
+              '',
+              `**Vulnerabilities**: ${results.vulnCount}`,
+              `**Patch Status**: ${results.patches === 'success' ? '✅' : '⚠️'}`,
+              '',
+              `[View Details](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/security)`,
+            ].join('\n');
             
             if (context.issue?.number) {
               github.rest.issues.createComment({
