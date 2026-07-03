@@ -10,8 +10,11 @@
     "start": "next start",
     "lint": "next lint",
     "size": "size-limit",
-    "test": "node --test --experimental-strip-types --experimental-test-module-mocks",
-    "test:coverage": "node --test --experimental-strip-types --experimental-test-module-mocks --experimental-test-coverage"
+    "test": "npm run test:unit && npm run test:components",
+    "test:unit": "node --test --experimental-strip-types --experimental-test-module-mocks \"lib/**/*.test.ts\" \"lib/**/*.test.js\" \"hooks/**/*.test.ts\"",
+    "test:unit:coverage": "node --test --experimental-strip-types --experimental-test-module-mocks --experimental-test-coverage \"lib/**/*.test.ts\" \"lib/**/*.test.js\" \"hooks/**/*.test.ts\"",
+    "test:components": "vitest run",
+    "check-env": "node --experimental-strip-types scripts/check-env.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.55.0",
@@ -42,10 +45,8 @@
   "devDependencies": {
     "@next/bundle-analyzer": "^14.2.0",
     "@size-limit/file": "^11.0.0",
-    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.2.0",
@@ -57,8 +58,6 @@
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.2.0",
     "husky": "^9.1.7",
-    "jest": "^30.4.2",
-    "jest-environment-jsdom": "^30.4.1",
     "jsdom": "^27.0.1",
     "lint-staged": "^17.0.5",
     "postcss": "^8.4.0",

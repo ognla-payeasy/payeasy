@@ -57,6 +57,74 @@ exports[`Navbar > matches snapshot 1`] = `
     <div
       class="hidden md:flex items-center gap-3"
     >
+      <div
+        class="relative"
+      >
+        <button
+          aria-expanded="false"
+          aria-haspopup="listbox"
+          aria-label="Select language"
+          class="flex items-center gap-1.5 text-dark-400 hover:text-white transition-colors text-sm font-medium"
+        >
+          <span
+            aria-hidden="true"
+          >
+            🇬🇧
+          </span>
+          <span
+            class="hidden sm:inline"
+          >
+            English
+          </span>
+          <svg
+            aria-hidden="true"
+            class="transition-transform duration-200 "
+            fill="none"
+            height="12"
+            viewBox="0 0 12 12"
+            width="12"
+          >
+            <path
+              d="M3 4.5L6 7.5L9 4.5"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+            />
+          </svg>
+        </button>
+      </div>
+      <a
+        class="btn-secondary !py-2.5 !px-5 !text-sm !rounded-lg"
+        href="#"
+      >
+        Sign In
+      </a>
+      <a
+        class="btn-primary !py-2.5 !px-5 !text-sm !rounded-lg"
+        href="#"
+      >
+        <svg
+          class="lucide lucide-wallet"
+          fill="none"
+          height="16"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
+          />
+          <path
+            d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"
+          />
+        </svg>
+        Connect Wallet
+      </a>
       <a
         class="btn-secondary !py-2.5 !px-5 !text-sm !rounded-lg flex items-center gap-1.5"
         href="/login"

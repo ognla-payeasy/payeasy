@@ -1,17 +1,20 @@
 // @vitest-environment node
 import { POST } from '@/app/api/auth/logout/route';
+import { NextRequest } from 'next/server';
 import { describe, it, expect } from 'vitest';
 
 describe('POST /api/auth/logout', () => {
   it('should clear the auth cookie and return success', async () => {
-    const mockRequest = new Request('http://localhost:3000/api/auth/logout', {
+    const mockRequest = new NextRequest('http://localhost:3000/api/auth/logout', {
       method: 'POST',
       headers: new Headers({
-        'cookie': 'auth_token=some-token-value'
+        // The route enforces double-submit CSRF: cookie must match header.
+        'cookie': 'auth_token=some-token-value; csrf_token=test-csrf-token',
+        'x-csrf-token': 'test-csrf-token',
       }),
     });
 
-    const res = await POST(mockRequest as any);
+    const res = await POST(mockRequest);
     // Ensure response is JSON and success is true
     expect(res.status).toBe(200);
     const data = await res.json();

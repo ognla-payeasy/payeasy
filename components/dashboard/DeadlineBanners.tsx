@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, X } from "lucide-react";
 import type { EscrowContract } from "@/lib/stellar/types";
-import { getApproachingEscrows, formatTimeUntil } from "./deadline-utils";
+import { getApproachingEscrows, formatTimeUntil } from "@/lib/dashboard/deadline-utils";
 
 const DISMISSED_KEY = "dismissed_deadline_banners";
 
