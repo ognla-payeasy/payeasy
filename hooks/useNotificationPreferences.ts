@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useStellarAuth } from "@/contexts/StellarAuthContext";
+import { useStellarAuth } from "@/context/StellarContext";
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   type NotificationPreferences,
