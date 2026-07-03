@@ -116,7 +116,6 @@ export function createUser(
     emailVerified: false,
     verificationToken,
     verificationTokenExpiresAt: tokenExpiresAt,
-    notificationPreferences: DEFAULT_NOTIFICATIONS, // Apply defaults on creation
     notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES, // Apply defaults on creation
   };
 
