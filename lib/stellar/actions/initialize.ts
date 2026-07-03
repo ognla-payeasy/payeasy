@@ -24,10 +24,10 @@ import {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
-const rpcUrl = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "";
-if (!rpcUrl) {
-  throw new Error("Missing required environment variable: NEXT_PUBLIC_SOROBAN_RPC_URL");
-}
+// App startup validates NEXT_PUBLIC_SOROBAN_RPC_URL (lib/env.ts); default
+// here keeps the module importable in tests and tooling.
+export const RPC_URL =
+  process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
 const DEFAULT_TIMEOUT_SECONDS = 300;
 const MAX_CONFIRMATION_RETRIES = 20;
 const CONFIRMATION_DELAY_MS = 1500;
@@ -118,7 +118,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function getServer(deps: InitializeDependencies): rpc.Server {
-  return deps.server ?? new rpc.Server(deps.rpcUrl ?? rpcUrl);
+  return deps.server ?? new rpc.Server(deps.rpcUrl ?? RPC_URL);
 }
 
 function getNetworkPassphrase(deps: InitializeDependencies): string {

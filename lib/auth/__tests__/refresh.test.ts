@@ -1,6 +1,9 @@
 import { test, describe, beforeEach } from "node:test";
 import assert from "node:assert";
-import { signToken, isTokenExpiringWithin } from "../jwt";
+
+// Tests need a signing secret before the module under test is exercised.
+process.env.AUTH_SECRET = process.env.AUTH_SECRET || "payeasy-test-secret-not-for-production";
+import { signToken, isTokenExpiringWithin } from "../jwt.ts";
 
 describe("Token Refresh Scenario Tests", () => {
   test("should identify token expiring within 24 hours", async () => {
@@ -32,6 +35,10 @@ describe("Token Refresh Scenario Tests", () => {
     // Initial token
     const token1 = await signToken(payload);
     assert.ok(token1);
+
+    // JWT iat has one-second granularity; wait so the refreshed token
+    // gets a later issued-at and therefore differs from the first.
+    await new Promise((resolve) => setTimeout(resolve, 1100));
 
     // Simulate refresh by signing new token
     const token2 = await signToken(payload);

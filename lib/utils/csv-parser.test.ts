@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseCSV } from "./csv-parser";
+import { parseCSV } from "./csv-parser.ts";
 
 test("parseCSV parses valid CSV with multiple roommates correctly", () => {
   const csv = `property_name,total_rent,deadline,token,roommate_addresses

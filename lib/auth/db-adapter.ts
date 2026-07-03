@@ -1,4 +1,9 @@
-import { StoredUser } from "./users";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { open, rename, unlink, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { randomUUID } from "node:crypto";
+
+import type { StoredUser } from "./users.ts";
 
 /**
  * DataStore interface provides an abstraction layer for user persistence.
@@ -25,19 +30,23 @@ export class FileDataStore implements DataStore {
   private lockTimeout = 5000; // 5 second lock timeout
 
   constructor(dataDir: string = "data") {
-    const path = require("path");
-    this.usersFilePath = path.join(process.cwd(), dataDir, "users.json");
+    this.usersFilePath = join(process.cwd(), dataDir, "users.json");
     this.lockFile = this.usersFilePath + ".lock";
   }
 
   private async acquireLock(): Promise<void> {
-    const fs = require("fs").promises;
+    const dataDir = dirname(this.usersFilePath);
+    if (!existsSync(dataDir)) {
+      mkdirSync(dataDir, { recursive: true });
+    }
+
     const startTime = Date.now();
 
     while (true) {
       try {
         // Try to create lock file exclusively
-        await fs.open(this.lockFile, "wx");
+        const handle = await open(this.lockFile, "wx");
+        await handle.close();
         return;
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
@@ -56,9 +65,8 @@ export class FileDataStore implements DataStore {
   }
 
   private async releaseLock(): Promise<void> {
-    const fs = require("fs").promises;
     try {
-      await fs.unlink(this.lockFile);
+      await unlink(this.lockFile);
     } catch (err) {
       // Lock file already removed or doesn't exist
       if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
@@ -66,32 +74,27 @@ export class FileDataStore implements DataStore {
   }
 
   private async readUsersFile(): Promise<StoredUser[]> {
-    const fs = require("fs");
-    const path = require("path");
-
-    if (!fs.existsSync(this.usersFilePath)) {
-      const dataDir = path.dirname(this.usersFilePath);
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+    if (!existsSync(this.usersFilePath)) {
+      const dataDir = dirname(this.usersFilePath);
+      if (!existsSync(dataDir)) {
+        mkdirSync(dataDir, { recursive: true });
       }
-      fs.writeFileSync(this.usersFilePath, JSON.stringify([]));
+      writeFileSync(this.usersFilePath, JSON.stringify([]));
       return [];
     }
 
-    const data = fs.readFileSync(this.usersFilePath, "utf-8");
+    const data = readFileSync(this.usersFilePath, "utf-8");
     return JSON.parse(data) as StoredUser[];
   }
 
   private async writeUsersFile(users: StoredUser[]): Promise<void> {
-    const fs = require("fs").promises;
-    const path = require("path");
     const tmpFile = this.usersFilePath + ".tmp";
 
     // Write to temp file first for atomic operation
-    await fs.writeFile(tmpFile, JSON.stringify(users, null, 2));
+    await writeFile(tmpFile, JSON.stringify(users, null, 2));
 
     // Atomic rename
-    await fs.rename(tmpFile, this.usersFilePath);
+    await rename(tmpFile, this.usersFilePath);
   }
 
   async findUserByEmail(email: string): Promise<StoredUser | undefined> {
@@ -112,7 +115,6 @@ export class FileDataStore implements DataStore {
     await this.acquireLock();
     try {
       const users = await this.readUsersFile();
-      const { randomUUID } = require("crypto");
 
       const user: StoredUser = {
         id: randomUUID(),

@@ -23,13 +23,19 @@ export interface RateLimitResult {
  */
 export class InMemoryRateLimiter {
   private requests: Map<string, number[]> = new Map();
+  private config: RateLimitConfig;
+  private cleanupInterval: number;
 
   constructor(
-    private config: RateLimitConfig,
-    private cleanupInterval: number = 60000 // Clean old entries every minute
+    config: RateLimitConfig,
+    cleanupInterval: number = 60000 // Clean old entries every minute
   ) {
-    // Periodic cleanup of expired entries
-    setInterval(() => this.cleanup(), this.cleanupInterval);
+    this.config = config;
+    this.cleanupInterval = cleanupInterval;
+    // Periodic cleanup of expired entries. unref() so the timer never
+    // keeps the process (or test runner) alive on its own.
+    const timer = setInterval(() => this.cleanup(), this.cleanupInterval);
+    if (typeof timer.unref === "function") timer.unref();
   }
 
   /**
@@ -135,9 +141,11 @@ interface RedisLike {
  */
 export class RedisRateLimiter {
   private redis: RedisLike;
+  private config: RateLimitConfig;
 
-  constructor(redisClient: RedisLike, private config: RateLimitConfig) {
+  constructor(redisClient: RedisLike, config: RateLimitConfig) {
     this.redis = redisClient;
+    this.config = config;
   }
 
   /**

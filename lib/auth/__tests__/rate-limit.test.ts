@@ -1,6 +1,6 @@
 import { test, describe, beforeEach } from "node:test";
 import assert from "node:assert";
-import { InMemoryRateLimiter } from "../rate-limit";
+import { InMemoryRateLimiter } from "../rate-limit.ts";
 
 describe("Rate Limiting Tests", () => {
   let rateLimiter: InMemoryRateLimiter;

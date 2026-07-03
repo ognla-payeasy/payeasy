@@ -7,8 +7,8 @@ import {
   xdr,
   rpc,
 } from "@stellar/stellar-sdk";
-import { getCurrentNetwork, getNetworkConfig } from "./config";
-import { toStellarAmount } from "./format";
+import { getCurrentNetwork, getNetworkConfig } from "./config.ts";
+import { toStellarAmount } from "./format.ts";
 
 /**
  * @description Thrown when a Soroban operation cannot be completed due to RPC, simulation,

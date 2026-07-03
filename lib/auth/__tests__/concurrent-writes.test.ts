@@ -1,6 +1,6 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { FileDataStore } from "../db-adapter";
+import { FileDataStore } from "../db-adapter.ts";
 import { randomUUID } from "crypto";
 import { existsSync, rmSync } from "fs";
 import { join } from "path";

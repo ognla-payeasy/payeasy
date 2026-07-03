@@ -1,6 +1,6 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { FileDataStore } from "../db-adapter";
+import { FileDataStore } from "../db-adapter.ts";
 import { existsSync, rmSync } from "fs";
 
 const TEST_DATA_DIR = "test-data-persistence";

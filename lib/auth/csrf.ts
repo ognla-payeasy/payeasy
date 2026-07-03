@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 
 export const CSRF_COOKIE_NAME = "csrf_token";

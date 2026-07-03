@@ -1,4 +1,5 @@
-import { assert, test } from "vitest";
+import test from "node:test";
+import assert from "node:assert/strict";
 import { isIOSUserAgent } from "./is-ios.ts";
 
 test("isIOSUserAgent detects iPhone", () => {

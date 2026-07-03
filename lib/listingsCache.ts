@@ -1,4 +1,4 @@
-import redis from './redis';
+import redis from './redis.ts';
 
 const LISTINGS_ALL_KEY = (page: number) => `listings:all:page:${page}`;
 const LISTING_DETAIL_KEY = (id: string) => `listings:detail:${id}`;

@@ -1,6 +1,6 @@
-import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
-export type { ContractState } from "./types";
-import { assertValidStellarAddress, assertValidContractId } from "./validation";
+import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types.ts";
+export type { ContractState } from "./types.ts";
+import { assertValidStellarAddress, assertValidContractId } from "./validation.ts";
 
 /**
  * @description Retrieves all escrow contracts where the given address is the landlord,

@@ -1,4 +1,4 @@
-import { getCurrentNetwork } from "./explorer";
+import { getCurrentNetwork } from "./explorer.ts";
 
 /**
  * Funds a Stellar testnet account using the official Friendbot service.

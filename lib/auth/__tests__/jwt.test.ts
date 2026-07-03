@@ -1,6 +1,9 @@
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { signToken, verifyToken, isTokenExpiringWithin, isTokenExpired } from "../jwt";
+
+// Tests need a signing secret before the module under test is exercised.
+process.env.AUTH_SECRET = process.env.AUTH_SECRET || "payeasy-test-secret-not-for-production";
+import { signToken, verifyToken, isTokenExpiringWithin, isTokenExpired } from "../jwt.ts";
 
 describe("JWT Token Tests", () => {
   test("should sign and verify a valid token", async () => {
