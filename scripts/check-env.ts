@@ -16,35 +16,31 @@ interface EnvVar {
 
 const ENV_VARS: EnvVar[] = [
   // Auth
-  { name: "JWT_SECRET", required: true, description: "JWT signing secret", group: "Auth" },
-  { name: "JWT_EXPIRES_IN", required: false, description: "JWT expiry duration", group: "Auth" },
+  { name: "AUTH_SECRET", required: true, description: "JWT signing secret (lib/auth/jwt.ts)", group: "Auth" },
+  { name: "JWT_EXPIRY", required: false, description: "JWT expiry duration (default 7d)", group: "Auth" },
 
   // Stellar
   { name: "NEXT_PUBLIC_STELLAR_NETWORK", required: true, description: "Stellar network (testnet | mainnet)", group: "Stellar" },
   { name: "NEXT_PUBLIC_HORIZON_URL", required: true, description: "Horizon REST API base URL", group: "Stellar" },
   { name: "NEXT_PUBLIC_SOROBAN_RPC_URL", required: true, description: "Soroban RPC endpoint", group: "Stellar" },
-  { name: "NEXT_PUBLIC_ESCROW_CONTRACT_ID", required: false, description: "Deployed escrow contract ID", group: "Stellar" },
-  { name: "STELLAR_FEE_BUMP_SOURCE", required: false, description: "Fee-bump source account address", group: "Stellar" },
-  { name: "STELLAR_FEE_BUMP_SECRET", required: false, description: "Fee-bump source secret key", group: "Stellar" },
 
-  // Database
-  { name: "MONGODB_URI", required: true, description: "MongoDB Atlas connection string", group: "Database" },
-  { name: "MONGODB_DB_NAME", required: false, description: "MongoDB database name", group: "Database" },
+  // Redis (Upstash REST)
+  { name: "UPSTASH_REDIS_REST_URL", required: false, description: "Upstash Redis REST endpoint", group: "Redis" },
+  { name: "UPSTASH_REDIS_REST_TOKEN", required: false, description: "Upstash Redis REST token", group: "Redis" },
 
-  // Redis
-  { name: "REDIS_URL", required: false, description: "Redis connection URL", group: "Redis" },
-  { name: "REDIS_TTL", required: false, description: "Redis key TTL in seconds", group: "Redis" },
+  // Web Push
+  { name: "NEXT_PUBLIC_VAPID_PUBLIC_KEY", required: false, description: "VAPID public key for web push", group: "Web Push" },
+  { name: "VAPID_PRIVATE_KEY", required: false, description: "VAPID private key for web push", group: "Web Push" },
+  { name: "VAPID_SUBJECT", required: false, description: "VAPID contact (mailto: URL)", group: "Web Push" },
 
-  // Feature Flags
-  { name: "NEXT_PUBLIC_FEATURE_ROOMMATE_MATCHING", required: false, description: "Enable roommate matching", group: "Feature Flags" },
-  { name: "NEXT_PUBLIC_FEATURE_MESSAGING", required: false, description: "Enable in-app messaging", group: "Feature Flags" },
-  { name: "NEXT_PUBLIC_FEATURE_HISTORY_EXPORT", required: false, description: "Enable history export", group: "Feature Flags" },
+  // Email
+  { name: "RESEND_API_KEY", required: false, description: "Resend API key for email", group: "Email" },
+  { name: "RESEND_FROM_EMAIL", required: false, description: "From address for outgoing emails", group: "Email" },
 
-  // Monitoring
+  // Monitoring / Analytics
   { name: "SENTRY_DSN", required: false, description: "Sentry DSN for error reporting", group: "Monitoring" },
-  { name: "SENTRY_ENVIRONMENT", required: false, description: "Sentry environment tag", group: "Monitoring" },
-  { name: "RESEND_API_KEY", required: false, description: "Resend API key for email", group: "Monitoring" },
-  { name: "RESEND_FROM_EMAIL", required: false, description: "From address for outgoing emails", group: "Monitoring" },
+  { name: "NEXT_PUBLIC_PLAUSIBLE_DOMAIN", required: false, description: "Plausible analytics domain", group: "Monitoring" },
+  { name: "NEXT_PUBLIC_PLAUSIBLE_SRC", required: false, description: "Plausible script source URL", group: "Monitoring" },
 ];
 
 function loadEnvFile(): Record<string, string> {
