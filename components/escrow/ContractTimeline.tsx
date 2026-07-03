@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { createHorizonClient, fetchTransactionHistory } from "@/lib/stellar/history";
-import { fetchContractEvents } from "@/lib/stellar/events";
+import { fetchContractEvents, createSdkEventServer } from "@/lib/stellar/events";
 import { rpcServer } from "@/lib/stellar/config";
 import type { ContractState } from "@/lib/stellar/types";
 import { 
@@ -128,8 +128,12 @@ export default function ContractTimeline({ contractId, contractState }: Contract
           order: "asc",
         });
 
+        // Soroban RPC only retains recent history, so anchor the event
+        // query to a window behind the latest ledger.
+        const latestLedger = await rpcServer.getLatestLedger();
+        const startLedger = Math.max(1, latestLedger.sequence - 17000);
         const sorobanEvents = await fetchContractEvents({
-          server: rpcServer,
+          server: createSdkEventServer(rpcServer, startLedger),
           contractId,
         });
 

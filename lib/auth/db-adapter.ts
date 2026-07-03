@@ -120,6 +120,7 @@ export class FileDataStore implements DataStore {
         name: name.trim(),
         passwordHash,
         createdAt: new Date().toISOString(),
+        emailVerified: false,
       };
 
       users.push(user);
@@ -219,6 +220,7 @@ export class DatabaseDataStore implements DataStore {
       name: user.name,
       passwordHash: user.passwordHash,
       createdAt: user.createdAt.toISOString(),
+      emailVerified: false,
     };
   }
 }

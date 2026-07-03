@@ -1,4 +1,5 @@
 import type { EscrowContract, LandlordStats, ContractState, ContractBasicInfo, RoommateState } from "./types";
+export type { ContractState } from "./types";
 import { assertValidStellarAddress, assertValidContractId } from "./validation";
 
 /**

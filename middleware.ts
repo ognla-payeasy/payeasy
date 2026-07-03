@@ -1,18 +1,6 @@
-import createMiddleware from "next-intl/middleware";
-
-export default createMiddleware({
-  locales: ["en", "es"],
-  defaultLocale: "en",
-  localeDetection: true,
-  localePrefix: "as-needed",
-});
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-
-// Edge Runtime declaration - runs middleware on Vercel Edge Network for lower latency
-export const runtime = "edge";
 
 // Public API routes that don't require authentication
 const PUBLIC_ROUTES = [

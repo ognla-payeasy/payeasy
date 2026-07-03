@@ -300,8 +300,8 @@ export default function BulkEscrowForm() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {validationRows.map((val, idx) => {
-                    const isProcessing = i => currentSubmittingIndex === i;
-                    const isProcessed = i => i < (currentSubmittingIndex ?? 0);
+                    const isProcessing = (i: number) => currentSubmittingIndex === i;
+                    const isProcessed = (i: number) => i < (currentSubmittingIndex ?? 0);
                     
                     return (
                       <tr key={idx} className="group hover:bg-white/[0.01] transition-colors">

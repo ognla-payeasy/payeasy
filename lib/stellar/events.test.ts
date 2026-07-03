@@ -108,8 +108,8 @@ test("fetchContractEvents calls getEvents and filters by type/contract", async (
   assert.ok(captured.request);
   const capturedRequest = captured.request;
   assert.equal(capturedRequest.startLedger, 90);
-  assert.equal(capturedRequest.pagination?.cursor, "cursor-0");
-  assert.equal(capturedRequest.pagination?.limit, 20);
+  assert.equal(capturedRequest.cursor, "cursor-0");
+  assert.equal(capturedRequest.limit, 20);
   assert.deepEqual(capturedRequest.filters, [
     {
       type: "contract",
@@ -129,9 +129,9 @@ test("createContractEventPoller advances cursor between poll calls", async () =>
 
   const server: SorobanRpcServer = {
     async getEvents(request: RpcGetEventsRequest): Promise<RpcGetEventsResponse> {
-      observedCursors.push(request.pagination?.cursor);
+      observedCursors.push(request.cursor);
 
-      if (!request.pagination?.cursor) {
+      if (!request.cursor) {
         return {
           events: [
             {

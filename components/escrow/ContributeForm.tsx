@@ -9,7 +9,7 @@ import { buildContributeXdr, signAndSubmitContribute } from "@/lib/stellar/actio
 import { recordPaymentHistoryEntry } from "@/lib/stellar/paymentHistory";
 import { useEmailAuth } from "@/context/EmailAuthContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ContractState } from "@/lib/stellar/queries";
+import { type ContractState } from "@/lib/stellar/types";
 
 type ContributePhase = "idle" | "building" | "review" | "submitting";
 

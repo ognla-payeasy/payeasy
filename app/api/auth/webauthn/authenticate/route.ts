@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import { findUserByEmail, updateUser } from "@/lib/auth/users";
 import { signToken } from "@/lib/auth/jwt";
 
@@ -27,9 +28,8 @@ export async function GET(req: NextRequest) {
   const options = await generateAuthenticationOptions({
     rpID,
     allowCredentials: user.webAuthnCredentials?.map(cred => ({
-      id: Buffer.from(cred.id, "base64url"),
-      type: "public-key",
-      transports: cred.transports as any[],
+      id: cred.id,
+      transports: cred.transports as AuthenticatorTransportFuture[] | undefined,
     })) || [],
     userVerification: "preferred",
   });
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       expectedOrigin,
       expectedRPID: rpID,
       credential: {
-        id: Buffer.from(credential.id, "base64url"),
+        id: credential.id,
         publicKey: Buffer.from(credential.publicKeyBase64, "base64"),
         counter: credential.counter,
       },

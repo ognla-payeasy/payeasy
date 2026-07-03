@@ -1,3 +1,5 @@
+"use client";
+
 import CreateEscrowForm from "@/components/escrow/CreateEscrowForm";
 import { useEmailAuth } from "@/context/EmailAuthContext";
 import Link from "next/link";

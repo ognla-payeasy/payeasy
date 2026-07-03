@@ -1,3 +1,6 @@
+import { scValToNative } from "@stellar/stellar-sdk";
+import type { rpc } from "@stellar/stellar-sdk";
+
 const KNOWN_EVENT_TYPES = ["Contribution", "AgreementReleased"] as const;
 
 export type ContractEventType = (typeof KNOWN_EVENT_TYPES)[number];
@@ -35,10 +38,8 @@ export interface RpcEventFilter {
 
 export interface RpcGetEventsRequest {
   startLedger?: number;
-  pagination?: {
-    cursor?: string;
-    limit?: number;
-  };
+  cursor?: string;
+  limit?: number;
   filters?: RpcEventFilter[];
 }
 
@@ -82,15 +83,48 @@ export interface ContractEventPoller {
   getCursor(): string | undefined;
 }
 
+/**
+ * Adapts a stellar-sdk rpc.Server to the SorobanRpcServer interface used by
+ * fetchContractEvents. The SDK requires a filters array plus a startLedger
+ * (or cursor), and returns XDR values that need converting to natives.
+ */
+export function createSdkEventServer(
+  server: rpc.Server,
+  defaultStartLedger: number
+): SorobanRpcServer {
+  return {
+    async getEvents(request: RpcGetEventsRequest): Promise<RpcGetEventsResponse> {
+      const response = await server.getEvents({
+        startLedger: request.cursor ? undefined : request.startLedger ?? defaultStartLedger,
+        cursor: request.cursor,
+        limit: request.limit,
+        filters: request.filters ?? [],
+      } as Parameters<rpc.Server["getEvents"]>[0]);
+
+      return {
+        latestLedger: response.latestLedger,
+        events: response.events.map((event) => ({
+          id: event.id,
+          pagingToken: event.id,
+          contractId: event.contractId?.contractId(),
+          topic: event.topic.map((entry) => scValToNative(entry)),
+          value: scValToNative(event.value),
+          txHash: event.txHash,
+          ledger: event.ledger,
+          ledgerClosedAt: event.ledgerClosedAt,
+        })),
+      };
+    },
+  };
+}
+
 export async function fetchContractEvents(
   options: FetchContractEventsOptions
 ): Promise<FetchContractEventsResult> {
   const request: RpcGetEventsRequest = {
     startLedger: options.startLedger,
-    pagination: {
-      cursor: options.cursor,
-      limit: options.limit ?? 100,
-    },
+    cursor: options.cursor,
+    limit: options.limit ?? 100,
     filters: options.contractId
       ? [{ type: "contract", contractIds: [options.contractId] }]
       : undefined,

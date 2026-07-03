@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
 import { verifyToken } from "@/lib/auth/jwt";
 import { findUserById, updateUser } from "@/lib/auth/users";
 
@@ -28,9 +29,8 @@ export async function GET(req: NextRequest) {
     userDisplayName: user.name,
     attestationType: "none",
     excludeCredentials: user.webAuthnCredentials?.map(cred => ({
-      id: Buffer.from(cred.id, "base64url"),
-      type: "public-key",
-      transports: cred.transports as any[],
+      id: cred.id,
+      transports: cred.transports as AuthenticatorTransportFuture[] | undefined,
     })) || [],
     authenticatorSelection: {
       residentKey: "preferred",
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
       
       const newCredential = {
-        id: Buffer.from(credential.id).toString("base64url"),
+        id: credential.id,
         publicKeyBase64: Buffer.from(credential.publicKey).toString("base64"),
         counter: credential.counter,
         transports: body.response.transports || [],
