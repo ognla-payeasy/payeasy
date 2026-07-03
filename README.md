@@ -71,8 +71,8 @@ graph TD
     end
 
     subgraph "Data Layer"
-        MONGO[(MongoDB Atlas)]
-        REDIS[(Redis Cache)]
+        STORE[(File-based user store\n data/users.json)]
+        REDIS[(Upstash Redis\n optional)]
     end
 
     UI -->|Signs transactions| FW
@@ -81,9 +81,8 @@ graph TD
     UI -->|REST calls| ESCROW_API
     FW -->|Submits signed tx| HORIZON
 
-    AUTH --> MONGO
+    AUTH --> STORE
     ESCROW_API --> SOROBAN
-    ESCROW_API --> MONGO
     HEALTH --> HORIZON
 
     SOROBAN --> CONTRACT
@@ -101,14 +100,14 @@ graph TD
 |---|---|
 | **Frontend** | Next.js 14, React 18, Tailwind CSS |
 | **Backend** | Next.js API Routes |
-| **Database** | MongoDB Atlas |
-| **Cache** | Redis (optional) |
+| **Persistence** | File-based user store (`data/users.json`) |
+| **Cache / Rate limiting** | Upstash Redis (optional) |
 | **Blockchain** | Stellar Network (Soroban smart contracts) |
 | **Smart Contracts** | Rust / Soroban SDK |
 | **Wallet** | Freighter (Stellar wallet extension) |
 | **Auth** | JWT-based authentication |
 | **Language** | TypeScript |
-| **Testing** | Node.js built-in test runner |
+| **Testing** | node:test (lib/hooks) + Vitest (components/routes) |
 | **CI** | GitHub Actions |
 
 ---
@@ -130,7 +129,7 @@ cp .env.example .env.local
 # Edit .env.local and fill in the required values (see Environment Setup below)
 
 # 4. Validate your environment
-npx tsx scripts/check-env.ts
+npm run check-env
 
 # 5. Start the development server
 npm run dev
@@ -152,31 +151,37 @@ The `.env.example` file documents every variable with inline comments, grouped b
 
 | Group | Key variables | Required? |
 |---|---|---|
-| **Auth** | `JWT_SECRET`, `JWT_EXPIRES_IN` | `JWT_SECRET` required |
+| **Auth** | `AUTH_SECRET`, `JWT_EXPIRY` | `AUTH_SECRET` required |
 | **Stellar** | `NEXT_PUBLIC_STELLAR_NETWORK`, `NEXT_PUBLIC_HORIZON_URL`, `NEXT_PUBLIC_SOROBAN_RPC_URL` | All required |
-| **Database** | `MONGODB_URI`, `MONGODB_DB_NAME` | `MONGODB_URI` required |
-| **Redis** | `REDIS_URL`, `REDIS_TTL` | Optional |
-| **Feature Flags** | `NEXT_PUBLIC_FEATURE_*` | Optional |
-| **Monitoring** | `SENTRY_DSN`, `RESEND_API_KEY` | Optional |
+| **Redis** | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Optional |
+| **Web Push** | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Optional |
+| **Email** | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Optional |
+| **Monitoring** | `SENTRY_DSN`, `NEXT_PUBLIC_PLAUSIBLE_*` | Optional |
 
 Run the env checker at any time to validate your setup:
 
 ```bash
-npx tsx scripts/check-env.ts
+npm run check-env
 ```
 
-For Stellar testnet development, the default values in `.env.example` work out of the box — you only need to set `JWT_SECRET` and `MONGODB_URI`.
+For Stellar testnet development, the default values in `.env.example` work out of the box — you only need to set `AUTH_SECRET`.
 
 ---
 
 ## Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (unit + component)
 npm test
 
-# Run tests with coverage report
-npm run test:coverage
+# Unit tests only — node:test over lib/ and hooks/
+npm run test:unit
+
+# Unit tests with coverage report
+npm run test:unit:coverage
+
+# Component / route tests only — Vitest (jsdom) over components/, app/, __tests__/
+npm run test:components
 
 # Run lint checks
 npm run lint
@@ -185,7 +190,9 @@ npm run lint
 npm run size
 ```
 
-Tests live alongside the source they test (e.g., `hooks/useToast.test.ts`) and in `__tests__/` for cross-cutting concerns.
+Two runners split by directory: pure logic in `lib/` and `hooks/` uses the
+native Node.js test runner; anything needing a DOM or the `@/` alias lives in
+`components/`, `app/`, or `__tests__/` and runs under Vitest.
 
 ---
 
@@ -234,16 +241,18 @@ payeasy/
 │       └── health/         # GET /api/health
 ├── components/             # Shared React components
 │   └── landing/            # Landing page sections
-├── contexts/               # React context providers
+├── context/                # React context providers
 ├── hooks/                  # Custom React hooks
 ├── lib/                    # Shared utilities
+│   ├── auth/               # JWT auth, CSRF, rate limiting, user store
 │   ├── stellar/            # Stellar SDK / Horizon integration
 │   ├── preferences/        # User preferences helpers
 │   └── env.ts              # Environment variable validation
 ├── scripts/                # Developer tooling
 │   └── check-env.ts        # Env variable checker
-├── __tests__/              # Integration / unit tests
+├── __tests__/              # Cross-cutting Vitest tests
 ├── contracts/              # Soroban smart contracts (Rust)
+├── docs/                   # ADRs, ops runbooks, design notes
 ├── .env.example            # Documented env template
 ├── .size-limit.json        # JS bundle size budgets
 ├── .github/workflows/      # CI pipelines
