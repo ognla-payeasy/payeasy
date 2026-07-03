@@ -10,7 +10,7 @@ import FundingProgress from "@/components/escrow/FundingProgress";
 import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 import { useStellar } from "@/context/StellarContext";
 import PaymentHistoryTab, { type ReleasedEscrow } from "@/components/dashboard/PaymentHistoryTab";
-import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload, TrendingUp } from "lucide-react";
+import { PlusCircle, Wallet, FileText, ArrowRight, ShieldCheck, Clock, Upload, TrendingUp, AlertCircle } from "lucide-react";
 import EscrowLabel from "@/components/escrow/EscrowLabel";
 import PortfolioSummary from "@/components/dashboard/PortfolioSummary";
 import DeadlineBanners from "@/components/dashboard/DeadlineBanners";
@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [escrows, setEscrows] = useState<EscrowContract[]>([]);
   const [releasedEscrows, setReleasedEscrows] = useState<ReleasedEscrow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"escrows" | "history">("escrows");
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function DashboardPage() {
     async function fetchData() {
       if (!publicKey) return;
       setLoading(true);
+      setLoadError(null);
       try {
         const escrowsData = await getLandlordEscrows(publicKey);
         setEscrows(escrowsData);
@@ -65,9 +67,9 @@ export default function DashboardPage() {
           setReleasedEscrows(seeded);
         }
       } catch (e) {
-        // TODO(issue-168): replace empty catch with proper error handling:
-        //   setError(e instanceof Error ? e.message : "Failed to load dashboard")
-        // handle error
+        setLoadError(
+          e instanceof Error ? e.message : "Failed to load dashboard data"
+        );
       } finally {
         setLoading(false);
       }
@@ -103,6 +105,15 @@ export default function DashboardPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(92,124,250,0.1),transparent_50%)] pointer-events-none" />
       
       <div className="container relative z-10 mx-auto px-6 max-w-5xl space-y-12">
+        {loadError && (
+          <div
+            role="alert"
+            className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{loadError}</span>
+          </div>
+        )}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-dark-400 text-[10px] font-black uppercase tracking-widest">

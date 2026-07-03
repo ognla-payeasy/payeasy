@@ -13,6 +13,7 @@ function SuccessContent() {
 
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [clipboardError, setClipboardError] = useState(false);
   const [countdown, setCountdown] = useState(8);
 
   useEffect(() => {
@@ -46,12 +47,11 @@ function SuccessContent() {
   const handleCopyId = async () => {
     try {
       await navigator.clipboard.writeText(contractId);
+      setClipboardError(false);
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     } catch {
-      // TODO(issue-168): replace empty catch with `setClipboardError(true)`
-      // and surface a fallback UI instead of silently swallowing the error.
-      // Ignore clipboard errors silently
+      setClipboardError(true);
     }
   };
 
@@ -59,12 +59,11 @@ function SuccessContent() {
     try {
       const link = `${window.location.origin}/escrow/${contractId}`;
       await navigator.clipboard.writeText(link);
+      setClipboardError(false);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
-      // TODO(issue-168): replace empty catch with `setClipboardError(true)`
-      // and surface a fallback UI instead of silently swallowing the error.
-      // Ignore clipboard errors silently
+      setClipboardError(true);
     }
   };
 
@@ -138,6 +137,13 @@ function SuccessContent() {
             )}
           </button>
         </div>
+
+        {clipboardError && (
+          <p role="alert" className="mt-4 text-sm text-amber-400">
+            Couldn&apos;t access the clipboard — copy the contract ID above
+            manually.
+          </p>
+        )}
       </motion.div>
     </main>
   );
