@@ -48,3 +48,10 @@ test_snapshots/
 scripts/*
 !scripts/mint-test-tokens.sh
 !scripts/check-env.ts
+
+# Local user data store (file-based dev persistence)
+data/users.json
+data/*.lock
+
+# Test artifacts
+test-data*/
