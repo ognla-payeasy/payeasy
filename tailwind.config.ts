@@ -9,18 +9,42 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Primary — confident "slush" blue
         brand: {
-          50: "#f0f4ff",
-          100: "#dbe4ff",
-          200: "#bac8ff",
-          300: "#91a7ff",
-          400: "#748ffc",
-          500: "#5c7cfa",
-          600: "#4c6ef5",
-          700: "#4263eb",
-          800: "#3b5bdb",
-          900: "#364fc7",
+          50: "#eef2ff",
+          100: "#e7ecff",
+          200: "#c7d2ff",
+          300: "#a5b4ff",
+          400: "#6b86ff",
+          500: "#2f5bff",
+          600: "#234ce0",
+          700: "#1e40c8",
+          800: "#1b39a8",
+          900: "#1a3488",
         },
+        // Accent — warm coral, used sparingly for one pop per screen
+        coral: {
+          50: "#fff2ee",
+          100: "#ffe1d8",
+          200: "#ffc3b2",
+          300: "#ff9d82",
+          400: "#ff8b70",
+          500: "#ff6b4a",
+          600: "#f0512e",
+          700: "#c8401f",
+        },
+        // Success — mint (status only)
+        mint: {
+          50: "#e6fcf5",
+          100: "#c3fae8",
+          200: "#96f2d7",
+          300: "#63e6be",
+          400: "#38d9a9",
+          500: "#12b886",
+          600: "#0ca678",
+          700: "#099268",
+        },
+        // Legacy teal alias kept for backward compatibility
         accent: {
           50: "#e6fcf5",
           100: "#c3fae8",
@@ -33,6 +57,13 @@ const config: Config = {
           800: "#099268",
           900: "#087f5b",
         },
+        // Warm neutrals — near-white canvas, warm ink
+        ink: "#12141a",
+        muted: "#5b616e",
+        faint: "#8a909c",
+        canvas: "#f5f6f8",
+        line: "#e4e7ec",
+        "line-soft": "#eef0f3",
         dark: {
           50: "#f8f9fa",
           100: "#f1f3f5",
@@ -47,9 +78,13 @@ const config: Config = {
           950: "#0a0a0f",
         },
       },
+      borderRadius: {
+        "2xl": "1.25rem",
+        "3xl": "1.75rem",
+      },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
-        display: ["var(--font-space-grotesk)", "system-ui", "sans-serif"],
+        display: ["var(--font-bricolage)", "system-ui", "sans-serif"],
         mono: ["var(--font-jetbrains-mono)", "ui-monospace", "monospace"],
       },
       animation: {

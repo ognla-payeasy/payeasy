@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono, Bricolage_Grotesque } from "next/font/google";
 import "@/lib/env";
 import { AppShell } from "@/components/ui/app-shell";
 import { PageTransition } from "@/components/ui/page-transition";
@@ -20,11 +20,12 @@ const inter = Inter({
   preload: true,
 });
 
-const spaceGrotesk = Space_Grotesk({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-bricolage",
   display: "swap",
   preload: true,
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const jetBrainsMono = JetBrains_Mono({
@@ -67,7 +68,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans pb-16 md:pb-0`}
+        className={`${inter.variable} ${bricolage.variable} ${jetBrainsMono.variable} font-sans pb-16 md:pb-0`}
       >
         <LocaleDirection />
         <WebVitals />
