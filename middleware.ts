@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/verify-email",
+  "/api/auth/csrf",
   "/api/auth/me",
   "/api/auth/refresh",
   "/api/auth/logout",

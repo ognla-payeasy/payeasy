@@ -19,6 +19,25 @@ function getCookie(name: string): string | null {
   return null;
 }
 
+/**
+ * Returns a CSRF token for the double-submit pattern, fetching one from
+ * /api/auth/csrf (which also sets the matching cookie) if we don't have it yet.
+ */
+async function ensureCsrfToken(): Promise<string> {
+  const existing = getCookie("csrf_token");
+  if (existing) return existing;
+  try {
+    const res = await fetch("/api/auth/csrf");
+    if (res.ok) {
+      const data = (await res.json()) as { csrfToken?: string };
+      if (data.csrfToken) return data.csrfToken;
+    }
+  } catch {
+    // fall through to whatever the cookie holds
+  }
+  return getCookie("csrf_token") ?? "";
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -111,7 +130,7 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
       const sanitizedPassword = sanitizePassword(password);
 
       const doLogin = async (): Promise<Response> => {
-        const csrfToken = getCookie("csrf_token") || "";
+        const csrfToken = await ensureCsrfToken();
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
@@ -144,7 +163,7 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
       const sanitizedPassword = sanitizePassword(password);
 
       const doSignup = async (): Promise<Response> => {
-        const csrfToken = getCookie("csrf_token") || "";
+        const csrfToken = await ensureCsrfToken();
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: {
@@ -173,7 +192,7 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      const csrfToken = getCookie("csrf_token") || "";
+      const csrfToken = await ensureCsrfToken();
       await fetch("/api/auth/logout", {
         method: "POST",
         headers: {
