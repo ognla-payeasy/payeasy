@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const payload = await verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = findUserById(payload.userId);
+  const user = await findUserById(payload.userId);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const options = await generateRegistrationOptions({
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Save the challenge in the user's record
-  updateUser(user.id, { currentChallenge: options.challenge });
+  await updateUser(user.id, { currentChallenge: options.challenge });
 
   return NextResponse.json(options);
 }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const payload = await verifyToken(token);
   if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = findUserById(payload.userId);
+  const user = await findUserById(payload.userId);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const body = await req.json();
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       };
 
       const existingCredentials = user.webAuthnCredentials || [];
-      updateUser(user.id, {
+      await updateUser(user.id, {
         webAuthnCredentials: [...existingCredentials, newCredential],
         currentChallenge: undefined, // clear challenge
       });

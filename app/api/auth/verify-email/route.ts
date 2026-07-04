@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Missing verification token." }, { status: 400 });
   }
 
-  const user = verifyEmailToken(token);
+  const user = await verifyEmailToken(token);
   if (!user) {
     return NextResponse.json({ success: false, error: "Invalid or expired verification token." }, { status: 400 });
   }

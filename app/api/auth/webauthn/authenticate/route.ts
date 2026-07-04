@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email");
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const options = await generateAuthenticationOptions({
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Save the challenge in the user's record
-  updateUser(user.id, { currentChallenge: options.challenge });
+  await updateUser(user.id, { currentChallenge: options.challenge });
 
   return NextResponse.json(options);
 }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing email or response" }, { status: 400 });
   }
 
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   if (!user.currentChallenge) {
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         c.id === credential.id ? { ...c, counter: verification.authenticationInfo.newCounter } : c
       );
 
-      updateUser(user.id, {
+      await updateUser(user.id, {
         webAuthnCredentials: updatedCredentials,
         currentChallenge: undefined, // clear challenge
       });

@@ -19,6 +19,10 @@ const ENV_VARS: EnvVar[] = [
   { name: "AUTH_SECRET", required: true, description: "JWT signing secret (lib/auth/jwt.ts)", group: "Auth" },
   { name: "JWT_EXPIRY", required: false, description: "JWT expiry duration (default 7d)", group: "Auth" },
 
+  // Database
+  { name: "DATABASE_URL", required: true, description: "Postgres connection string (Prisma)", group: "Database" },
+  { name: "DIRECT_URL", required: false, description: "Direct (non-pooled) Postgres URL for migrations", group: "Database" },
+
   // Stellar
   { name: "NEXT_PUBLIC_STELLAR_NETWORK", required: true, description: "Stellar network (testnet | mainnet)", group: "Stellar" },
   { name: "NEXT_PUBLIC_HORIZON_URL", required: true, description: "Horizon REST API base URL", group: "Stellar" },

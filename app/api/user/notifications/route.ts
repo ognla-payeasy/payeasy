@@ -16,9 +16,8 @@ export async function GET(request: Request) {
   if (!userId) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
-  return NextResponse.json({
-    notificationPreferences: getNotificationPreferences(userId),
-  });
+  const notificationPreferences = await getNotificationPreferences(userId);
+  return NextResponse.json({ notificationPreferences });
 }
 
 export async function PATCH(request: Request) {
@@ -41,6 +40,6 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const updated = updateNotificationPreferences(userId, body as any);
+  const updated = await updateNotificationPreferences(userId, body as any);
   return NextResponse.json({ notificationPreferences: updated });
 }

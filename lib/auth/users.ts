@@ -1,208 +1,190 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { join } from "path";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db/prisma";
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  type NotificationPreferences,
+  type StoredUser,
+  type WebAuthnCredentialJSON,
+} from "./user-types";
 
-const DATA_DIR = join(process.cwd(), "data");
-const USERS_FILE = join(DATA_DIR, "users.json");
+// Re-export the client-safe types and pure helpers so existing server-side
+// imports from "@/lib/auth/users" keep working. Client code should import
+// these from "@/lib/auth/user-types" instead (this module is server-only).
+export {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  toPublicUser,
+  isValidNotificationPatch,
+} from "./user-types";
+export type {
+  NotificationPreferences,
+  WebAuthnCredentialJSON,
+  StoredUser,
+  PublicUser,
+} from "./user-types";
 
-export interface NotificationPreferences {
-  marketingEmails: boolean;
-  securityAlerts: boolean;
-  pushNotifications: boolean;
-}
+const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
-export interface WebAuthnCredentialJSON {
-  id: string;
-  publicKeyBase64: string;
-  counter: number;
-  transports?: string[];
-}
-
-export interface StoredUser {
+/** Maps a Prisma User row to the app's StoredUser shape. */
+function toStoredUser(row: {
   id: string;
   email: string;
   name: string;
   passwordHash: string;
-  createdAt: string;
+  createdAt: Date;
   emailVerified: boolean;
-  verificationToken?: string;
-  verificationTokenExpiresAt?: string;
-  notificationPreferences?: NotificationPreferences;
-  currentChallenge?: string;
-  webAuthnCredentials?: WebAuthnCredentialJSON[];
+  verificationToken: string | null;
+  verificationTokenExpiresAt: Date | null;
+  notificationPreferences: Prisma.JsonValue | null;
+  currentChallenge: string | null;
+  webAuthnCredentials: Prisma.JsonValue | null;
+}): StoredUser {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    passwordHash: row.passwordHash,
+    createdAt: row.createdAt.toISOString(),
+    emailVerified: row.emailVerified,
+    verificationToken: row.verificationToken ?? undefined,
+    verificationTokenExpiresAt:
+      row.verificationTokenExpiresAt?.toISOString() ?? undefined,
+    notificationPreferences:
+      (row.notificationPreferences as NotificationPreferences | null) ??
+      undefined,
+    currentChallenge: row.currentChallenge ?? undefined,
+    webAuthnCredentials:
+      (row.webAuthnCredentials as WebAuthnCredentialJSON[] | null) ?? undefined,
+  };
 }
 
-export interface PublicUser {
-  id: string;
-  email: string;
-  name: string;
-  emailVerified: boolean;
+export async function findUserByEmail(
+  email: string
+): Promise<StoredUser | undefined> {
+  const row = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
+  return row ? toStoredUser(row) : undefined;
 }
 
-export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  marketingEmails: false,
-  securityAlerts: true,
-  pushNotifications: true,
-};
-
-function readUsers(): StoredUser[] {
-  if (!existsSync(USERS_FILE)) {
-    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(USERS_FILE, "[]");
-    return [];
-  }
-  return JSON.parse(readFileSync(USERS_FILE, "utf-8")) as StoredUser[];
+export async function findUserById(id: string): Promise<StoredUser | undefined> {
+  const row = await prisma.user.findUnique({ where: { id } });
+  return row ? toStoredUser(row) : undefined;
 }
 
-function writeUsers(users: StoredUser[]): void {
-  writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+export async function findUserByVerificationToken(
+  token: string
+): Promise<StoredUser | undefined> {
+  const row = await prisma.user.findFirst({
+    where: {
+      verificationToken: token,
+      verificationTokenExpiresAt: { gt: new Date() },
+    },
+  });
+  return row ? toStoredUser(row) : undefined;
 }
 
-export function findUserByEmail(email: string): StoredUser | undefined {
-  return readUsers().find(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
+export async function verifyEmailToken(
+  token: string
+): Promise<StoredUser | null> {
+  const row = await prisma.user.findFirst({
+    where: {
+      verificationToken: token,
+      verificationTokenExpiresAt: { gt: new Date() },
+    },
+  });
+  if (!row) return null;
+
+  const updated = await prisma.user.update({
+    where: { id: row.id },
+    data: {
+      emailVerified: true,
+      verificationToken: null,
+      verificationTokenExpiresAt: null,
+    },
+  });
+  return toStoredUser(updated);
 }
 
-export function findUserById(id: string): StoredUser | undefined {
-  return readUsers().find((u) => u.id === id);
-}
-
-export function findUserByVerificationToken(token: string): StoredUser | undefined {
-  return readUsers().find(
-    (u) =>
-      u.verificationToken === token &&
-      u.verificationTokenExpiresAt &&
-      new Date(u.verificationTokenExpiresAt) > new Date()
-  );
-}
-
-export function verifyEmailToken(token: string): StoredUser | null {
-  const users = readUsers();
-  const userIndex = users.findIndex(
-    (u) =>
-      u.verificationToken === token &&
-      u.verificationTokenExpiresAt &&
-      new Date(u.verificationTokenExpiresAt) > new Date()
-  );
-
-  if (userIndex === -1) {
-    return null;
-  }
-
-  users[userIndex].emailVerified = true;
-  delete users[userIndex].verificationToken;
-  delete users[userIndex].verificationTokenExpiresAt;
-  writeUsers(users);
-
-  return users[userIndex];
-}
-
-export function createUser(
+export async function createUser(
   email: string,
   name: string,
   passwordHash: string
-): StoredUser {
-  const users = readUsers();
-  const verificationToken = randomUUID();
-  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-  const user: StoredUser = {
-    id: randomUUID(),
-    email: email.toLowerCase().trim(),
-    name: name.trim(),
-    passwordHash,
-    createdAt: new Date().toISOString(),
-    emailVerified: false,
-    verificationToken,
-    verificationTokenExpiresAt: tokenExpiresAt,
-    notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES, // Apply defaults on creation
-  };
-
-  users.push(user);
-  writeUsers(users);
-  return user;
+): Promise<StoredUser> {
+  const row = await prisma.user.create({
+    data: {
+      email: email.toLowerCase().trim(),
+      name: name.trim(),
+      passwordHash,
+      emailVerified: false,
+      verificationToken: randomUUID(),
+      verificationTokenExpiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+      notificationPreferences:
+        DEFAULT_NOTIFICATION_PREFERENCES as unknown as Prisma.InputJsonValue,
+    },
+  });
+  return toStoredUser(row);
 }
 
-export function toPublicUser(user: StoredUser): PublicUser {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    emailVerified: user.emailVerified,
-  };
+export async function getNotificationPreferences(
+  userId: string
+): Promise<NotificationPreferences> {
+  const user = await findUserById(userId);
+  return user?.notificationPreferences ?? DEFAULT_NOTIFICATION_PREFERENCES;
 }
 
-// ---------------------------------------------------------------------------
-// Notification Preference Functions
-// ---------------------------------------------------------------------------
-
-export function getNotificationPreferences(userId: string): NotificationPreferences {
-  const user = findUserById(userId);
-  // Return the user's saved preferences, or defaults if they don't have any yet
-  return user?.notificationPreferences || DEFAULT_NOTIFICATION_PREFERENCES;
-}
-
-export function isValidNotificationPatch(body: unknown): boolean {
-  if (!body || typeof body !== 'object') return false;
-
-  const validKeys = ['marketingEmails', 'securityAlerts', 'pushNotifications'];
-  const patch = body as Record<string, unknown>;
-
-  for (const key of Object.keys(patch)) {
-    // If the key isn't allowed, or the value isn't a boolean, reject it
-    if (!validKeys.includes(key) || typeof patch[key] !== 'boolean') {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export function updateNotificationPreferences(
+export async function updateNotificationPreferences(
   userId: string,
   patch: Partial<NotificationPreferences>
-): NotificationPreferences {
-  const users = readUsers();
-  const userIndex = users.findIndex((u) => u.id === userId);
+): Promise<NotificationPreferences> {
+  const current =
+    (await getNotificationPreferences(userId)) ??
+    DEFAULT_NOTIFICATION_PREFERENCES;
+  const updated: NotificationPreferences = { ...current, ...patch };
 
-  if (userIndex === -1) {
-    throw new Error("User not found");
-  }
-
-  const currentPrefs = users[userIndex].notificationPreferences || DEFAULT_NOTIFICATION_PREFERENCES;
-  const updatedPrefs = { ...currentPrefs, ...patch };
-
-  // Update the user in the array and write back to the JSON file
-  users[userIndex].notificationPreferences = updatedPrefs;
-  writeUsers(users);
-
-  return updatedPrefs;
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      notificationPreferences: updated as unknown as Prisma.InputJsonValue,
+    },
+  });
+  return updated;
 }
 
-export function updateUserPasswordHash(userId: string, passwordHash: string): void {
-  const users = readUsers();
-  const userIndex = users.findIndex((u) => u.id === userId);
-
-  if (userIndex === -1) {
-    throw new Error("User not found");
-  }
-
-  users[userIndex].passwordHash = passwordHash;
-  writeUsers(users);
+export async function updateUserPasswordHash(
+  userId: string,
+  passwordHash: string
+): Promise<void> {
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 }
 
-export function updateUser(userId: string, patch: Partial<StoredUser>): StoredUser {
-  const users = readUsers();
-  const userIndex = users.findIndex((u) => u.id === userId);
+export async function updateUser(
+  userId: string,
+  patch: Partial<StoredUser>
+): Promise<StoredUser> {
+  const data: Prisma.UserUpdateInput = {};
 
-  if (userIndex === -1) {
-    throw new Error("User not found");
-  }
+  if ("name" in patch) data.name = patch.name;
+  if ("email" in patch) data.email = patch.email?.toLowerCase().trim();
+  if ("passwordHash" in patch) data.passwordHash = patch.passwordHash;
+  if ("emailVerified" in patch) data.emailVerified = patch.emailVerified;
+  if ("verificationToken" in patch)
+    data.verificationToken = patch.verificationToken ?? null;
+  if ("verificationTokenExpiresAt" in patch)
+    data.verificationTokenExpiresAt = patch.verificationTokenExpiresAt
+      ? new Date(patch.verificationTokenExpiresAt)
+      : null;
+  if ("currentChallenge" in patch)
+    data.currentChallenge = patch.currentChallenge ?? null;
+  if ("notificationPreferences" in patch)
+    data.notificationPreferences = patch.notificationPreferences
+      ? (patch.notificationPreferences as unknown as Prisma.InputJsonValue)
+      : Prisma.DbNull;
+  if ("webAuthnCredentials" in patch)
+    data.webAuthnCredentials = patch.webAuthnCredentials
+      ? (patch.webAuthnCredentials as unknown as Prisma.InputJsonValue)
+      : Prisma.DbNull;
 
-  const updatedUser = { ...users[userIndex], ...patch };
-  users[userIndex] = updatedUser;
-  writeUsers(users);
-
-  return updatedUser;
+  const row = await prisma.user.update({ where: { id: userId }, data });
+  return toStoredUser(row);
 }

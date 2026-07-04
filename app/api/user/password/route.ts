@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const user = findUserById(payload.userId);
+  const user = await findUserById(payload.userId);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
-  updateUserPasswordHash(user.id, passwordHash);
+  await updateUserPasswordHash(user.id, passwordHash);
 
   return NextResponse.json({ ok: true });
 }

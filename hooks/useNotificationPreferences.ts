@@ -5,7 +5,7 @@ import { useStellarAuth } from "@/context/StellarContext";
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   type NotificationPreferences,
-} from "@/lib/auth/users";
+} from "@/lib/auth/user-types";
 
 export function useNotificationPreferences() {
   const { publicKey } = useStellarAuth();

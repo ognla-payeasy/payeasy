@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Fetch the user and their preferences from your JSON database
-    const user = findUserById(userId);
-    
+    const user = await findUserById(userId);
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const notificationPreferences = getNotificationPreferences(userId);
+    const notificationPreferences = await getNotificationPreferences(userId);
 
     // 3. Format the data to match the exact requirements of Issue #683
     const userData = {

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const payload = await verifyToken(token);
   if (!payload) return NextResponse.json(null);
 
-  const user = findUserById(payload.userId);
+  const user = await findUserById(payload.userId);
   if (!user) return NextResponse.json(null);
 
   return NextResponse.json(toPublicUser(user));

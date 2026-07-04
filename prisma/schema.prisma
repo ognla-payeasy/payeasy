@@ -1,0 +1,37 @@
+// PayEasy — Prisma schema (Postgres)
+// The app's sign-in is custom (bcrypt + JWT); Prisma is the persistence layer.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon / Supabase give a pooled URL for the app and a direct URL for
+  // migrations. If you only have one string, set both to the same value.
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  name         String
+  passwordHash String
+
+  emailVerified              Boolean   @default(false)
+  verificationToken          String?
+  verificationTokenExpiresAt DateTime?
+
+  // Stored as JSON to mirror the app's existing shapes.
+  // notificationPreferences: { marketingEmails, securityAlerts, pushNotifications }
+  notificationPreferences Json?
+  // webAuthnCredentials: Array<{ id, publicKeyBase64, counter, transports? }>
+  webAuthnCredentials     Json?
+  currentChallenge        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verificationToken])
+}
