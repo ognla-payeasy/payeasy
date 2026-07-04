@@ -32,18 +32,18 @@ import CopyButton from "@/components/ui/copy-button";
 const FEATURES = [
   {
     icon: Shield,
-    title: "Non-Custodial",
-    description: "Your keys, your funds. We never have access to your wallet.",
+    title: "Your money, protected",
+    description: "Funds are held safely in escrow — never in anyone's personal account.",
   },
   {
     icon: Zap,
-    title: "Instant Transactions",
-    description: "Stellar settles in ~5 seconds with near-zero fees.",
+    title: "Settles in seconds",
+    description: "Payments clear in about five seconds, with fees you'll never notice.",
   },
   {
     icon: Globe,
-    title: "Global Access",
-    description: "Pay rent from anywhere in the world, in any currency.",
+    title: "Pay from anywhere",
+    description: "Split rent with roommates across the hall or across the world.",
   },
 ];
 
@@ -68,17 +68,15 @@ export default function ConnectWalletPage() {
   const [freighterNetwork, setFreighterNetwork] = useState<"TESTNET" | "MAINNET" | null>(null);
   const [isVersionOutdated, setIsVersionOutdated] = useState(false);
 
-  const {
-    balance,
-    isLoading: isBalanceLoading,
-  } = useWalletBalance(publicKey ?? null, isConnected);
+  const { balance, isLoading: isBalanceLoading } = useWalletBalance(
+    publicKey ?? null,
+    isConnected
+  );
 
   useEffect(() => {
     if (isConnected && publicKey) {
       setStep("connected");
-      if (!isOnboarded()) {
-        setShowOnboarding(true);
-      }
+      if (!isOnboarded()) setShowOnboarding(true);
     } else if (isConnecting) {
       setStep("connecting");
     } else {
@@ -96,16 +94,13 @@ export default function ConnectWalletPage() {
     await connect();
   };
 
-
   const handleDisconnect = () => {
     disconnect();
     setStep("intro");
   };
 
-  const confirmDisconnect = () => {
-    setShowDisconnectConfirm(true);
-  };
-  // Check Freighter network when connected
+  const confirmDisconnect = () => setShowDisconnectConfirm(true);
+
   useEffect(() => {
     if (isConnected && publicKey) {
       setCheckingNetwork(true);
@@ -118,7 +113,6 @@ export default function ConnectWalletPage() {
     }
   }, [isConnected, publicKey]);
 
-  // Check Freighter version on mount (only in browser, only when installed)
   useEffect(() => {
     if (!isFreighterInstalled) return;
     isFreighterVersionSupported().then((supported) => {
@@ -126,178 +120,130 @@ export default function ConnectWalletPage() {
     });
   }, [isFreighterInstalled]);
 
-
   return (
-    <main id="main-content" aria-label="Connect Wallet" className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(92,124,250,0.08) 0%, transparent 70%)",
-            filter: "blur(80px)",
-          }}
-        />
-        <div
-          className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(32,201,151,0.06) 0%, transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
-      </div>
+    <main
+      id="main-content"
+      aria-label="Set up payments"
+      className="brand-canvas relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(50% 45% at 25% 15%, rgba(47,91,255,0.08) 0%, transparent 60%), radial-gradient(45% 40% at 85% 85%, rgba(255,107,74,0.06) 0%, transparent 60%)",
+        }}
+      />
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-16 py-5"
-      >
-        <Link href="/">
-          <PayEasyLogo size={30} />
+      <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-5 lg:px-12">
+        <Link href="/" aria-label="PayEasy home">
+          <PayEasyLogo size={28} />
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm text-dark-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
         >
           <ArrowLeft size={16} />
-          Back to Home
+          Back to home
         </Link>
-      </motion.div>
+      </div>
 
-      {/* Main content */}
       <div className="relative z-10 w-full max-w-lg">
         <AnimatePresence mode="wait">
-          {/* ── STEP: INTRO ── */}
+          {/* ── INTRO ── */}
           {step === "intro" && (
             <motion.div
               key="intro"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.35 }}
               className="flex flex-col items-center"
             >
-              {/* Icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-                className="mb-8 landscape:mb-4 p-5 landscape:p-3 rounded-2xl glass-card"
-                style={{
-                  boxShadow: "0 0 40px rgba(92,124,250,0.15)",
-                }}
-              >
-                <Wallet className="w-10 h-10 landscape:w-7 landscape:h-7 text-brand-400" />
-              </motion.div>
+              <span className="grid h-16 w-16 place-items-center rounded-3xl bg-brand-500 text-white shadow-[0_20px_50px_-15px_rgba(47,91,255,0.6)]">
+                <Wallet className="h-8 w-8" />
+              </span>
 
-              {/* Heading */}
-              <h1 className="text-4xl sm:text-5xl font-bold text-center text-white mb-4 font-display">
-                Connect Your{" "}
-                <span className="gradient-text">Wallet</span>
+              <h1 className="mt-7 text-center text-4xl font-extrabold tracking-tight sm:text-5xl">
+                Set up your payments
               </h1>
-              <p className="text-dark-400 text-center text-lg max-w-md mb-10 leading-relaxed">
-                Link your Stellar wallet to start splitting rent with
-                trustless escrow. Secure, instant, transparent.
+              <p className="mt-4 max-w-md text-center text-lg leading-relaxed text-muted">
+                Connect a Stellar wallet to start splitting rent with protected
+                payments. Secure, instant, and always in your control.
               </p>
 
-              {/* Outdated Freighter version banner */}
               {isVersionOutdated && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full glass-card p-4 border border-amber-500/30 bg-amber-500/10 space-y-2"
-                >
+                <div className="mt-6 w-full rounded-2xl border border-coral-200 bg-coral-50 p-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-coral-600" />
                     <div className="space-y-1">
-                      <p className="text-amber-300 text-sm font-semibold">
-                        Please update Freighter to version 10+.
+                      <p className="text-sm font-semibold text-coral-700">
+                        Please update Freighter to version 10 or newer.
                       </p>
                       <a
                         href="https://chrome.google.com/webstore/detail/freighter/bcacfldlkkdogcmkkibnjlakofdplcbk"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700"
                       >
-                        Update on Chrome Web Store
-                        <ExternalLink size={12} />
+                        Update on Chrome Web Store <ExternalLink size={12} />
                       </a>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
 
-              {/* Freighter detection */}
               {!isFreighterInstalled ? (
-                <div className="w-full space-y-4">
-                  <div className="glass-card p-5 flex items-start gap-4">
-                    <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                      <AlertCircle className="w-5 h-5 text-amber-400" />
-                    </div>
+                <div className="mt-8 w-full">
+                  <div className="card-soft flex items-start gap-4 p-5">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-coral-50 text-coral-600">
+                      <AlertCircle className="h-5 w-5" />
+                    </span>
                     <div>
-                      <h3 className="text-white font-semibold text-sm mb-1 font-display">
-                        Freighter Wallet Required
-                      </h3>
-                      <p className="text-dark-500 text-sm leading-relaxed">
-                        Install the Freighter browser extension to connect
+                      <h3 className="text-sm font-bold text-ink">Freighter wallet required</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted">
+                        Install the free Freighter browser extension to connect
                         your Stellar wallet to PayEasy.
                       </p>
                       <a
                         href="https://www.freighter.app/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-3 text-sm text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
                       >
-                        Get Freighter
-                        <ExternalLink size={14} />
+                        Get Freighter <ExternalLink size={14} />
                       </a>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="w-full space-y-4">
-                  {/* Connect button */}
+                <div className="mt-8 w-full space-y-4">
                   <button
                     onClick={handleConnect}
                     disabled={isConnecting}
-                    className="w-full group relative overflow-hidden rounded-2xl p-[1px] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    className="btn-pill btn-pill-primary w-full !py-4 text-base disabled:opacity-50"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-accent-500 rounded-2xl" />
-                    <div className="relative flex items-center justify-center gap-3 bg-dark-950 hover:bg-dark-900 rounded-[15px] px-8 py-4 transition-colors">
-                      <Wallet className="w-5 h-5 text-brand-400 group-hover:rotate-12 transition-transform" />
-                      <span className="text-white font-semibold text-lg font-display">
-                        Connect with Freighter
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-dark-500 group-hover:translate-x-1 transition-transform" />
-                    </div>
+                    <Wallet className="h-5 w-5" />
+                    Connect with Freighter
+                    <ChevronRight className="h-5 w-5" />
                   </button>
-
-                  {/* Freighter detected badge */}
-                  <div className="flex items-center justify-center gap-2 text-sm text-accent-400">
-                    <div className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
+                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-mint-600">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-mint-500" />
                     Freighter detected
                   </div>
                 </div>
               )}
 
-              {/* Error display */}
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full mt-4 glass-card p-4 border-red-500/20 space-y-2"
-                  style={{ borderColor: "rgba(239,68,68,0.2)" }}
-                >
+                <div className="mt-4 w-full rounded-2xl border border-coral-200 bg-coral-50 p-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                    <p className="text-red-300 text-sm flex-1">{error.message}</p>
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-coral-600" />
+                    <p className="flex-1 text-sm text-coral-700">{error.message}</p>
                   </div>
                   <button
                     onClick={() => setErrorExpanded((v) => !v)}
-                    className="flex items-center gap-1.5 text-xs text-dark-400 hover:text-dark-200 transition-colors ml-8"
+                    className="ml-8 mt-2 flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink"
                   >
                     <ChevronDown
                       size={14}
@@ -306,279 +252,206 @@ export default function ConnectWalletPage() {
                     What does this mean?
                   </button>
                   {errorExpanded && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="text-xs text-dark-400 leading-relaxed ml-8 border-l border-white/10 pl-3"
-                    >
+                    <p className="ml-8 mt-2 border-l-2 border-coral-200 pl-3 text-xs leading-relaxed text-muted">
                       {error.help}
-                    </motion.p>
+                    </p>
                   )}
-                </motion.div>
+                </div>
               )}
 
-              {/* Feature cards */}
-              <div className="w-full grid grid-cols-1 gap-3 mt-12">
-                {FEATURES.map((feature, i) => (
-                  <motion.div
+              <div className="mt-10 grid w-full grid-cols-1 gap-3">
+                {FEATURES.map((feature) => (
+                  <div
                     key={feature.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    className="glass-card p-4 flex items-center gap-4 hover:!transform-none"
+                    className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4"
                   >
-                    <div className="p-2.5 rounded-xl bg-brand-500/5 border border-brand-500/10">
-                      <feature.icon className="w-5 h-5 text-brand-400" />
-                    </div>
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                      <feature.icon className="h-5 w-5" />
+                    </span>
                     <div>
-                      <h3 className="text-white font-semibold text-sm font-display">
-                        {feature.title}
-                      </h3>
-                      <p className="text-dark-500 text-xs mt-0.5 leading-relaxed">
+                      <h3 className="text-sm font-bold text-ink">{feature.title}</h3>
+                      <p className="mt-0.5 text-xs leading-relaxed text-muted">
                         {feature.description}
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP: CONNECTING ── */}
+          {/* ── CONNECTING ── */}
           {step === "connecting" && (
             <motion.div
               key="connecting"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center"
             >
-              <div className="mb-8 p-6 rounded-2xl glass-card">
-                <Loader2 className="w-12 h-12 text-brand-400 animate-spin" />
-              </div>
-
-              <h2 className="text-3xl font-bold text-white mb-3 font-display">
-                Connecting...
-              </h2>
-              <p className="text-dark-400 text-center max-w-sm leading-relaxed">
-                Approve the connection request in your Freighter wallet
-                extension. A popup should appear momentarily.
+              <span className="grid h-20 w-20 place-items-center rounded-3xl border border-line bg-white">
+                <Loader2 className="h-10 w-10 animate-spin text-brand-500" />
+              </span>
+              <h2 className="mt-7 text-3xl font-extrabold tracking-tight">Connecting…</h2>
+              <p className="mt-3 max-w-sm text-center leading-relaxed text-muted">
+                Approve the connection request in your Freighter wallet. A popup
+                should appear in a moment.
               </p>
-
-              <motion.div
-                className="mt-8 flex items-center gap-3"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <div className="w-2 h-2 rounded-full bg-brand-400" />
-                <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <div className="w-2 h-2 rounded-full bg-accent-400" />
-              </motion.div>
             </motion.div>
           )}
 
-          {/* ── STEP: CONNECTED ── */}
+          {/* ── CONNECTED ── */}
           {step === "connected" && publicKey && (
             <motion.div
               key="connected"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.35 }}
               className="flex flex-col items-center"
             >
-              {/* Success icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="mb-8 p-5 rounded-2xl glass-card"
-                style={{
-                  boxShadow: "0 0 40px rgba(32,201,151,0.15)",
-                }}
-              >
-                <Check className="w-10 h-10 text-accent-400" />
-              </motion.div>
-
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2 font-display">
-                Wallet{" "}
-                <span className="gradient-text">Connected</span>
+              <span className="grid h-16 w-16 place-items-center rounded-3xl bg-mint-500 text-white shadow-[0_20px_50px_-15px_rgba(18,184,134,0.6)]">
+                <Check className="h-8 w-8" strokeWidth={3} />
+              </span>
+              <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
+                You&apos;re all set
               </h2>
-              <p className="text-dark-400 text-center mb-8">
-                You&apos;re ready to start using PayEasy.
+              <p className="mt-2 text-center text-muted">
+                Your wallet is connected and ready to split rent.
               </p>
+
               {/* Network badge */}
-              <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="mt-6 flex items-center justify-center gap-3">
                 {(() => {
-                  const appNetwork = getCurrentNetwork();
-                  const isAppTestnet = appNetwork === "testnet";
-                  const badgeColor = isAppTestnet
-                    ? "bg-green-500/10 text-green-400 border-green-500/30"
-                    : "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                  const isAppTestnet = getCurrentNetwork() === "testnet";
                   return (
-                    <div
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-black uppercase tracking-widest ${badgeColor} backdrop-blur-md`}
+                    <span
+                      className={`chip ${isAppTestnet ? "chip-paid" : "chip-wait"}`}
                     >
-                      <div
-                        className={`h-2 w-2 rounded-full ${isAppTestnet ? "bg-green-400" : "bg-amber-400"} animate-pulse`}
+                      <span
+                        className={`h-2 w-2 animate-pulse rounded-full ${isAppTestnet ? "bg-mint-500" : "bg-amber-500"}`}
                       />
                       {isAppTestnet ? "Testnet" : "Mainnet"}
+                    </span>
+                  );
+                })()}
+                {checkingNetwork && <Loader2 className="h-4 w-4 animate-spin text-faint" />}
+              </div>
+
+              {freighterNetwork !== null &&
+                (() => {
+                  const isAppTestnet = getCurrentNetwork() === "testnet";
+                  const isFreighterTestnet = freighterNetwork === "TESTNET";
+                  const mismatch = isAppTestnet !== isFreighterTestnet;
+                  return mismatch ? (
+                    <div className="mt-4 w-full rounded-2xl border border-coral-200 bg-coral-50 p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-coral-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-coral-700">Network mismatch</p>
+                          <p className="text-xs text-coral-600">
+                            Switch Freighter to {isAppTestnet ? "Testnet" : "Mainnet"}.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-2 text-sm font-medium text-mint-600">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-mint-500" />
+                      Network synchronized
                     </div>
                   );
                 })()}
-                {checkingNetwork && (
-                  <Loader2 className="h-4 w-4 text-dark-500 animate-spin" />
-                )}
-              </div>
-
-              {/* Network mismatch warning */}
-              {freighterNetwork !== null && (
-                <div className="mb-6">
-                  {(() => {
-                    const appNetwork = getCurrentNetwork();
-                    const isAppTestnet = appNetwork === "testnet";
-                    const isFreighterTestnet = freighterNetwork === "TESTNET";
-                    const mismatch = isAppTestnet !== isFreighterTestnet;
-                    
-                    if (mismatch) {
-                      return (
-                        <div className="glass-card p-4 border-red-500/20 bg-red-500/10">
-                          <div className="flex items-start gap-3">
-                            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                              <p className="text-red-300 text-sm font-semibold">
-                                Network mismatch
-                              </p>
-                              <p className="text-red-400 text-xs">
-                                Switch Freighter to {isAppTestnet ? "Testnet" : "Mainnet"}.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div className="flex items-center justify-center gap-2 text-sm text-accent-400">
-                        <div className="h-1.5 w-1.5 rounded-full bg-accent-400 animate-pulse" />
-                        Network synchronized
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
 
               {/* Address card */}
-              <div className="w-full glass-card p-5 space-y-4 hover:!transform-none">
+              <div className="card-soft mt-6 w-full space-y-4 p-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-widest text-dark-500 font-semibold font-display">
-                    Your Address
+                  <span className="text-xs font-bold uppercase tracking-widest text-faint">
+                    Your address
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
-                    <span className="text-xs text-accent-400 font-medium">
-                      Connected
-                    </span>
-                  </div>
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-mint-600">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-mint-500" />
+                    Connected
+                  </span>
                 </div>
-
-                <div className="flex items-center gap-2 min-w-0">
-                  <code className="flex-1 min-w-0 text-sm text-dark-200 bg-dark-950/60 rounded-xl px-4 py-3 font-mono truncate border border-white/5">
+                <div className="flex items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded-xl border border-line bg-canvas px-4 py-3 font-mono text-sm text-ink">
                     {publicKey}
                   </code>
                   <CopyButton
                     value={publicKey}
                     label="Copy wallet address"
                     size={18}
-                    className="!p-3 rounded-xl glass hover:bg-white/10 transition-colors shrink-0"
+                    className="shrink-0 rounded-xl border border-line bg-white !p-3 text-muted transition-colors hover:bg-canvas"
                   />
                   <a
                     href={getExplorerLink("account", publicKey)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl glass hover:bg-white/10 transition-colors shrink-0"
+                    className="shrink-0 rounded-xl border border-line bg-white p-3 text-muted transition-colors hover:bg-canvas"
                     title="View on Stellar Expert"
                     aria-label="View on Stellar Expert"
                   >
-                    <ExternalLink size={18} className="text-dark-400" />
+                    <ExternalLink size={18} />
                   </a>
                 </div>
-
-                {/* XLM Balance */}
-                <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                  <span className="text-xs uppercase tracking-widest text-dark-500 font-semibold font-display">
+                <div className="flex items-center justify-between border-t border-line-soft pt-3">
+                  <span className="text-xs font-bold uppercase tracking-widest text-faint">
                     Balance
                   </span>
                   {isBalanceLoading ? (
-                    <div className="h-4 w-28 rounded bg-white/10 animate-pulse" />
+                    <span className="h-4 w-24 animate-pulse rounded bg-line" />
                   ) : (
-                    <span className="text-sm font-semibold text-white font-mono">
+                    <span className="font-mono text-sm font-semibold text-ink">
                       {balance != null ? `${balance} XLM` : "—"}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Fund testnet */}
-              <div className="w-full mt-4">
+              <div className="mt-4 w-full">
                 <FundTestnetButton publicKey={publicKey} />
               </div>
 
-              {/* First-time onboarding prompt */}
               {showOnboarding && (
-                <div className="w-full mt-4">
+                <div className="mt-4 w-full">
                   <OnboardingCard onDismiss={handleDismissOnboarding} />
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-                <Link
-                  href="/escrow/create"
-                  className="btn-primary !justify-center !rounded-xl !py-3.5 text-sm"
-                >
-                  Create Escrow
+              <div className="mt-6 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+                <Link href="/escrow/create" className="btn-pill btn-pill-primary !py-3.5">
+                  Start a rent split
                   <ChevronRight size={16} />
                 </Link>
-                <Link
-                  href="/history"
-                  className="btn-secondary !justify-center !rounded-xl !py-3.5 text-sm"
-                >
-                  View History
+                <Link href="/escrows" className="btn-pill btn-pill-ghost !py-3.5">
+                  View my splits
                 </Link>
               </div>
 
-              {/* Disconnect */}
               <button
                 onClick={confirmDisconnect}
-                className="mt-6 flex items-center gap-2 text-sm text-dark-500 hover:text-red-400 transition-colors"
+                className="mt-6 flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-coral-600"
               >
                 <LogOut size={14} />
-                Disconnect Wallet
+                Disconnect wallet
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Footer note */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="fixed bottom-6 text-xs text-dark-600 text-center"
-      >
-        Powered by Stellar blockchain. Your keys never leave your browser.
-      </motion.p>
+      <p className="fixed bottom-6 text-center text-xs text-faint">
+        Powered by Stellar. Your keys never leave your browser.
+      </p>
 
       <ConfirmDialog
         isOpen={showDisconnectConfirm}
         onClose={() => setShowDisconnectConfirm(false)}
         onConfirm={handleDisconnect}
-        title="Disconnect Wallet?"
-        description="Are you sure you want to disconnect your Stellar wallet? You will need to reconnect to create new escrows or manage your agreements."
+        title="Disconnect wallet?"
+        description="You'll need to reconnect to start new rent splits or manage your existing ones."
         confirmText="Disconnect"
         variant="danger"
       />
