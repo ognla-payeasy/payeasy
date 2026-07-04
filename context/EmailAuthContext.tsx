@@ -86,11 +86,20 @@ export function EmailAuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Initialize auth state on mount
+  // Initialize auth state on mount. /api/auth/me returns the user object
+  // when signed in, or null otherwise; on any error (e.g. a 401 body) fall
+  // back to null so `user` is only ever a real AuthUser or null — never a
+  // truthy error object.
   useEffect(() => {
     fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((data: AuthUser | null) => setUser(data))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: unknown) => {
+        setUser(
+          data && typeof data === "object" && "id" in data
+            ? (data as AuthUser)
+            : null
+        );
+      })
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, []);

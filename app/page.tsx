@@ -111,7 +111,7 @@ export default function Home() {
             {user ? (
               <>
                 <span className="hidden text-sm font-medium text-muted sm:inline">
-                  Hi, {user.name.split(" ")[0]}
+                  Hi, {user.name?.split(" ")[0] ?? "there"}
                 </span>
                 <button
                   onClick={logout}

@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-// Public API routes that don't require authentication
+// Public API routes that don't require a Bearer token in middleware.
+// These either need no auth, or read the auth_token cookie and guard
+// themselves (returning null / their own 401 when not signed in).
 const PUBLIC_ROUTES = [
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/verify-email",
+  "/api/auth/me",
+  "/api/auth/refresh",
+  "/api/auth/logout",
+  "/api/auth/webauthn",
   "/api/health",
+  "/api/vitals",
 ];
 
 /**
