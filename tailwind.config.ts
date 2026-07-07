@@ -57,13 +57,15 @@ const config: Config = {
           800: "#099268",
           900: "#087f5b",
         },
-        // Warm neutrals — near-white canvas, warm ink
-        ink: "#12141a",
-        muted: "#5b616e",
-        faint: "#8a909c",
-        canvas: "#f5f6f8",
-        line: "#e4e7ec",
-        "line-soft": "#eef0f3",
+        // Theme-aware neutrals — driven by CSS vars (see globals.css) so
+        // light/dark flip cleanly while keeping Tailwind opacity modifiers.
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        muted: "rgb(var(--muted) / <alpha-value>)",
+        faint: "rgb(var(--faint) / <alpha-value>)",
+        canvas: "rgb(var(--canvas) / <alpha-value>)",
+        card: "rgb(var(--card) / <alpha-value>)",
+        line: "rgb(var(--line) / <alpha-value>)",
+        "line-soft": "rgb(var(--line-soft) / <alpha-value>)",
         dark: {
           50: "#f8f9fa",
           100: "#f1f3f5",

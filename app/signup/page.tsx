@@ -6,6 +6,7 @@ import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, AlertCircle, Check } from "lu
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PayEasyLogo } from "@/components/ui/payeasy-logo";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useEmailAuth } from "@/context/EmailAuthContext";
 
 export default function SignupPage() {
@@ -57,13 +58,16 @@ export default function SignupPage() {
         <Link href="/" aria-label="PayEasy home">
           <PayEasyLogo size={28} />
         </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-        >
-          <ArrowLeft size={16} />
-          Back to home
-        </Link>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+          >
+            <ArrowLeft size={16} />
+            Back to home
+          </Link>
+        </div>
       </div>
 
       <div className="relative z-10 w-full max-w-md">

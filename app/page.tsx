@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { PayEasyLogo } from "@/components/ui/payeasy-logo";
 import { Reveal } from "@/components/ui/reveal";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useEmailAuth } from "@/context/EmailAuthContext";
 
 const jsonLd = {
@@ -108,6 +109,7 @@ export default function Home() {
             <a href="#trust" className="transition-colors hover:text-ink">Safety</a>
           </nav>
           <div className="flex items-center gap-2.5">
+            <ThemeToggle />
             {user ? (
               <>
                 <span className="hidden text-sm font-medium text-muted sm:inline">
@@ -292,7 +294,7 @@ export default function Home() {
             </div>
 
             {/* floating accent chip */}
-            <div className="absolute -right-3 -top-4 z-20 hidden rotate-3 items-center gap-2 rounded-2xl border border-line bg-white px-3.5 py-2.5 shadow-lg sm:flex">
+            <div className="absolute -right-3 -top-4 z-20 hidden rotate-3 items-center gap-2 rounded-2xl border border-line bg-card px-3.5 py-2.5 shadow-lg sm:flex">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-coral-500 text-white">
                 <Bell size={14} />
               </span>
@@ -304,7 +306,7 @@ export default function Home() {
 
       {/* ------------------------------------------------------------- Stats */}
       <section className="mx-auto max-w-6xl px-6 py-10">
-        <Reveal className="grid grid-cols-2 gap-4 rounded-3xl border border-line bg-white px-6 py-8 md:grid-cols-4">
+        <Reveal className="grid grid-cols-2 gap-4 rounded-3xl border border-line bg-card px-6 py-8 md:grid-cols-4">
           {[
             { v: "~5 sec", l: "to settle a payment" },
             { v: "~$0.001", l: "in fees per split" },
@@ -354,7 +356,7 @@ export default function Home() {
       </section>
 
       {/* ---------------------------------------------------------- Features */}
-      <section id="features" className="border-y border-line bg-white">
+      <section id="features" className="border-y border-line bg-card">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <Reveal className="max-w-2xl">
             <span className="text-sm font-bold uppercase tracking-[0.16em] text-brand-600">
@@ -371,7 +373,7 @@ export default function Home() {
                 delay={(i % 3) * 80}
                 className="rounded-2xl border border-line bg-canvas p-6 transition-colors hover:border-brand-200"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-white text-brand-600 shadow-sm">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-card text-brand-600 shadow-sm">
                   <f.icon size={20} />
                 </span>
                 <h3 className="mt-4 text-lg font-bold">{f.title}</h3>
@@ -494,7 +496,7 @@ export default function Home() {
       </section>
 
       {/* ------------------------------------------------------------ Footer */}
-      <footer className="border-t border-line bg-white">
+      <footer className="border-t border-line bg-card">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row">
           <PayEasyLogo size={26} />
           <nav className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted">

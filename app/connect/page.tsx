@@ -28,6 +28,7 @@ import FundTestnetButton from "@/components/wallet/FundTestnetButton";
 import { getFreighterNetwork, isFreighterVersionSupported } from "@/lib/stellar/wallet";
 import { getCurrentNetwork } from "@/lib/stellar/config";
 import CopyButton from "@/components/ui/copy-button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const FEATURES = [
   {
@@ -140,13 +141,16 @@ export default function ConnectWalletPage() {
         <Link href="/" aria-label="PayEasy home">
           <PayEasyLogo size={28} />
         </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
-        >
-          <ArrowLeft size={16} />
-          Back to home
-        </Link>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+          >
+            <ArrowLeft size={16} />
+            Back to home
+          </Link>
+        </div>
       </div>
 
       <div className="relative z-10 w-full max-w-lg">
@@ -263,7 +267,7 @@ export default function ConnectWalletPage() {
                 {FEATURES.map((feature) => (
                   <div
                     key={feature.title}
-                    className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4"
+                    className="flex items-center gap-4 rounded-2xl border border-line bg-card p-4"
                   >
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
                       <feature.icon className="h-5 w-5" />
@@ -290,7 +294,7 @@ export default function ConnectWalletPage() {
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center"
             >
-              <span className="grid h-20 w-20 place-items-center rounded-3xl border border-line bg-white">
+              <span className="grid h-20 w-20 place-items-center rounded-3xl border border-line bg-card">
                 <Loader2 className="h-10 w-10 animate-spin text-brand-500" />
               </span>
               <h2 className="mt-7 text-3xl font-extrabold tracking-tight">Connecting…</h2>
@@ -383,13 +387,13 @@ export default function ConnectWalletPage() {
                     value={publicKey}
                     label="Copy wallet address"
                     size={18}
-                    className="shrink-0 rounded-xl border border-line bg-white !p-3 text-muted transition-colors hover:bg-canvas"
+                    className="shrink-0 rounded-xl border border-line bg-card !p-3 text-muted transition-colors hover:bg-canvas"
                   />
                   <a
                     href={getExplorerLink("account", publicKey)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-xl border border-line bg-white p-3 text-muted transition-colors hover:bg-canvas"
+                    className="shrink-0 rounded-xl border border-line bg-card p-3 text-muted transition-colors hover:bg-canvas"
                     title="View on Stellar Expert"
                     aria-label="View on Stellar Expert"
                   >

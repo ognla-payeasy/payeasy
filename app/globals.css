@@ -42,10 +42,8 @@
     outline-offset: 3px !important;
   }
 
-  .light body {
-    background-color: #f8f9fa;
-    color: #212529;
-  }
+  /* The not-yet-redesigned dark UI is theme-independent; the light theme
+     only affects the new token-driven pages. */
 }
 
 @layer components {
@@ -177,29 +175,8 @@
     max-width: 800px;
   }
 
-  .light .glass {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-  }
-
-  .light .glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
-
-  .light .glass-card:hover {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(92, 124, 250, 0.5);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  }
-
-  .light .text-dark-400 {
-    color: #6c757d;
-  }
-  
-  .light .text-dark-500 {
-    color: #495057;
-  }
+  /* Old glass cards intentionally stay dark in every theme so the
+     not-yet-redesigned pages remain readable when a user picks light. */
 }
 
 @layer utilities {
@@ -234,13 +211,36 @@
 }
 
 /* =========================================================================
-   New brand — light, warm, slush-inspired primitives
+   New brand — slush-inspired, theme-aware (light + dark navy)
    ========================================================================= */
+
+/* Semantic neutral tokens as space-separated RGB channels so Tailwind opacity
+   modifiers keep working via rgb(var(--x) / <alpha-value>), and one set of
+   class names serves both themes. */
+:root {
+  --canvas: 245 246 248;
+  --card: 255 255 255;
+  --ink: 18 20 26;
+  --muted: 91 97 110;
+  --faint: 138 144 156;
+  --line: 228 231 236;
+  --line-soft: 238 240 243;
+}
+.dark {
+  --canvas: 11 15 25;
+  --card: 20 26 39;
+  --ink: 237 240 245;
+  --muted: 156 163 178;
+  --faint: 108 116 132;
+  --line: 40 48 64;
+  --line-soft: 30 37 51;
+}
+
 @layer components {
-  /* A full-bleed light surface pages opt into to override the dark shell */
+  /* A full-bleed brand surface pages opt into to own their theme */
   .brand-canvas {
-    background: #f5f6f8;
-    color: #12141a;
+    background: rgb(var(--canvas));
+    color: rgb(var(--ink));
     font-family: var(--font-inter), system-ui, sans-serif;
   }
   .brand-canvas h1,
@@ -248,22 +248,22 @@
   .brand-canvas h3,
   .brand-canvas h4 {
     font-family: var(--font-bricolage), system-ui, sans-serif;
-    color: #12141a;
+    color: rgb(var(--ink));
     letter-spacing: -0.03em;
   }
 
   .card-soft {
-    background: #ffffff;
-    border: 1px solid #e4e7ec;
+    background: rgb(var(--card));
+    border: 1px solid rgb(var(--line));
     border-radius: 20px;
     transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
   }
   .card-soft:hover {
-    border-color: #d4dae3;
-    box-shadow: 0 24px 60px -30px rgba(18, 20, 26, 0.28);
+    border-color: rgb(var(--line));
+    box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.4);
   }
 
-  /* Pill buttons for the light brand */
+  /* Pill buttons for the brand */
   .btn-pill {
     display: inline-flex;
     align-items: center;
@@ -290,9 +290,9 @@
     box-shadow: 0 12px 30px -10px rgba(47, 91, 255, 0.55);
   }
   .btn-pill-ghost {
-    background: #ffffff;
-    color: #12141a;
-    border-color: #e4e7ec;
+    background: rgb(var(--card));
+    color: rgb(var(--ink));
+    border-color: rgb(var(--line));
   }
   .btn-pill-ghost:hover {
     border-color: #2f5bff;
@@ -322,6 +322,12 @@
   .chip-due  { background: #ffe9e3; color: #c8401f; }
   .chip-info { background: #e7ecff; color: #234ce0; }
 }
+
+/* Dark chip variants (unlayered, so they win over the layered defaults). */
+.dark .chip-paid { background: rgba(18, 184, 134, 0.16); color: #5fe0b4; }
+.dark .chip-wait { background: rgba(245, 159, 0, 0.16); color: #f7c96b; }
+.dark .chip-due  { background: rgba(255, 107, 74, 0.18); color: #ff9d82; }
+.dark .chip-info { background: rgba(47, 91, 255, 0.22); color: #aebdff; }
 
 /* Scroll-reveal — content composes itself just ahead of the reader.
    Starts visible; the "not yet revealed" state is only applied by JS. */

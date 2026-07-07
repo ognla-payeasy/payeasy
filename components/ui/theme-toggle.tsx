@@ -4,24 +4,25 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+export function ThemeToggle({ className = "" }: { className?: string }) {
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="p-2 rounded-xl glass hover:bg-white/10 transition-colors flex items-center justify-center"
-      aria-label="Toggle theme"
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-card text-muted transition-colors hover:text-ink ${className}`}
     >
-      {theme === "dark" ? (
-        <Sun size={20} className="text-yellow-400" />
+      {/* Render the icon only after mount so SSR and client agree. */}
+      {mounted ? (
+        isDark ? <Sun size={16} /> : <Moon size={16} />
       ) : (
-        <Moon size={20} className="text-blue-500" />
+        <Moon size={16} className="opacity-0" />
       )}
     </button>
   );
