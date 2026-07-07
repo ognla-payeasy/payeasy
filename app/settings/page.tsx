@@ -34,18 +34,15 @@ function Toggle({
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-        {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
-        )}
+        <p className="text-sm font-medium text-ink">{label}</p>
+        {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
       </div>
       <button
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 
-          focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
-          checked ? "bg-brand-600" : "bg-gray-200 dark:bg-gray-700"
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 focus:ring-offset-canvas ${
+          checked ? "bg-brand-600" : "bg-line"
         }`}
       >
         <span
@@ -80,8 +77,8 @@ function SaveFeedbackBanner({
 
   if (saveStatus === "saving") {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 px-4 py-3 text-sm text-brand-700 dark:text-brand-300">
-        <Loader2 className="w-4 h-4 animate-spin" />
+      <div className="flex items-center gap-2 rounded-xl border border-line bg-canvas px-4 py-3 text-sm text-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Saving…
       </div>
     );
@@ -89,16 +86,16 @@ function SaveFeedbackBanner({
 
   if (saveStatus === "saved") {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
-        <CheckCircle2 className="w-4 h-4" />
+      <div className="flex items-center gap-2 rounded-xl border border-mint-500/30 bg-mint-500/10 px-4 py-3 text-sm text-mint-600">
+        <CheckCircle2 className="h-4 w-4" />
         Settings saved successfully.
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+    <div className="flex items-center gap-2 rounded-xl border border-coral-500/30 bg-coral-500/10 px-4 py-3 text-sm text-coral-600">
+      <AlertCircle className="h-4 w-4 flex-shrink-0" />
       {saveError ?? "Failed to save settings. Please try again."}
     </div>
   );
@@ -114,8 +111,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass-card p-6 space-y-5">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-400">
+    <section className="card-soft space-y-5 p-6">
+      <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-brand-600">
         {title}
       </h2>
       {children}
@@ -134,14 +131,14 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+      <label className="text-sm font-semibold text-ink">{label}</label>
       {children}
     </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 transition";
+  "w-full rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink placeholder:text-faint transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100";
 
 // ─── Budget section ───────────────────────────────────────────────────────────
 
@@ -318,7 +315,7 @@ function NotificationsSection({
       <Toggle
         checked={n.escrowContributions}
         label="Contribution alerts"
-        description="Notify when a roommate contributes to escrow"
+        description="Notify when a roommate pays their share"
         onChange={(v) =>
           update((p) => ({
             ...p,
@@ -340,7 +337,7 @@ function NotificationsSection({
       <Toggle
         checked={n.deadlineReminders}
         label="Deadline reminders"
-        description="Remind before the escrow deadline"
+        description="Remind before the payment deadline"
         onChange={(v) =>
           update((p) => ({
             ...p,
@@ -402,8 +399,8 @@ function PrivacySection({
       />
       <Toggle
         checked={pv.shareActivityWithRoommates}
-        label="Share escrow activity with roommates"
-        description="Roommates can see your contribution history"
+        label="Share activity with roommates"
+        description="Roommates can see your payment history"
         onChange={(v) =>
           update((p) => ({
             ...p,
@@ -489,7 +486,7 @@ function PasswordSection() {
   return (
     <Section title="Password">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Current Password">
+        <Field label="Current password">
           <input
             type="password"
             value={currentPassword}
@@ -498,7 +495,7 @@ function PasswordSection() {
             className={inputClass}
           />
         </Field>
-        <Field label="New Password">
+        <Field label="New password">
           <input
             type="password"
             value={newPassword}
@@ -507,7 +504,7 @@ function PasswordSection() {
             className={inputClass}
           />
         </Field>
-        <Field label="Confirm New Password">
+        <Field label="Confirm new password">
           <input
             type="password"
             value={confirmPassword}
@@ -518,8 +515,8 @@ function PasswordSection() {
         </Field>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-xl border border-coral-500/30 bg-coral-500/10 px-4 py-3 text-sm text-coral-600">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
             {error}
           </div>
         )}
@@ -527,14 +524,14 @@ function PasswordSection() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-secondary !w-full sm:!w-auto flex items-center justify-center gap-2"
+          className="btn-pill btn-pill-ghost w-full sm:w-auto"
         >
           {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="h-4 w-4" />
           )}
-          {isSubmitting ? "Updating..." : "Update Password"}
+          {isSubmitting ? "Updating…" : "Update password"}
         </button>
       </form>
     </Section>
@@ -559,24 +556,20 @@ function DataExportSection() {
       }
 
       const data = await res.json();
-      
-      // Format the current date as YYYY-MM-DD
+
       const dateStr = new Date().toISOString().split("T")[0];
       const emailSafe = data.email ? data.email.replace(/[^a-zA-Z0-9@.-]/g, "") : "user";
       const filename = `payeasy-data-${emailSafe}-${dateStr}.json`;
 
-      // Create a blob from the JSON response
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element to trigger the download
+
       const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      
-      // Cleanup
+
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
@@ -589,24 +582,24 @@ function DataExportSection() {
 
   return (
     <Section title="Data & Privacy">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white">Download My Data</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm font-medium text-ink">Download my data</p>
+          <p className="mt-0.5 text-xs text-muted">
             Export a JSON copy of your personal account data and preferences.
           </p>
         </div>
         <button
           onClick={handleExportData}
           disabled={isExporting}
-          className="btn-secondary !w-full sm:!w-auto flex items-center justify-center gap-2"
+          className="btn-pill btn-pill-ghost w-full sm:w-auto"
         >
           {isExporting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Download className="w-4 h-4" />
+            <Download className="h-4 w-4" />
           )}
-          {isExporting ? "Exporting..." : "Download Data"}
+          {isExporting ? "Exporting…" : "Download data"}
         </button>
       </div>
     </Section>
@@ -619,7 +612,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { user, isLoading } = useEmailAuth();
   const { isConnected } = useWalletConnection();
-  
+
   const { preferences, setPreferences, save, reset, saveStatus, saveError } =
     usePreferences();
 
@@ -644,38 +637,47 @@ export default function SettingsPage() {
   if (isLoading || !isConnected || !user) return null;
 
   return (
-    <main aria-label="Account Settings" className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <Settings className="w-7 h-7 text-brand-400" />
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Settings
-        </h1>
-      </div>
+    <main
+      aria-label="Account settings"
+      className="brand-canvas min-h-screen"
+    >
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+            <Settings className="h-6 w-6" />
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink">Settings</h1>
+        </div>
 
-      <SaveFeedbackBanner
-        saveStatus={bannerStatus}
-        saveError={bannerError}
-        onDismiss={dismissBanner}
-      />
+        <SaveFeedbackBanner
+          saveStatus={bannerStatus}
+          saveError={bannerError}
+          onDismiss={dismissBanner}
+        />
 
-     <BudgetSection prefs={preferences} update={setPreferences} />
-      <LocationSection prefs={preferences} update={setPreferences} />
-      <NotificationsSection prefs={preferences} update={setPreferences} />
-      <PrivacySection prefs={preferences} update={setPreferences} />
-      <PasswordSection />
-      <DataExportSection />
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <button onClick={save} className="btn-primary !w-full sm:!w-auto flex items-center justify-center gap-2">
-          <Save className="w-4 h-4" />
-          Save Settings
-        </button>
-        <button
-          onClick={reset}
-          className="btn-secondary !w-full sm:!w-auto flex items-center justify-center gap-2"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset to Defaults
-        </button>
+        <BudgetSection prefs={preferences} update={setPreferences} />
+        <LocationSection prefs={preferences} update={setPreferences} />
+        <NotificationsSection prefs={preferences} update={setPreferences} />
+        <PrivacySection prefs={preferences} update={setPreferences} />
+        <PasswordSection />
+        <DataExportSection />
+
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+          <button
+            onClick={save}
+            className="btn-pill btn-pill-primary w-full sm:w-auto"
+          >
+            <Save className="h-4 w-4" />
+            Save settings
+          </button>
+          <button
+            onClick={reset}
+            className="btn-pill btn-pill-ghost w-full sm:w-auto"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset to defaults
+          </button>
+        </div>
       </div>
     </main>
   );
