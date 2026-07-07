@@ -278,6 +278,41 @@ payeasy/
 
 ---
 
+## Roadmap
+
+Planned features, not yet implemented. Tracked here so the direction is captured before the work starts.
+
+### 🏘️ Landlord & Tenant roles + property listings — _planned_
+
+Introduce two account types so the platform serves both sides of a rental, not just roommates splitting a bill.
+
+**Roles**
+
+| Role | Can do |
+|---|---|
+| **Landlord** | Upload and manage property listings, set rent and terms, review applicants, and create the rent-split escrow for the chosen tenants. |
+| **Tenant** | Browse listings, apply/express interest, join a household, and pay their share into escrow (today's flow). |
+
+**Landlord — upload houses**
+- Create a **property listing**: address, monthly rent, number of rooms/beds, deposit, photos, description, availability date, house rules.
+- Manage listings: edit, mark as available/rented, archive.
+- From a listing, spin up the existing **rent-split escrow** for the accepted tenants — connecting listings to the on-chain flow already built.
+
+**Tenant — find a home**
+- Search/filter listings (location, price, rooms, move-in date).
+- Apply to a listing or express interest; landlord reviews and accepts.
+- Once accepted, the tenant is added to the household and pays their share via the existing protected-payment flow.
+
+**What this touches (for whoever implements it)**
+- **Data model:** add a `role` field to `User` (`LANDLORD` | `TENANT`), and a new `Property` / `Listing` model (owned by a landlord) with an optional link to an escrow agreement. Prisma schema + migration.
+- **Auth/onboarding:** capture role at sign-up; role-based routing and permissions (middleware + route guards).
+- **UI:** a landlord dashboard (my listings, create/edit listing, applicants) and a tenant listings browse/detail/apply experience — built in the new brand.
+- **Storage:** listing photos (e.g. an object store / uploads provider) — a new concern the current app doesn't have.
+
+> Status: **design/spec only.** No code for this exists yet.
+
+---
+
 ## Contributing
 
 > **Before you start, read [CONTRIBUTING.md](CONTRIBUTING.md).** It covers setup instructions, coding standards, branch naming, commit conventions, and our code of conduct.
