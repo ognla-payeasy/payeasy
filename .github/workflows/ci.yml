@@ -14,6 +14,11 @@ env:
   NEXT_PUBLIC_STELLAR_NETWORK: testnet
   NEXT_PUBLIC_HORIZON_URL: https://horizon-testnet.stellar.org
   NEXT_PUBLIC_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+  # Prisma needs a connection string to initialise its client. Tests never
+  # open a connection, so a placeholder is enough for lint/test/build.
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/payeasy_ci
+  DIRECT_URL: postgresql://postgres:postgres@localhost:5432/payeasy_ci
+  AUTH_SECRET: ci-placeholder-secret-not-used-for-real-auth
 
 jobs:
   lint:
@@ -31,6 +36,21 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    # Route tests exercise the real auth handlers, which read from Postgres.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: payeasy_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +58,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Create the database schema
+        run: npx prisma db push --skip-generate
       - name: Unit tests (node:test)
         run: npm run test:unit
       - name: Component tests (Vitest)
