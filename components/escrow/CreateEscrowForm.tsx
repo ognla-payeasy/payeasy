@@ -2,11 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createEscrow } from "@/lib/mock/escrow";
 
-import { getSupportedTokenByIssuer } from "@/lib/stellar/config";
+import {
+  getSupportedTokenByIssuer,
+  resolveTokenContractAddress,
+} from "@/lib/stellar/config";
 import { getExplorerLink, type ExplorerProvider } from "@/lib/stellar/explorer";
 import { getFeeStats } from "@/lib/stellar/queries";
+import { toStellarAmount } from "@/lib/stellar/format";
+import { useStellar } from "@/context/StellarContext";
+import { deployEscrowInstance } from "@/lib/stellar/actions/deployEscrowInstance";
+import { initializeEscrow } from "@/lib/stellar/actions/initialize";
+import { addRoommate as addRoommateOnChain } from "@/lib/stellar/actions/addRoommate";
 
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useBeforeUnload } from "@/hooks/useBeforeUnload";
@@ -172,6 +179,63 @@ export default function CreateEscrowForm({
   const [saveTemplateName, setSaveTemplateName] = useState("");
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateSaved, setTemplateSaved] = useState(false);
+
+  // ── Wallet / real contract client ──────────────────────────────────────
+  const { publicKey, isConnected } = useStellar();
+  const usingDemo = !contractClient && !(isConnected && publicKey);
+
+  const realClient: EscrowContractClient = useMemo(() => {
+    // Closure-local: set by initialize(), read by add_roommate(). Each call
+    // to initialize() deploys (and remembers) a fresh contract instance, so
+    // a retry after a failed/rejected signature starts a clean deploy
+    // rather than reusing a partially-set-up instance.
+    let deployedContractId: string | null = null;
+
+    return {
+      async initialize(params) {
+        if (!publicKey) {
+          throw new Error("Connect your wallet to create a real escrow.");
+        }
+
+        const deployResult = await deployEscrowInstance({ landlord: publicKey });
+        deployedContractId = deployResult.contractId;
+
+        const resolvedToken = resolveTokenContractAddress(params.tokenAddress);
+
+        const initResult = await initializeEscrow({
+          contractId: deployResult.contractId,
+          landlord: publicKey,
+          totalRent: toStellarAmount(params.totalRent),
+          deadline: BigInt(params.deadlineLedgerTimestamp),
+          tokenAddress: resolvedToken,
+          // Roommates are registered individually via add_roommate below.
+          roommates: {},
+        });
+
+        return {
+          transactionHash: initResult.txHash,
+          contractId: deployResult.contractId,
+        };
+      },
+      async add_roommate({ roommateAddress, shareAmount }) {
+        if (!publicKey) {
+          throw new Error("Connect your wallet to create a real escrow.");
+        }
+        if (!deployedContractId) {
+          throw new Error("Escrow contract has not been deployed yet.");
+        }
+
+        const result = await addRoommateOnChain({
+          contractId: deployedContractId,
+          landlord: publicKey,
+          roommateAddress,
+          shareAmount: toStellarAmount(shareAmount),
+        });
+
+        return { transactionHash: result.txHash };
+      },
+    };
+  }, [publicKey]);
 
   function clearFieldError(field: string) {
     setFieldErrors((prev) => {
@@ -341,7 +405,7 @@ export default function CreateEscrowForm({
       return;
     }
 
-    const activeClient = contractClient ?? DEMO_CONTRACT_CLIENT;
+    const activeClient = contractClient ?? (usingDemo ? DEMO_CONTRACT_CLIENT : realClient);
     const addRoommateMethod =
       activeClient.add_roommate ?? activeClient.addRoommate;
 
@@ -362,6 +426,10 @@ export default function CreateEscrowForm({
 
       let lastMetadata = metadataFromResult(initializeResult);
 
+      // Each roommate is registered with its own add_roommate call (one
+      // Freighter signature each) rather than batched into initialize(),
+      // to keep this handler client-agnostic across the demo and real
+      // contract clients.
       for (const roommate of draft.roommates) {
         const addRoommateResult = await addRoommateMethod({
           roommateAddress: roommate.address.trim(),
@@ -374,20 +442,19 @@ export default function CreateEscrowForm({
           ...roommateMetadata,
         };
       }
-      // Call the mock service
-      const result = await createEscrow();
-      setSubmission(result);
+
+      setSubmission(lastMetadata);
 
       // Register escrow ID for the escrows listing page
-      if (result.contractId) {
+      if (lastMetadata.contractId) {
         try {
           const existing: string[] = JSON.parse(
             localStorage.getItem("escrow_registry") ?? "[]"
           ) as string[];
-          if (!existing.includes(result.contractId)) {
+          if (!existing.includes(lastMetadata.contractId)) {
             localStorage.setItem(
               "escrow_registry",
-              JSON.stringify([result.contractId, ...existing])
+              JSON.stringify([lastMetadata.contractId, ...existing])
             );
           }
         } catch (e) {
@@ -570,7 +637,7 @@ export default function CreateEscrowForm({
       <div className="space-y-6">
         {step === 1 ? (
           <>
-            {!contractClient ? (
+            {usingDemo ? (
               <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -780,9 +847,9 @@ export default function CreateEscrowForm({
               </div>
             ) : null}
 
-            {!contractClient ? (
+            {usingDemo ? (
               <p className="text-xs text-dark-600">
-                Demo mode is active. Pass a real contract client to execute on-chain transactions.
+                Demo mode is active. Connect your wallet to execute real on-chain transactions.
               </p>
             ) : null}
           </div>
