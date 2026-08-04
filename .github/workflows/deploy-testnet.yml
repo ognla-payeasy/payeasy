@@ -29,7 +29,7 @@ env:
   CONTRACT_DIR: contracts/rent-escrow
   # This is a Cargo workspace, so build output lands in the workspace-root
   # target/ directory, not inside the member crate.
-  WASM_PATH: target/wasm32-unknown-unknown/release/rent_escrow.wasm
+  WASM_PATH: target/wasm32v1-none/release/rent_escrow.wasm
   STELLAR_NETWORK: testnet
   STELLAR_RPC_URL: https://soroban-testnet.stellar.org
   STELLAR_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
@@ -66,7 +66,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: wasm32-unknown-unknown
+          targets: wasm32v1-none
 
       - name: Cache Cargo
         uses: actions/cache@v4
@@ -77,7 +77,7 @@ jobs:
             target
           # The lockfile lives at the workspace root; hashing a non-existent
           # path yielded a constant key that restored a stale cache forever.
-          key: ${{ runner.os }}-cargo-deploy-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-deploy-v2-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-deploy-
             ${{ runner.os }}-cargo-
@@ -85,7 +85,7 @@ jobs:
       - name: Build optimised WASM
         run: |
           cd ${{ env.CONTRACT_DIR }}
-          cargo build --target wasm32-unknown-unknown --release
+          cargo build --target wasm32v1-none --release
 
       - name: Verify WASM produced
         run: |

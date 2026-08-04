@@ -19,7 +19,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          targets: wasm32-unknown-unknown
+          targets: wasm32v1-none
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -40,7 +40,7 @@ jobs:
       - name: Build WASM contract
         run: |
           cd contracts/rent-escrow
-          cargo build --target wasm32-unknown-unknown --release
+          cargo build --target wasm32v1-none --release
 
       - name: Run contract tests
         run: |
@@ -51,6 +51,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rent-escrow-wasm
-          path: target/wasm32-unknown-unknown/release/*.wasm
+          path: target/wasm32v1-none/release/*.wasm
           if-no-files-found: error
           retention-days: 7

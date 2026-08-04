@@ -1,6 +1,0 @@
-# Rust 1.82+ enables the WebAssembly reference-types and multi-value proposals
-# by default for wasm32-unknown-unknown. The Soroban host VM rejects modules
-# that use them ("reference-types not enabled: zero byte expected"), so the
-# contract must be built with those features disabled.
-[target.wasm32-unknown-unknown]
-rustflags = ["-C", "target-feature=-reference-types,-multivalue"]
