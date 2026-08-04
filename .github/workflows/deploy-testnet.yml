@@ -27,7 +27,9 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   CONTRACT_DIR: contracts/rent-escrow
-  WASM_PATH: contracts/rent-escrow/target/wasm32-unknown-unknown/release/rent_escrow.wasm
+  # This is a Cargo workspace, so build output lands in the workspace-root
+  # target/ directory, not inside the member crate.
+  WASM_PATH: target/wasm32-unknown-unknown/release/rent_escrow.wasm
   STELLAR_NETWORK: testnet
   STELLAR_RPC_URL: https://soroban-testnet.stellar.org
   STELLAR_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
