@@ -74,8 +74,10 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            ${{ env.CONTRACT_DIR }}/target
-          key: ${{ runner.os }}-cargo-deploy-${{ hashFiles(format('{0}/Cargo.lock', env.CONTRACT_DIR)) }}
+            target
+          # The lockfile lives at the workspace root; hashing a non-existent
+          # path yielded a constant key that restored a stale cache forever.
+          key: ${{ runner.os }}-cargo-deploy-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-deploy-
             ${{ runner.os }}-cargo-
