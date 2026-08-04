@@ -3,11 +3,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Ogstevyn/payeasy/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
-  <a href="https://github.com/Ogstevyn/payeasy/stargazers"><img src="https://img.shields.io/github/stars/Ogstevyn/payeasy?style=social" alt="Stars" /></a>
+  <a href="https://github.com/ognla-payeasy/payeasy/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
   <a href="https://stellar.org"><img src="https://img.shields.io/badge/powered%20by-Stellar-brightgreen" alt="Stellar" /></a>
-  <a href="https://github.com/Ogstevyn/payeasy/actions/workflows/ci.yml"><img src="https://github.com/Ogstevyn/payeasy/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
-  <a href="https://github.com/Ogstevyn/payeasy/actions/workflows/bundle-size.yml"><img src="https://github.com/Ogstevyn/payeasy/actions/workflows/bundle-size.yml/badge.svg" alt="Bundle Size" /></a>
+  <a href="https://github.com/ognla-payeasy/payeasy/actions/workflows/ci.yml"><img src="https://github.com/ognla-payeasy/payeasy/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/ognla-payeasy/payeasy/graphs/contributors"><img src="https://img.shields.io/github/contributors/ognla-payeasy/payeasy" alt="Contributors" /></a>
+  <a href="https://github.com/ognla-payeasy/payeasy/pulls?q=is%3Apr+is%3Amerged"><img src="https://img.shields.io/github/issues-pr-closed/ognla-payeasy/payeasy?label=merged%20PRs" alt="Merged PRs" /></a>
+  <a href="https://github.com/ognla-payeasy/payeasy/network/members"><img src="https://img.shields.io/github/forks/ognla-payeasy/payeasy?style=flat" alt="Forks" /></a>
 </p>
 
 ---
