@@ -27,6 +27,7 @@ const ENV_VARS: EnvVar[] = [
   { name: "NEXT_PUBLIC_STELLAR_NETWORK", required: true, description: "Stellar network (testnet | mainnet)", group: "Stellar" },
   { name: "NEXT_PUBLIC_HORIZON_URL", required: true, description: "Horizon REST API base URL", group: "Stellar" },
   { name: "NEXT_PUBLIC_SOROBAN_RPC_URL", required: true, description: "Soroban RPC endpoint", group: "Stellar" },
+  { name: "NEXT_PUBLIC_ESCROW_WASM_HASH", required: false, description: "Deployed escrow contract WASM hash (required to create real, non-demo escrows)", group: "Stellar" },
 
   // Redis (Upstash REST)
   { name: "UPSTASH_REDIS_REST_URL", required: false, description: "Upstash Redis REST endpoint", group: "Redis" },
