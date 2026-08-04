@@ -119,7 +119,7 @@ graph TD
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Ogstevyn/payeasy.git
+git clone https://github.com/ognla-payeasy/payeasy.git
 cd payeasy
 
 # 2. Install dependencies
@@ -325,7 +325,7 @@ We welcome contributions from developers of all experience levels!
 3. Run `npm test` and `npm run lint` to verify everything passes
 4. Open a pull request against `main`
 
-Check the [Issues](https://github.com/Ogstevyn/payeasy/issues) tab for tasks labelled `good first issue`.
+Check the [Issues](https://github.com/ognla-payeasy/payeasy/issues) tab for tasks labelled `good first issue`.
 
 ---
 
